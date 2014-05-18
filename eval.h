@@ -27,7 +27,7 @@
 #include "board.h"
 
 static const int DOUBLED_PAWN_PENALTY = 10;
-static const int ISOLATED_PAWN_PENALTY = 15;
+static const int ISOLATED_PAWN_PENALTY = 5;
 static const int PROTECTED_PAWN_BONUS = 2;
 static const int PASSED_PAWN_BONUS = 35;
 static const int OPEN_FILE_BONUS = 15;
