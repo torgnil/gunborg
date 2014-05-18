@@ -33,12 +33,12 @@
 std::string pvstring_from_stack(int * pv, int size) {
 	std::string pv_string;
 	for (int i = 0; i < size; i++) {
-		if (1UL << from_square(pv[i]) == 1UL << to_square(pv[i])) {
+		if (1ULL << from_square(pv[i]) == 1ULL << to_square(pv[i])) {
 			// garbage..
 			return pv_string;
 		}
-		pv_string += long_algebraic_notation(1UL << from_square(pv[i]));
-		pv_string += long_algebraic_notation(1UL << to_square(pv[i]));
+		pv_string += long_algebraic_notation(1ULL << from_square(pv[i]));
+		pv_string += long_algebraic_notation(1ULL << to_square(pv[i]));
 		if (is_promotion(pv[i])) {
 			pv_string += "q";
 		}
@@ -185,7 +185,7 @@ void print_board(const Board& board) {
 	for (int i = 63; i >= 0; i--) {
 		int file = 7 - i % 8;
 		int row = i / 8;
-		uint64_t square = 1UL << ((8 * row) + file);
+		uint64_t square = 1ULL << ((8 * row) + file);
 		if (board.b[WHITE][PAWN] & square) {
 			std::cout << "♙";
 		} else if (board.b[BLACK][PAWN] & square) {
@@ -222,7 +222,7 @@ void print_board(const Board& board) {
 
 void print_bit_mask(uint64_t bit_mask) {
 	for (int i = 63; i >= 0; i--) {
-		uint64_t square = 1UL << i;
+		uint64_t square = 1ULL << i;
 		if (square & bit_mask) {
 			std::cout << "1";
 		} else {

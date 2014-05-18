@@ -71,8 +71,8 @@ Board_legacy start_pos() {
 	start_pos.black_rooks = A8 + H8;
 	start_pos.black_queen = D8;
 	start_pos.meta_info = C1 + G1 + C8 + G8;
-	start_pos.from = 1UL;
-	start_pos.to = 1UL;
+	start_pos.from = 1ULL;
+	start_pos.to = 1ULL;
 	return start_pos;
 }
 

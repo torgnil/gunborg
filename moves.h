@@ -68,7 +68,7 @@ inline int piece_at_board(const Board& board, const uint64_t b, int color) {
 }
 
 inline int piece_at_square(const Board& board, int square, int color) {
-	return piece_at_board(board, (1UL << square), color);
+	return piece_at_board(board, (1ULL << square), color);
 }
 
 #endif /* MOVES_H_ */

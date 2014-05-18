@@ -73,26 +73,26 @@ uint64_t file_fill(uint64_t l) {
  */
 
 void make_move(Board& board, Move move) {
-	board.b[color(move.m)][piece(move.m)] &= ~(1UL << from_square(move.m));
-	board.b[color(move.m)][piece(move.m)] |= (1UL << to_square(move.m));
+	board.b[color(move.m)][piece(move.m)] &= ~(1ULL << from_square(move.m));
+	board.b[color(move.m)][piece(move.m)] |= (1ULL << to_square(move.m));
 	uint64_t meta_info = board.meta_info_stack.back();
 	int captured_piece = captured_piece(move.m);
 	if (captured_piece != EMPTY) {
 		int captured_color = color(move.m) ^ 1;
 		if (captured_piece != EN_PASSANT) {
-			board.b[captured_color][captured_piece] &= ~(1UL << to_square(move.m));
+			board.b[captured_color][captured_piece] &= ~(1ULL << to_square(move.m));
 		} else {
-			board.b[captured_color][PAWN] &= ~(1UL << (to_square(move.m) - 8 + (color(move.m) * 16)));
+			board.b[captured_color][PAWN] &= ~(1ULL << (to_square(move.m) - 8 + (color(move.m) * 16)));
 		}
 	}
 	int promotion_piece = promotion_piece(move.m);
 	if (promotion_piece != EMPTY) {
-		board.b[color(move.m)][piece(move.m)] &= ~(1UL << to_square(move.m));
-		board.b[color(move.m)][promotion_piece] |= (1UL << to_square(move.m));
+		board.b[color(move.m)][piece(move.m)] &= ~(1ULL << to_square(move.m));
+		board.b[color(move.m)][promotion_piece] |= (1ULL << to_square(move.m));
 	}
 	if (is_castling(move.m)) {
-		board.b[color(move.m)][ROOK] &= ~(1UL << rook_castle_from_squares[to_square(move.m)]);
-		board.b[color(move.m)][ROOK] |= (1UL << rook_castle_to_squares[to_square(move.m)]);
+		board.b[color(move.m)][ROOK] &= ~(1ULL << rook_castle_from_squares[to_square(move.m)]);
+		board.b[color(move.m)][ROOK] |= (1ULL << rook_castle_to_squares[to_square(move.m)]);
 	}
 	if (piece(move.m) == KING) {
 		meta_info &= ~(ROW_1 << (56 * color(move.m)));
@@ -115,9 +115,9 @@ void make_move(Board& board, Move move) {
 	// set en passant square
 	if (piece(move.m) == PAWN && abs(to_square(move.m) - from_square(move.m)) == 16) {
 		if (color(move.m) == WHITE) {
-			meta_info |= (1UL << from_square(move.m)) << 8;
+			meta_info |= (1ULL << from_square(move.m)) << 8;
 		} else {
-			meta_info |= (1UL << from_square(move.m)) >> 8;
+			meta_info |= (1ULL << from_square(move.m)) >> 8;
 		}
 	}
 	board.meta_info_stack.push_back(meta_info);
@@ -125,24 +125,24 @@ void make_move(Board& board, Move move) {
 }
 
 void unmake_move(Board& board, Move move) {
-	board.b[color(move.m)][piece(move.m)] |= (1UL << from_square(move.m));
-	board.b[color(move.m)][piece(move.m)] &= ~(1UL << to_square(move.m));
+	board.b[color(move.m)][piece(move.m)] |= (1ULL << from_square(move.m));
+	board.b[color(move.m)][piece(move.m)] &= ~(1ULL << to_square(move.m));
 	int captured_piece = captured_piece(move.m);
 	if (captured_piece != EMPTY) {
 		int captured_color = color(move.m) ^ 1;
 		if (captured_piece != EN_PASSANT) {
-			board.b[captured_color][captured_piece] |= (1UL << to_square(move.m));
+			board.b[captured_color][captured_piece] |= (1ULL << to_square(move.m));
 		} else {
-			board.b[captured_color][PAWN] |= (1UL << (to_square(move.m) - 8 + (color(move.m) * 16)));
+			board.b[captured_color][PAWN] |= (1ULL << (to_square(move.m) - 8 + (color(move.m) * 16)));
 		}
 	}
 	int promotion_piece = promotion_piece(move.m);
 	if (promotion_piece != EMPTY) {
-		board.b[color(move.m)][promotion_piece] &= ~(1UL << to_square(move.m));
+		board.b[color(move.m)][promotion_piece] &= ~(1ULL << to_square(move.m));
 	}
 	if (is_castling(move.m)) {
-		board.b[color(move.m)][ROOK] |= (1UL << rook_castle_from_squares[to_square(move.m)]);
-		board.b[color(move.m)][ROOK] &= ~(1UL << rook_castle_to_squares[to_square(move.m)]);
+		board.b[color(move.m)][ROOK] |= (1ULL << rook_castle_from_squares[to_square(move.m)]);
+		board.b[color(move.m)][ROOK] &= ~(1ULL << rook_castle_to_squares[to_square(move.m)]);
 	}
 	// reverse meta-info by poping the last element from the stack
 	board.meta_info_stack.pop_back();
@@ -699,7 +699,7 @@ void init() {
 	rook_castle_from_squares[58] = 56;
 
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = ((b & ~NNW_BORDER) << 15) | ((b & ~NNE_BORDER) << 17) | ((b & ~EEN_BORDER) << 10)
 				| ((b & ~WWN_BORDER) << 6) | ((b & ~EES_BORDER) >> 6) | ((b & ~SSE_BORDER) >> 15)
 				| ((b & ~SSW_BORDER) >> 17) | ((b & ~WWS_BORDER) >> 10);
@@ -707,7 +707,7 @@ void init() {
 		knight_moves[i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = ((b & ~NW_BORDER) << 7) | ((b & ~NE_BORDER) << 9) | ((b & ~ROW_8) << 8)
 				| ((b & ~H_FILE) << 1) | ((b & ~A_FILE) >> 1) | ((b & ~ROW_1) >> 8) | ((b & ~SW_BORDER) >> 9)
 				| ((b & ~SE_BORDER) >> 7);
@@ -715,7 +715,7 @@ void init() {
 		king_moves[i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = 0;
 		while (b & ~ROW_8) {
 			b = b << 8UL;
@@ -724,7 +724,7 @@ void init() {
 		ray_moves[N][i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = 0;
 		while (b & ~ROW_1) {
 			b = b >> 8UL;
@@ -733,25 +733,25 @@ void init() {
 		ray_moves[S][i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = 0;
 		while (b & ~H_FILE) {
-			b = b << 1UL;
+			b = b << 1ULL;
 			to_squares |= b;
 		}
 		ray_moves[E][i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = 0;
 		while (b & ~A_FILE) {
-			b = b >> 1UL;
+			b = b >> 1ULL;
 			to_squares |= b;
 		}
 		ray_moves[W][i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = 0;
 		while (b & ~NW_BORDER) {
 			b = b << 7UL;
@@ -760,7 +760,7 @@ void init() {
 		ray_moves[NW][i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = 0;
 		while (b & ~SW_BORDER) {
 			b = b >> 9UL;
@@ -769,7 +769,7 @@ void init() {
 		ray_moves[SW][i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = 0;
 		while (b & ~NE_BORDER) {
 			b = b << 9UL;
@@ -778,7 +778,7 @@ void init() {
 		ray_moves[NE][i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1UL << i;
+		uint64_t b = 1ULL << i;
 		uint64_t to_squares = 0;
 		while (b & ~SE_BORDER) {
 			b = b >> 7UL;

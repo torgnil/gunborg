@@ -64,40 +64,40 @@ FenInfo parseFen(string fen) {
 		char c = fen[i];
 		int j = (row - 1) * 8 + file - 1;
 		if (c == 'r') {
-			board.b[BLACK][ROOK] += (1UL << j);
+			board.b[BLACK][ROOK] += (1ULL << j);
 		}
 		if (c == 'n') {
-			board.b[BLACK][KNIGHT] += (1UL << j);
+			board.b[BLACK][KNIGHT] += (1ULL << j);
 		}
 		if (c == 'b') {
-			board.b[BLACK][BISHOP] += (1UL << j);
+			board.b[BLACK][BISHOP] += (1ULL << j);
 		}
 		if (c == 'q') {
-			board.b[BLACK][QUEEN] += (1UL << j);
+			board.b[BLACK][QUEEN] += (1ULL << j);
 		}
 		if (c == 'k') {
-			board.b[BLACK][KING] += (1UL << j);
+			board.b[BLACK][KING] += (1ULL << j);
 		}
 		if (c == 'p') {
-			board.b[BLACK][PAWN] += (1UL << j);
+			board.b[BLACK][PAWN] += (1ULL << j);
 		}
 		if (c == 'R') {
-			board.b[WHITE][ROOK] += (1UL << j);
+			board.b[WHITE][ROOK] += (1ULL << j);
 		}
 		if (c == 'N') {
-			board.b[WHITE][KNIGHT] += (1UL << j);
+			board.b[WHITE][KNIGHT] += (1ULL << j);
 		}
 		if (c == 'B') {
-			board.b[WHITE][BISHOP] += (1UL << j);
+			board.b[WHITE][BISHOP] += (1ULL << j);
 		}
 		if (c == 'Q') {
-			board.b[WHITE][QUEEN] += (1UL << j);
+			board.b[WHITE][QUEEN] += (1ULL << j);
 		}
 		if (c == 'K') {
-			board.b[WHITE][KING] += (1UL << j);
+			board.b[WHITE][KING] += (1ULL << j);
 		}
 		if (c == 'P') {
-			board.b[WHITE][PAWN] += (1UL << j);
+			board.b[WHITE][PAWN] += (1ULL << j);
 		}
 		if (c >= '0' && c <= '9') {
 			int skips = c - '0';
@@ -150,8 +150,8 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 
 	uint64_t occupied_squares = black_squares | white_squares;
 
-	uint64_t from_square = 1UL << from;
-	uint64_t to_square = 1UL << to;
+	uint64_t from_square = 1ULL << from;
+	uint64_t to_square = 1ULL << to;
 
 	uint64_t meta_info = board.meta_info_stack.back();
 
