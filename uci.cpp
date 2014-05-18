@@ -187,13 +187,13 @@ void uci() {
 	Board start_board = start_Pos();
 	bool white_turn = true;
 	int move = 1;
-	bitchess::Search* search = NULL;
+	gunborg::Search* search = NULL;
 	list history;
 	while (true) {
 		string line;
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
-			cout << "id name gunborg 0.40\n";
+			cout << "id name gunborg 0.41\n";
 			cout << "id author torgnil\n";
 			cout << "uciok\n" << flush;
 		}
@@ -246,7 +246,7 @@ void uci() {
 				delete search;
 				search = NULL;
 			}
-			search = new bitchess::Search();
+			search = new gunborg::Search();
 			search->should_run = true;
 			if (line.find("infinite") != string::npos) {
 				search->max_think_time_ms = INT_MAX;
@@ -273,7 +273,7 @@ void uci() {
 				cout << "info string max think time=" << search->max_think_time_ms << endl << flush;
 			}
 
-			search_thread = new thread(&bitchess::Search::search_best_move, search, start_board, white_turn, history);
+			search_thread = new thread(&gunborg::Search::search_best_move, search, start_board, white_turn, history);
 		}
 		if (line.find("stop") != string::npos) {
 			if (search_thread != NULL) {

@@ -36,7 +36,7 @@
 #include <deque>
 #include <sstream>
 
-namespace bitchess {
+namespace gunborg {
 
 Search::Search() {
 	max_think_time_ms = 10000;
@@ -461,4 +461,4 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 Search::~Search() {
 }
 
-} /* namespace bitchess */
+} /* namespace gunborg */

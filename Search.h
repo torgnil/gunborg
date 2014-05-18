@@ -30,7 +30,7 @@
 #include <chrono>
 #include <string>
 
-namespace bitchess {
+namespace gunborg {
 
 class Search {
 
@@ -57,5 +57,5 @@ public:
 	virtual ~Search();
 };
 
-} /* namespace bitchess */
+} /* namespace gunborg */
 #endif /* SEARCH_H_ */
