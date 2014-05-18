@@ -2,7 +2,7 @@ ABOUT:
 
  Gunborg is a free UCI chess engine.
  
- The UCI protocol is described at:
+ UCI protocol description:
 
  http://www.shredderchess.com/chess-info/features/uci-universal-chess-interface.html
 
