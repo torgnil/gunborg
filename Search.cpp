@@ -46,10 +46,9 @@ Search::Search() {
 }
 
 inline bool Search::time_to_stop() {
-	int time_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(clock.now() - start).count();
+	int time_elapsed = std::chrono::duration_cast < std::chrono::milliseconds > (clock.now() - start).count();
 	return time_elapsed > max_think_time_ms || !should_run;
 }
-
 
 bool is_equal(const Board& b1, const Board& b2) {
 	if (b1.b[BLACK][PAWN] != b2.b[BLACK][PAWN]) {
@@ -91,10 +90,9 @@ bool is_equal(const Board& b1, const Board& b2) {
 	return true;
 }
 
-
 /**
  * selection sort algorithm
-  *
+ *
  * The algorithm divides the input list into two parts: the sublist of items already sorted,
  * which is built up from left to right at the front (left) of the list,
  * and the sublist of items remaining to be sorted that occupy the rest of the list.
@@ -112,7 +110,7 @@ void pick_next_move(MoveList& moves, const int no_sorted_moves) {
 		}
 		i++;
 	}
-	std::swap(moves[no_sorted_moves] , moves[max_index]);
+	std::swap(moves[no_sorted_moves], moves[max_index]);
 }
 
 int Search::capture_quiescence_eval_search2(bool white_turn, int alpha, int beta, Board& board) {
@@ -158,7 +156,8 @@ int Search::capture_quiescence_eval_search2(bool white_turn, int alpha, int beta
 	return beta;
 }
 
-int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board,Transposition *tt, bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int ply) {
+int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
+		bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int ply) {
 
 	// If, mate we do not need search at greater depths
 	if (board.b[WHITE][KING] == 0) {
@@ -212,7 +211,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 	if (moves.empty()) {
 		return 0;
 	}
-	Transposition tt_pv = tt[board.hash_key%HASH_SIZE];
+	Transposition tt_pv = tt[board.hash_key % HASH_SIZE];
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
 		if (tt_pv.next_move != 0 && tt_pv.hash == board.hash_key && tt_pv.next_move == it->m) {
@@ -249,8 +248,8 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		node_count++;
 		make_move(board, child);
 
-		int res = alphaBeta(!white_turn, depth - 1, alpha, beta, board, tt,
-								null_move_in_branch, killers, history, ply + 1);
+		int res = alphaBeta(!white_turn, depth - 1, alpha, beta, board, tt, null_move_in_branch, killers, history,
+				ply + 1);
 		unmake_move(board, child);
 		if (res > alpha && res < beta) {
 			// only cache exact scores
@@ -277,8 +276,8 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		}
 		if (beta <= alpha || time_to_stop()) {
 			if (!is_capture(child.m)) {
-				if (killers[ply-1][0].m != child.m) {
-					killers[ply - 1][1] = killers[ply-1][0];
+				if (killers[ply - 1][0].m != child.m) {
+					killers[ply - 1][1] = killers[ply - 1][0];
 					killers[ply - 1][0] = child;
 				}
 			}
@@ -286,7 +285,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		}
 	}
 	t.next_move = next_move;
-	tt[board.hash_key%HASH_SIZE] = t;
+	tt[board.hash_key % HASH_SIZE] = t;
 	if (white_turn) {
 		return alpha;
 	}
@@ -309,7 +308,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 	int beta = INT_MAX;
 	int START_WINDOW_SIZE = 32;
 	Move killers2[32][2];
-	int quites_history[64][64] = {};
+	int quites_history[64][64] = { };
 	Transposition * tt = new Transposition[HASH_SIZE];
 	b2.hash_key = 0;
 	for (int depth = 1; depth < 30;) {
@@ -331,9 +330,9 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 			if (b > a) { //strict?
 				if (is_castling(root_move.m)) {
 					Transposition * empty_tt = new Transposition[1000];
-					int empty_quites_history[64][64] = {};
-					int one_depth_score = alphaBeta(!white_turn, 1, INT_MIN/2, INT_MAX/2, b2, empty_tt,
-									true, killers2, empty_quites_history, 1);
+					int empty_quites_history[64][64] = { };
+					int one_depth_score = alphaBeta(!white_turn, 1, INT_MIN / 2, INT_MAX / 2, b2, empty_tt,
+					true, killers2, empty_quites_history, 1);
 					delete empty_tt;
 					if ((white_turn && one_depth_score < -5000) || (!white_turn && one_depth_score > 5000)) {
 						// we are in check and castling is illegal. The move is not copied to the next iteration.
@@ -344,7 +343,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 				node_count++;
 				make_move(b2, root_move);
 				int res = -1; // TODO clean up code
-				for (auto hit=history.begin(); hit != history.end();++hit) {
+				for (auto hit = history.begin(); hit != history.end(); ++hit) {
 					if (is_equal(b2, *hit)) {
 						// draw by repetition
 						res = 0;
@@ -363,7 +362,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 					int hash = b2.hash_key;
 					for (int p = 1; p < depth - 1; p++) {
 						hash ^= next_pv_move;
-						Transposition next = tt[hash%HASH_SIZE];
+						Transposition next = tt[hash % HASH_SIZE];
 						if (next.hash == hash && next.next_move != 0) {
 							pv[p] = next.next_move;
 							next_pv_move = next.next_move;
@@ -380,7 +379,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 					int hash = b2.hash_key;
 					for (int p = 1; p < depth - 1; p++) {
 						hash ^= next_pv_move;
-						Transposition next = tt[hash%HASH_SIZE];
+						Transposition next = tt[hash % HASH_SIZE];
 						if (next.hash == hash && next.next_move != 0) {
 							pv[p] = next.next_move;
 							next_pv_move = next.next_move;
@@ -393,17 +392,19 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 			} else {
 				// beta fail
 				// we just know that the rest of the moves are worse than the best move, or is this un-reachable code?
-				root_move.sort_score =  white_turn ? a - i : b + i; // keep sort order
+				root_move.sort_score = white_turn ? a - i : b + i; // keep sort order
 			}
 			next_iteration_root_moves.push_back(root_move);
 		}
-		int time_elapsed_last_depth_ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock.now() - start).count();
+		int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
+				> (clock.now() - start).count();
 		if (score > alpha && score < beta) {
 			std::string pvstring = pvstring_from_stack(pv, depth);
 			// uci score is from engine perspective
 			int engine_score = white_turn ? score : -score;
-			std::cout << "info score cp " << engine_score << " depth " << depth << " time " << time_elapsed_last_depth_ms << " nodes "
-					<< node_count << " pv " << pvstring << "\n" << std::flush;
+			std::cout << "info score cp " << engine_score << " depth " << depth << " time "
+					<< time_elapsed_last_depth_ms << " nodes " << node_count << " pv " << pvstring << "\n"
+					<< std::flush;
 
 			std::stringstream ss(pvstring);
 			getline(ss, best_move, ' ');

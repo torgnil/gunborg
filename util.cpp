@@ -32,7 +32,7 @@
 
 std::string pvstring_from_stack(int * pv, int size) {
 	std::string pv_string;
-	for(int i = 0; i < size; i++) {
+	for (int i = 0; i < size; i++) {
 		if (1UL << from_square(pv[i]) == 1UL << to_square(pv[i])) {
 			// garbage..
 			return pv_string;
@@ -181,7 +181,6 @@ std::string long_algebraic_notation(uint64_t square) {
 	return "";
 }
 
-
 void print_board(const Board& board) {
 	for (int i = 63; i >= 0; i--) {
 		int file = 7 - i % 8;
@@ -221,7 +220,6 @@ void print_board(const Board& board) {
 	}
 }
 
-
 void print_bit_mask(uint64_t bit_mask) {
 	for (int i = 63; i >= 0; i--) {
 		uint64_t square = 1UL << i;
@@ -246,7 +244,6 @@ std::vector<std::string> split(std::string& line) {
 	return result;
 }
 
-
 int parse_int_parameter(std::string line, std::string parameter) {
 	std::string::size_type pos = line.find(parameter);
 	if (pos != std::string::npos) {
@@ -265,9 +262,9 @@ int perft(Board& board, const int depth, const bool white_turn) {
 	}
 	int nodes = 0;
 	MoveList children = get_children(board, white_turn);
-	for(auto it : children) {
+	for (auto it : children) {
 		make_move(board, it);
-		nodes += perft(board, depth -1 , !white_turn);
+		nodes += perft(board, depth - 1, !white_turn);
 		unmake_move(board, it);
 	}
 	return nodes;

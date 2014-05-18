@@ -30,9 +30,31 @@ int test_count = 0;
 void assertEquals(const char* fail_message, uint64_t value, uint64_t expected) {
 	test_count++;
 	if (expected != value) {
-		std::cout<< "Assert failure msg: " << fail_message << " expected: "<< expected << " got: " << value << std::endl;
+		std::cout << "Assert failure msg: " << fail_message << " expected: " << expected << " got: " << value
+				<< std::endl;
 	}
 }
+
+struct Board_legacy {
+	uint64_t white_pawns = 0;
+	uint64_t white_king = 0;
+	uint64_t white_bishops = 0;
+	uint64_t white_knights = 0;
+	uint64_t white_rooks = 0;
+	uint64_t white_queen = 0;
+	uint64_t black_pawns = 0;
+	uint64_t black_king = 0;
+	uint64_t black_bishops = 0;
+	uint64_t black_knights = 0;
+	uint64_t black_rooks = 0;
+	uint64_t black_queen = 0;
+	uint64_t meta_info = C1 + G1 + C8 + G8; // castling rights
+	// move
+	uint64_t from = 0; //unnecessary with 64-bits, optimize later
+	uint64_t to = 0; //unnecessary with 64-bits, optimize later use meta_info instead
+	bool queened = false;
+	bool is_capture = false;
+};
 
 Board_legacy start_pos() {
 	Board_legacy start_pos;
@@ -54,6 +76,42 @@ Board_legacy start_pos() {
 	return start_pos;
 }
 
+Board to_board2(const Board_legacy& board) {
+	Board b2;
+	b2.b[WHITE][PAWN] = board.white_pawns;
+	b2.b[WHITE][KNIGHT] = board.white_knights;
+	b2.b[WHITE][BISHOP] = board.white_bishops;
+	b2.b[WHITE][ROOK] = board.white_rooks;
+	b2.b[WHITE][QUEEN] = board.white_queen;
+	b2.b[WHITE][KING] = board.white_king;
+	b2.b[BLACK][PAWN] = board.black_pawns;
+	b2.b[BLACK][KNIGHT] = board.black_knights;
+	b2.b[BLACK][BISHOP] = board.black_bishops;
+	b2.b[BLACK][ROOK] = board.black_rooks;
+	b2.b[BLACK][QUEEN] = board.black_queen;
+	b2.b[BLACK][KING] = board.black_king;
+	b2.meta_info_stack.push_back(board.meta_info);
+	return b2;
+}
+
+Board_legacy to_board(const Board& b2) {
+	Board_legacy b;
+	b.white_pawns = b2.b[WHITE][PAWN];
+	b.white_knights = b2.b[WHITE][KNIGHT];
+	b.white_bishops = b2.b[WHITE][BISHOP];
+	b.white_rooks = b2.b[WHITE][ROOK];
+	b.white_queen = b2.b[WHITE][QUEEN];
+	b.white_king = b2.b[WHITE][KING];
+	b.black_pawns = b2.b[BLACK][PAWN];
+	b.black_knights = b2.b[BLACK][KNIGHT];
+	b.black_bishops = b2.b[BLACK][BISHOP];
+	b.black_rooks = b2.b[BLACK][ROOK];
+	b.black_queen = b2.b[BLACK][QUEEN];
+	b.black_king = b2.b[BLACK][KING];
+	b.meta_info = b2.meta_info_stack.back();
+	return b;
+}
+
 void white_pawn_push() {
 	Board_legacy board;
 	board.meta_info = 0;
@@ -61,11 +119,11 @@ void white_pawn_push() {
 	board.white_king = A1;
 	board.black_king = H8;
 	MoveList quites = get_children(to_board2(board), true);
-	assertEquals("should be 11 moves", quites.size() , 11);
-	assertEquals("first move from A3", from_square(quites.front().m) , lsb_to_square(A3));
-	assertEquals("first move to A4", to_square(quites.front().m) , lsb_to_square(A4));
-	assertEquals("last move from H3", from_square(quites.back().m) , lsb_to_square(A1));
-	assertEquals("last move to H4", to_square(quites.back().m) , lsb_to_square(B2));
+	assertEquals("should be 11 moves", quites.size(), 11);
+	assertEquals("first move from A3", from_square(quites.front().m), lsb_to_square(A3));
+	assertEquals("first move to A4", to_square(quites.front().m), lsb_to_square(A4));
+	assertEquals("last move from H3", from_square(quites.back().m), lsb_to_square(A1));
+	assertEquals("last move to H4", to_square(quites.back().m), lsb_to_square(B2));
 }
 
 void white_pawn_two_square_push() {
@@ -75,9 +133,9 @@ void white_pawn_two_square_push() {
 	board.white_king = A1;
 	board.black_king = H8;
 	MoveList quites = get_children(to_board2(board), true);
-	assertEquals("should be 17 moves", quites.size() , 17);
-	assertEquals("first move from A2", from_square(quites.front().m) , lsb_to_square(A2));
-	assertEquals("first move to A3", to_square(quites.front().m) , lsb_to_square(A3));
+	assertEquals("should be 17 moves", quites.size(), 17);
+	assertEquals("first move from A2", from_square(quites.front().m), lsb_to_square(A2));
+	assertEquals("first move to A3", to_square(quites.front().m), lsb_to_square(A3));
 }
 
 void black_pawn_two_square_push() {
@@ -87,9 +145,9 @@ void black_pawn_two_square_push() {
 	board.white_king = A1;
 	board.black_king = H8;
 	MoveList quites = get_children(to_board2(board), false);
-	assertEquals("should be 17 moves", quites.size() , 17);
-	assertEquals("first move from A7", from_square(quites.front().m) , lsb_to_square(A7));
-	assertEquals("first move to A6", to_square(quites.front().m) , lsb_to_square(A6));
+	assertEquals("should be 17 moves", quites.size(), 17);
+	assertEquals("first move from A7", from_square(quites.front().m), lsb_to_square(A7));
+	assertEquals("first move to A6", to_square(quites.front().m), lsb_to_square(A6));
 }
 
 void black_pawn_push() {
@@ -99,9 +157,9 @@ void black_pawn_push() {
 	board.white_king = A1;
 	board.black_king = H8;
 	MoveList quites = get_children(to_board2(board), false);
-	assertEquals("b should be 11 moves", quites.size() , 11);
-	assertEquals("first move from A6", from_square(quites.front().m) , lsb_to_square(A6));
-	assertEquals("first move to A5", to_square(quites.front().m) , lsb_to_square(A5));
+	assertEquals("b should be 11 moves", quites.size(), 11);
+	assertEquals("first move from A6", from_square(quites.front().m), lsb_to_square(A6));
+	assertEquals("first move to A5", to_square(quites.front().m), lsb_to_square(A5));
 }
 
 void white_blocked_pawn_push() {
@@ -112,9 +170,9 @@ void white_blocked_pawn_push() {
 	board.white_king = A1;
 	board.black_king = H8;
 	MoveList quites = get_children(to_board2(board), true);
-	assertEquals("should be 12 moves", quites.size() , 12);
-	assertEquals("first move from A3", from_square(quites.front().m) , lsb_to_square(C3));
-	assertEquals("first move to A4", to_square(quites.front().m) , lsb_to_square(D4));
+	assertEquals("should be 12 moves", quites.size(), 12);
+	assertEquals("first move from A3", from_square(quites.front().m), lsb_to_square(C3));
+	assertEquals("first move to A4", to_square(quites.front().m), lsb_to_square(D4));
 }
 
 void pawn_captures() {
@@ -125,9 +183,8 @@ void pawn_captures() {
 	board.white_king = A1;
 	board.black_king = H8;
 	MoveList children = get_children(to_board2(board), true);
-	assertEquals("should be 5 moves", children.size() , 5);
+	assertEquals("should be 5 moves", children.size(), 5);
 }
-
 
 void make_unmake() {
 	Board_legacy board;
@@ -137,11 +194,11 @@ void make_unmake() {
 
 	Board b = to_board2(board);
 	make_move(b, move);
-	assertEquals("Pawn at A5", b.b[WHITE][PAWN] , A5);
-	assertEquals("make hash", b.hash_key , move.m);
+	assertEquals("Pawn at A5", b.b[WHITE][PAWN], A5);
+	assertEquals("make hash", b.hash_key, move.m);
 	unmake_move(b, move);
-	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN] , A4);
-	assertEquals("unmake hash", b.hash_key , 0);
+	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN], A4);
+	assertEquals("unmake hash", b.hash_key, 0);
 }
 
 void make_unmake_capture() {
@@ -154,11 +211,11 @@ void make_unmake_capture() {
 
 	Board b = to_board2(board);
 	make_move(b, move);
-	assertEquals("Pawn at B5", b.b[WHITE][PAWN] , B5);
-	assertEquals("Pawn is captured", b.b[BLACK][PAWN] , 0);
+	assertEquals("Pawn at B5", b.b[WHITE][PAWN], B5);
+	assertEquals("Pawn is captured", b.b[BLACK][PAWN], 0);
 	unmake_move(b, move);
-	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN] , A4);
-	assertEquals("Captured pawn unmaked to B5", b.b[BLACK][PAWN] , B5);
+	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN], A4);
+	assertEquals("Captured pawn unmaked to B5", b.b[BLACK][PAWN], B5);
 
 }
 
@@ -172,11 +229,11 @@ void make_unmake_king_capture() {
 
 	Board b = to_board2(board);
 	make_move(b, move);
-	assertEquals("Pawn at B5", b.b[WHITE][PAWN] , B5);
-	assertEquals("Pawn is captured", b.b[BLACK][KING] , 0);
+	assertEquals("Pawn at B5", b.b[WHITE][PAWN], B5);
+	assertEquals("Pawn is captured", b.b[BLACK][KING], 0);
 	unmake_move(b, move);
-	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN] , A4);
-	assertEquals("Captured king unmaked to B5", b.b[BLACK][KING] , B5);
+	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN], A4);
+	assertEquals("Captured king unmaked to B5", b.b[BLACK][KING], B5);
 
 }
 
@@ -187,23 +244,22 @@ void white_knight_moves() {
 	board.black_king = H8;
 	board.white_knights = D4;
 	MoveList quites = get_children(to_board2(board), true);
-	assertEquals("should be 11 knight moves", quites.size() , 11);
+	assertEquals("should be 11 knight moves", quites.size(), 11);
 
 	board.white_knights = A1;
 	quites = get_children(to_board2(board), true);
-	assertEquals("should be 5 knight moves", quites.size() , 5);
+	assertEquals("should be 5 knight moves", quites.size(), 5);
 
 	board.white_knights = D4;
 	board.white_pawns = C6 | B5;
 	quites = get_children(to_board2(board), true);
-	assertEquals("should be 6 knight + 2 pawn moves + 3 king", quites.size() , 11);
+	assertEquals("should be 6 knight + 2 pawn moves + 3 king", quites.size(), 11);
 
 	board.white_knights = D4;
 	board.white_pawns = 0;
 	board.black_pawns = C6 | B5;
 	quites = get_children(to_board2(board), true);
-	assertEquals("should be 11 knight moves", quites.size() , 11);
-
+	assertEquals("should be 11 knight moves", quites.size(), 11);
 
 }
 
@@ -211,9 +267,9 @@ void start_moves() {
 	Board_legacy board = start_pos();
 
 	MoveList children = get_children(to_board2(board), true);
-	assertEquals("should be 20 white start moves", children.size() , 20);
+	assertEquals("should be 20 white start moves", children.size(), 20);
 	children = get_children(to_board2(board), false);
-	assertEquals("should be 20 black start moves", children.size() , 20);
+	assertEquals("should be 20 black start moves", children.size(), 20);
 
 }
 
@@ -226,7 +282,7 @@ void white_castling() {
 
 	board.meta_info_stack.push_back(G1);
 	MoveList children = get_children(board, true);
-	assertEquals("should be 21 white start moves", children.size() , 21);
+	assertEquals("should be 21 white start moves", children.size(), 21);
 	Move castle_move = children.front();
 	assertEquals("from square", from_square(castle_move.m), 4);
 	assertEquals("to square", to_square(castle_move.m), 6);
@@ -243,7 +299,7 @@ void white_castling() {
 	assertEquals("castle rights are given back", board.meta_info_stack.back(), G1);
 }
 
-void white_en_passant_capture(){
+void white_en_passant_capture() {
 	Board_legacy board;
 	board.white_pawns = E5;
 	board.black_pawns = D5;
@@ -260,14 +316,13 @@ void white_en_passant_capture(){
 			assertEquals("pawn mvvlva", it.sort_score, 1000006);
 			make_move(b, it);
 			assertEquals("black pawn is captured", b.b[BLACK][PAWN], 0);
-			unmake_move(b,it);
+			unmake_move(b, it);
 			assertEquals("black pawn is back", b.b[BLACK][PAWN], D5);
 		}
 	}
 }
 
-
-void black_en_passant_capture(){
+void black_en_passant_capture() {
 	Board_legacy board;
 	board.white_pawns = E4;
 	board.black_pawns = D4;
@@ -284,7 +339,7 @@ void black_en_passant_capture(){
 			assertEquals("pawn mvvlva", it.sort_score, 1000006);
 			make_move(b, it);
 			assertEquals("white pawn is captured", b.b[WHITE][PAWN], 0);
-			unmake_move(b,it);
+			unmake_move(b, it);
 			assertEquals("white pawn is back", b.b[WHITE][PAWN], E4);
 		}
 	}
@@ -312,6 +367,4 @@ void run_tests() {
 
 	std::cout << test_count << " tests executed" << std::endl;
 }
-
-
 

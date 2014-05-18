@@ -31,8 +31,10 @@ int evaluate(const Board& board) {
 	int white_bishops = 0;
 	int black_bishops = 0;
 
-	uint64_t white_pawn_protection_squares = ((board.b[WHITE][PAWN] & ~A_FILE) << 7) | ((board.b[WHITE][PAWN] & ~H_FILE) << 9);
-	uint64_t black_pawn_protection_squares = ((board.b[BLACK][PAWN] & ~A_FILE) >> 9) | ((board.b[BLACK][PAWN] & ~H_FILE) >> 7);
+	uint64_t white_pawn_protection_squares = ((board.b[WHITE][PAWN] & ~A_FILE) << 7)
+			| ((board.b[WHITE][PAWN] & ~H_FILE) << 9);
+	uint64_t black_pawn_protection_squares = ((board.b[BLACK][PAWN] & ~A_FILE) >> 9)
+			| ((board.b[BLACK][PAWN] & ~H_FILE) >> 7);
 
 	// The idea is if a white pawn is on any of these squares then it is not a passed pawn
 	uint64_t black_pawn_blocking_squares = (board.b[BLACK][PAWN] >> 8) | black_pawn_protection_squares;
@@ -41,7 +43,7 @@ int evaluate(const Board& board) {
 	black_pawn_blocking_squares = black_pawn_blocking_squares | (black_pawn_blocking_squares >> 8);
 	black_pawn_blocking_squares = black_pawn_blocking_squares | (black_pawn_blocking_squares >> 8);
 
-	uint64_t white_pawn_blocking_squares = (board.b[WHITE][PAWN]  << 8) | white_pawn_protection_squares;
+	uint64_t white_pawn_blocking_squares = (board.b[WHITE][PAWN] << 8) | white_pawn_protection_squares;
 	white_pawn_blocking_squares = white_pawn_blocking_squares | (white_pawn_blocking_squares << 8);
 	white_pawn_blocking_squares = white_pawn_blocking_squares | (white_pawn_blocking_squares << 8);
 	white_pawn_blocking_squares = white_pawn_blocking_squares | (white_pawn_blocking_squares << 8);
@@ -58,17 +60,16 @@ int evaluate(const Board& board) {
 	uint64_t white_double_pawn_mask = north_fill(board.b[WHITE][PAWN] << 8);
 	uint64_t black_double_pawn_mask = south_fill(board.b[BLACK][PAWN] >> 8);
 
-
 	uint64_t white_pawns = board.b[WHITE][PAWN];
 	bool end_game = (board.b[WHITE][QUEEN] == 0) && (board.b[BLACK][QUEEN] == 0);
-	while(white_pawns) {
+	while (white_pawns) {
 		int i = lsb_to_square(white_pawns);
 		uint64_t square = lsb(white_pawns);
 		score += WHITE_PAWN_SQUARE_TABLE[i];
 		if ((black_pawn_blocking_squares & square) == 0) {
 			score += PASSED_PAWN_BONUS;
 		}
-		if (square & white_pawn_protection_squares)  {
+		if (square & white_pawn_protection_squares) {
 			score += PROTECTED_PAWN_BONUS;
 		}
 		if (square & white_double_pawn_mask) {
@@ -80,7 +81,7 @@ int evaluate(const Board& board) {
 		white_pawns = reset_lsb(white_pawns);
 	}
 	uint64_t white_king = board.b[WHITE][KING];
-	while(white_king) {
+	while (white_king) {
 		uint64_t square = lsb(white_king);
 		if (end_game) {
 			int i = lsb_to_square(white_king);
@@ -104,20 +105,20 @@ int evaluate(const Board& board) {
 		white_king = reset_lsb(white_king);
 	}
 	uint64_t w_bishops = board.b[WHITE][BISHOP];
-	while(w_bishops) {
+	while (w_bishops) {
 		int i = lsb_to_square(w_bishops);
 		score += BISHOP_SQUARE_TABLE[i];
 		white_bishops++;
 		w_bishops = reset_lsb(w_bishops);
 	}
 	uint64_t white_knights = board.b[WHITE][KNIGHT];
-	while(white_knights) {
-		int i  = lsb_to_square(white_knights);
+	while (white_knights) {
+		int i = lsb_to_square(white_knights);
 		score += KNIGHT_SQUARE_TABLE[i];
 		white_knights = reset_lsb(white_knights);
 	}
 	uint64_t white_rooks = board.b[WHITE][ROOK];
-	while(white_rooks) {
+	while (white_rooks) {
 		int i = lsb_to_square(white_rooks);
 		uint64_t square = lsb(white_rooks);
 		score += WHITE_ROOK_SQUARE_TABLE[i];
@@ -129,7 +130,7 @@ int evaluate(const Board& board) {
 		white_rooks = reset_lsb(white_rooks);
 	}
 	uint64_t white_queens = board.b[WHITE][QUEEN];
-	while(white_queens) {
+	while (white_queens) {
 		uint64_t square = lsb(white_queens);
 		score += 900;
 		if (open_files & square) {
@@ -141,14 +142,14 @@ int evaluate(const Board& board) {
 	}
 
 	uint64_t black_pawns = board.b[BLACK][PAWN];
-	while(black_pawns) {
+	while (black_pawns) {
 		int i = lsb_to_square(black_pawns);
 		uint64_t square = lsb(black_pawns);
 		score -= BLACK_PAWN_SQUARE_TABLE[i];
 		if ((white_pawn_blocking_squares & square) == 0) {
 			score -= PASSED_PAWN_BONUS;
 		}
-		if (square & black_pawn_protection_squares)  {
+		if (square & black_pawn_protection_squares) {
 			score -= PROTECTED_PAWN_BONUS;
 		}
 		if (square & black_double_pawn_mask) {
@@ -160,7 +161,7 @@ int evaluate(const Board& board) {
 		black_pawns = reset_lsb(black_pawns);
 	}
 	uint64_t black_king = board.b[BLACK][KING];
-	while(black_king) {
+	while (black_king) {
 		uint64_t square = lsb(black_king);
 		if (end_game) {
 			int i = lsb_to_square(black_king);
@@ -184,20 +185,20 @@ int evaluate(const Board& board) {
 		black_king = reset_lsb(black_king);
 	}
 	uint64_t b_bishops = board.b[BLACK][BISHOP];
-	while(b_bishops) {
+	while (b_bishops) {
 		int i = lsb_to_square(b_bishops);
 		score -= BISHOP_SQUARE_TABLE[i];
 		black_bishops++;
 		b_bishops = reset_lsb(b_bishops);
 	}
 	uint64_t black_knights = board.b[BLACK][KNIGHT];
-	while(black_knights) {
-		int i  = lsb_to_square(black_knights);
+	while (black_knights) {
+		int i = lsb_to_square(black_knights);
 		score -= KNIGHT_SQUARE_TABLE[i];
 		black_knights = reset_lsb(black_knights);
 	}
 	uint64_t black_rooks = board.b[BLACK][ROOK];
-	while(black_rooks) {
+	while (black_rooks) {
 		int i = lsb_to_square(black_rooks);
 		uint64_t square = lsb(black_rooks);
 		score -= BLACK_ROOK_SQUARE_TABLE[i];
@@ -209,7 +210,7 @@ int evaluate(const Board& board) {
 		black_rooks = reset_lsb(black_rooks);
 	}
 	uint64_t black_queens = board.b[BLACK][QUEEN];
-	while(black_queens) {
+	while (black_queens) {
 		uint64_t square = lsb(black_queens);
 		score -= 900;
 		if (open_files & square) {

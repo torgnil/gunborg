@@ -171,29 +171,6 @@ static const uint64_t black_queen_side_castle_squares = B8 + C8 + D8;
 static const uint64_t center_mask_1 = D4 + D5 + E4 + E5;
 static const uint64_t center_mask_2 = C3 + C4 + C5 + C6 + D3 + D6 + E3 + E6 + F3 + F4 + F5 + F6;
 
-
-struct Board_legacy {
-	uint64_t white_pawns = 0;
-	uint64_t white_king = 0;
-	uint64_t white_bishops = 0;
-	uint64_t white_knights = 0;
-	uint64_t white_rooks = 0;
-	uint64_t white_queen = 0;
-	uint64_t black_pawns = 0;
-	uint64_t black_king = 0;
-	uint64_t black_bishops = 0;
-	uint64_t black_knights = 0;
-	uint64_t black_rooks = 0;
-	uint64_t black_queen = 0;
-	uint64_t meta_info = C1 + G1 + C8 + G8; // castling rights
-	// move
-	uint64_t from = 0; //unnecessary with 64-bits, optimize later
-	uint64_t to = 0; //unnecessary with 64-bits, optimize later use meta_info instead
-	bool queened = false;
-	bool is_capture = false;
-};
-
-
 static const int WHITE = 0;
 static const int BLACK = 1;
 
@@ -221,10 +198,6 @@ static const int EMPTY = 7;
 #define is_capture(m) (((m >> 16) & 0xf) != EMPTY)
 #define color(m) ((m >> 20) & 0x1)
 #define is_castling(m) ((m >> 21) & 0x1)
-
-/* convertion from legacy*/
-Board_legacy to_board(const Board& board);
-Board to_board2(const Board_legacy& board);
 
 
 // begin code snippet from https://chessprogramming.wikispaces.com/BitScan

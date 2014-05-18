@@ -142,19 +142,11 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 	int to_row = move_str[3] - '0';
 	int to = (to_row - 1) * 8 + to_file - 1;
 
-	uint64_t black_squares = board.b[BLACK][KING] |
-			board.b[BLACK][PAWN] |
-			board.b[BLACK][KNIGHT] |
-			board.b[BLACK][BISHOP] |
-			board.b[BLACK][ROOK] |
-			board.b[BLACK][QUEEN];
+	uint64_t black_squares = board.b[BLACK][KING] | board.b[BLACK][PAWN] | board.b[BLACK][KNIGHT]
+			| board.b[BLACK][BISHOP] | board.b[BLACK][ROOK] | board.b[BLACK][QUEEN];
 
-	uint64_t white_squares = board.b[WHITE][KING] |
-			board.b[WHITE][PAWN] |
-			board.b[WHITE][KNIGHT] |
-			board.b[WHITE][BISHOP] |
-			board.b[WHITE][ROOK] |
-			board.b[WHITE][QUEEN];
+	uint64_t white_squares = board.b[WHITE][KING] | board.b[WHITE][PAWN] | board.b[WHITE][KNIGHT]
+			| board.b[WHITE][BISHOP] | board.b[WHITE][ROOK] | board.b[WHITE][QUEEN];
 
 	uint64_t occupied_squares = black_squares | white_squares;
 
@@ -162,7 +154,6 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 	uint64_t to_square = 1UL << to;
 
 	uint64_t meta_info = board.meta_info_stack.back();
-
 
 	Move move;
 	int promotion = EMPTY;
@@ -176,14 +167,13 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 	if (piece == PAWN && (to_square & meta_info & (ROW_6 | ROW_3))) {
 		en_passant_capture = true;
 	}
-	if (piece == KING && ((to_square == G1 && from_square == E1)
-						|| (to_square == C1 && from_square == E1)
-						|| (to_square == G8 && from_square == E8)
-						|| (to_square == C8 && from_square == E8)) ) {
+	if (piece == KING
+			&& ((to_square == G1 && from_square == E1) || (to_square == C1 && from_square == E1)
+					|| (to_square == G8 && from_square == E8) || (to_square == C8 && from_square == E8))) {
 		move.m = to_castle_move(from, to, color);
 	} else if ((to_square & occupied_squares) || en_passant_capture) {
 		int captured_color = color ^ 1;
-		int captured_piece = piece_at_square(board,to, captured_color);
+		int captured_piece = piece_at_square(board, to, captured_color);
 		move.m = to_capture_move(from, to, piece, captured_piece, color, promotion);
 	} else {
 		move.m = to_move(from, to, piece, color, promotion);
@@ -272,12 +262,12 @@ void uci() {
 					moves_togo = moves_togo < 10 ? 10 : moves_togo;
 				}
 				// use more time at move 1 - 20
-				int factor = 2 - min(max(10,move),20) / 20;
+				int factor = 2 - min(max(10, move), 20) / 20;
 				if (white_turn && w_time != 0) {
-					search->max_think_time_ms = factor*((w_time + (moves_togo - 1) * w_inc) / moves_togo) - 3;
+					search->max_think_time_ms = factor * ((w_time + (moves_togo - 1) * w_inc) / moves_togo) - 3;
 				}
 				if (!white_turn && b_time != 0) {
-					search->max_think_time_ms = factor*((b_time + (moves_togo - 1) * b_inc) / moves_togo) - 3;
+					search->max_think_time_ms = factor * ((b_time + (moves_togo - 1) * b_inc) / moves_togo) - 3;
 				}
 
 				cout << "info string max think time=" << search->max_think_time_ms << endl << flush;
