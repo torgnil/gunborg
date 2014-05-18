@@ -42,8 +42,13 @@ uint64_t king_moves[64];
 
 // [V][A] Most valuable victim gives the highest scores
 const int MVVLVA[7][6] = // 7th captured piece type is EN_PASSANT
-		{ { 6, 5, 4, 3, 2, 1 }, { 16, 15, 14, 13, 12, 11 }, { 26, 25, 24, 23, 22, 21 }, { 36, 35, 34, 33, 32, 31 }, {
-				46, 45, 44, 43, 42, 41 }, { 56, 55, 54, 53, 52, 51 }, { 6, 6, 6, 6, 6, 6 }, };
+		{{ 6, 5, 4, 3, 2, 1 },
+		{ 16, 15, 14, 13, 12, 11 },
+		{ 26, 25, 24, 23, 22, 21 },
+		{ 36, 35, 34, 33, 32, 31 },
+		{ 46, 45, 44, 43, 42, 41 },
+		{ 56, 55, 54, 53, 52, 51 },
+		{ 6, 6, 6, 6, 6, 6 }, };
 
 uint64_t south_fill(uint64_t l) {
 	l |= l >> 8; // OR 1 row
@@ -57,13 +62,6 @@ uint64_t north_fill(uint64_t l) {
 	l |= l << 16; // OR 2 rows
 	l |= l << 32; // OR 4 rows
 	return l;
-}
-
-/*
- * returns mask with all files filled that are occupied with at least one bit of input
- */
-uint64_t file_fill(uint64_t l) {
-	return south_fill(l) | north_fill(l);
 }
 
 /*

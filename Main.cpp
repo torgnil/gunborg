@@ -22,22 +22,15 @@
  */
 
 #include "board.h"
-#include "Cache.h"
 #include "Main.h"
 #include "moves.h"
 #include "uci.h"
 #include "util.h"
 #include "test.h"
-#include <atomic>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
-#include <limits.h>
-#include <stdlib.h>
-#include <time.h>
 #include <thread>
-#include <deque>
-#include <cmath>
 
 using namespace std;
 namespace {
@@ -52,14 +45,14 @@ int main(int argc, char* argv[]) {
 	std::cout << "Gunborg Copyright (C) 2013-2014 Torbjörn Nilsson\n"
 			<< "This program comes with ABSOLUTELY NO WARRANTY;\n"
 			<< "This is free software, and you are welcome to redistribute it\n"
-			<< "under certain conditions; See LICENSE.TXT\n";
+			<< "under certain conditions; See LICENSE\n";
 
 	if (argc == 2 && strcmp(argv[1], "perft") == 0) {
 		std::chrono::high_resolution_clock clock;
 		std::chrono::high_resolution_clock::time_point start;
 
 		string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-		Board b2 = parseFen(fen).board;
+		Board b2 = parse_fen(fen).board;
 		for (int i = 1; i <= 6; i++) {
 			start = clock.now();
 			std::cout << "perft depth(" << i << ") nodes: "

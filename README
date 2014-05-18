@@ -1,11 +1,9 @@
 ABOUT:
 
- Gunborg is a free UCI chess engine.
+ Gunborg is a free 64-bit UCI chess engine.
+
+ Compatible with at least scid and cutechess.
  
- UCI protocol description:
-
- http://www.shredderchess.com/chess-info/features/uci-universal-chess-interface.html
-
 LICENSE:
 
  This program is free software: you can redistribute it and/or modify
@@ -24,5 +22,3 @@ LICENSE:
 AUTHOR: 
 
  Torbjörn Nilsson
-
- torgnil@gmail.com

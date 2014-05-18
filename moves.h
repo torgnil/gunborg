@@ -32,7 +32,12 @@ uint64_t south_fill(uint64_t l);
 
 uint64_t north_fill(uint64_t l);
 
-uint64_t file_fill(uint64_t l);
+/*
+ * returns mask with all files filled that are occupied with at least one bit of input
+ */
+inline uint64_t file_fill(uint64_t l) {
+	return south_fill(l) | north_fill(l);
+}
 
 MoveList get_captures(const Board& board, const bool white_turn);
 

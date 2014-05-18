@@ -113,7 +113,7 @@ void pick_next_move(MoveList& moves, const int no_sorted_moves) {
 	std::swap(moves[no_sorted_moves], moves[max_index]);
 }
 
-int Search::capture_quiescence_eval_search2(bool white_turn, int alpha, int beta, Board& board) {
+int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Board& board) {
 	if (board.b[WHITE][KING] == 0) {
 		return -10000;
 	} else if (board.b[BLACK][KING] == 0) {
@@ -138,7 +138,7 @@ int Search::capture_quiescence_eval_search2(bool white_turn, int alpha, int beta
 		Move move = capture_moves[i];
 		quiescence_node_count++;
 		make_move(board, move);
-		int res = capture_quiescence_eval_search2(!white_turn, alpha, beta, board);
+		int res = capture_quiescence_eval_search(!white_turn, alpha, beta, board);
 		unmake_move(board, move);
 		if (res > alpha && white_turn) {
 			alpha = res;
@@ -166,16 +166,16 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		return 10000;
 	}
 	if (depth == 0) {
-		return capture_quiescence_eval_search2(white_turn, alpha, beta, board);
+		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 	}
 	if (depth == 1) {
 		// futility pruning. we do not hope for improving a position more than 300 in one move...
 		int static_eval = evaluate(board);
 		if (white_turn && (static_eval + 300) < alpha) {
-			return capture_quiescence_eval_search2(white_turn, alpha, beta, board);
+			return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 		}
 		if (!white_turn && (static_eval - 300) > beta) {
-			return capture_quiescence_eval_search2(white_turn, alpha, beta, board);
+			return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 		}
 	}
 	if (depth == 2) {
@@ -183,7 +183,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		// not really proven to +ELO but does not worse performance at least
 		int static_eval = evaluate(board);
 		if ((white_turn && (static_eval + 500) < alpha) || (!white_turn && (static_eval - 500) > beta)) {
-			return capture_quiescence_eval_search2(white_turn, alpha, beta, board);
+			return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 		}
 	}
 
@@ -356,7 +356,10 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 				if (res > a && white_turn) {
 					score = res;
 					a = res;
-					// TODO extract method
+					// TODO extract method get_pv
+					for (int p = 1; p < depth; p++) {
+						pv[p] = 0;
+					}
 					pv[0] = root_move.m;
 					int next_pv_move = root_move.m;
 					int hash = b2.hash_key;
@@ -374,6 +377,9 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 				if (res < b && !white_turn) {
 					score = res;
 					b = res;
+					for (int p = 1; p < depth; p++) {
+						pv[p] = 0;
+					}
 					pv[0] = root_move.m;
 					int next_pv_move = root_move.m;
 					int hash = b2.hash_key;

@@ -24,7 +24,6 @@
 #include "board.h"
 #include "util.h"
 #include "moves.h"
-#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <string>

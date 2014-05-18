@@ -34,7 +34,7 @@
 
 using namespace std;
 
-Board startPos() {
+Board start_Pos() {
 	Board start_pos;
 	start_pos.meta_info_stack.push_back(C1 + G1 + C8 + G8);
 
@@ -54,7 +54,7 @@ Board startPos() {
 	return start_pos;
 }
 
-FenInfo parseFen(string fen) {
+FenInfo parse_fen(string fen) {
 
 	Board board;
 	board.meta_info_stack.push_back(0);
@@ -184,7 +184,7 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 
 void uci() {
 	thread* search_thread = NULL;
-	Board start_board = startPos();
+	Board start_board = start_Pos();
 	bool white_turn = true;
 	int move = 1;
 	bitchess::Search* search = NULL;
@@ -202,20 +202,20 @@ void uci() {
 		}
 		if (line.find("ucinewgame") != string::npos) {
 			// new game
-			start_board = startPos();
+			start_board = start_Pos();
 		}
 		if (line.find("position") != string::npos) {
 			history.clear();
 			// parse position
 			// position [fen <fenstring> | startpos ]  moves <move1> .... <movei>
 			if (line.find("startpos") != string::npos) {
-				start_board = startPos();
+				start_board = start_Pos();
 				white_turn = true;
 			}
 			std::string::size_type pos = line.find("fen");
 			if (pos != string::npos) {
 				string fen = line.substr(pos + 4);
-				FenInfo fen_info = parseFen(fen);
+				FenInfo fen_info = parse_fen(fen);
 				start_board = fen_info.board;
 				white_turn = fen_info.white_turn;
 				move = fen_info.move;
