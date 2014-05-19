@@ -194,7 +194,7 @@ void uci() {
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
 			cout << "id name gunborg 0.41\n";
-			cout << "id author torgnil\n";
+			cout << "id author Torbjorn Nilsson\n";
 			cout << "uciok\n" << flush;
 		}
 		if (line.find("isready") != string::npos) {
@@ -286,7 +286,7 @@ void uci() {
 		if (line.find("quit") != string::npos) {
 			return;
 		}
-		if (line.find("perft2") != string::npos) {
+		if (line.find("perft") != string::npos) {
 
 		}
 	}
