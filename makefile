@@ -10,7 +10,7 @@ $(EXECUTABLE):
 	$(CC) $(CFLAGS) $(SOURCES) -o $@ $(LDFLAGS)
 
 win64:
-	x86_64-w64-mingw32-c++ $(CFLAGS) $(SOURCES) -o $(EXECUTABLE)_w64.exe -static -static-libstdc++ -lpthread
+	x86_64-w64-mingw32-g++ $(CFLAGS) $(SOURCES) -o $(EXECUTABLE)_w64.exe -static -static-libstdc++ -lpthread
 
 clean:
 	rm -f $(EXECUTABLE)
