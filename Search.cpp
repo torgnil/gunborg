@@ -211,7 +211,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 	if (moves.empty()) {
 		return 0;
 	}
-	Transposition tt_pv = tt[board.hash_key % HASH_SIZE];
+	Transposition tt_pv = tt[board.hash_key % hash_size];
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
 		if (tt_pv.next_move != 0 && tt_pv.hash == board.hash_key && tt_pv.next_move == it->m) {
@@ -285,7 +285,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		}
 	}
 	t.next_move = next_move;
-	tt[board.hash_key % HASH_SIZE] = t;
+	tt[board.hash_key % hash_size] = t;
 	if (white_turn) {
 		return alpha;
 	}
@@ -309,7 +309,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 	int START_WINDOW_SIZE = 32;
 	Move killers2[32][2];
 	int quites_history[64][64] = { };
-	Transposition * tt = new Transposition[HASH_SIZE];
+	Transposition * tt = new Transposition[hash_size];
 	b2.hash_key = 0;
 	for (int depth = 1; depth < 30;) {
 		if (!white_turn) {
@@ -362,10 +362,10 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 					}
 					pv[0] = root_move.m;
 					int next_pv_move = root_move.m;
-					int hash = b2.hash_key;
+					uint32_t hash = b2.hash_key;
 					for (int p = 1; p < depth - 1; p++) {
 						hash ^= next_pv_move;
-						Transposition next = tt[hash % HASH_SIZE];
+						Transposition next = tt[hash % hash_size];
 						if (next.hash == hash && next.next_move != 0) {
 							pv[p] = next.next_move;
 							next_pv_move = next.next_move;
@@ -382,10 +382,10 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 					}
 					pv[0] = root_move.m;
 					int next_pv_move = root_move.m;
-					int hash = b2.hash_key;
+					uint32_t hash = b2.hash_key;
 					for (int p = 1; p < depth - 1; p++) {
 						hash ^= next_pv_move;
-						Transposition next = tt[hash % HASH_SIZE];
+						Transposition next = tt[hash % hash_size];
 						if (next.hash == hash && next.next_move != 0) {
 							pv[p] = next.next_move;
 							next_pv_move = next.next_move;
@@ -453,8 +453,8 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 		}
 		depth++;
 	}
-	delete tt;
 	std::cout << "bestmove " << best_move << std::endl << std::flush;
+	delete tt;
 	return;
 }
 

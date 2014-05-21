@@ -31,7 +31,7 @@
 struct Board {
 	uint64_t b[2][6] = {}; //[WHITE|BLACK][PAWN ... KING]
 	std::vector<uint64_t> meta_info_stack;
-	int hash_key = 0;
+	uint32_t hash_key = 0;
 };
 
 // meta_info:
@@ -40,7 +40,7 @@ struct Board {
 
 // 0000 pppp 00Cc CCCC PPPP TTTT TTFF FFFF
 struct Move {
-	int m; // from: bit 0-5, to bit 6-11, piece bit 12-15, capture_piece bit 16-19, color bit 20, castle bit 21, promotion piece bit 24-27
+	uint32_t m; // from: bit 0-5, to bit 6-11, piece bit 12-15, capture_piece bit 16-19, color bit 20, castle bit 21, promotion piece bit 24-27
 	int sort_score = 0;
 };
 
@@ -129,9 +129,6 @@ static const uint64_t E8 = 1ULL << 60;
 static const uint64_t F8 = 1ULL << 61;
 static const uint64_t G8 = 1ULL << 62;
 static const uint64_t H8 = 1ULL << 63;
-
-static const bool white = 1;
-static const bool black = 0;
 
 static const uint64_t ROW_1 = A1 + B1 + C1 + D1 + E1 + F1 + G1 + H1;
 static const uint64_t ROW_2 = A2 + B2 + C2 + D2 + E2 + F2 + G2 + H2;

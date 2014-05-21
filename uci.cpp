@@ -189,12 +189,14 @@ void uci() {
 	int move = 1;
 	gunborg::Search* search = NULL;
 	list history;
+	int hash_size = 4 * HASH_MB_FACTOR;
 	while (true) {
 		string line;
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
 			cout << "id name gunborg 0.41\n";
 			cout << "id author Torbjorn Nilsson\n";
+			cout << "option name Hash type spin default 4 min 1 max 32\n";
 			cout << "uciok\n" << flush;
 		}
 		if (line.find("isready") != string::npos) {
@@ -204,6 +206,13 @@ void uci() {
 			// new game
 			start_board = start_Pos();
 		}
+		if (line.find("setoption name Hash") != string::npos) {
+			int hash_size_in_mb = parse_int_parameter(line, "value");
+			if (hash_size_in_mb >= 1 && hash_size_in_mb <= 32) {
+				hash_size = hash_size_in_mb * HASH_MB_FACTOR;
+			}
+
+		}
 		if (line.find("position") != string::npos) {
 			history.clear();
 			// parse position
@@ -212,7 +221,7 @@ void uci() {
 				start_board = start_Pos();
 				white_turn = true;
 			}
-			std::string::size_type pos = line.find("fen");
+			string::size_type pos = line.find("fen");
 			if (pos != string::npos) {
 				string fen = line.substr(pos + 4);
 				FenInfo fen_info = parse_fen(fen);
@@ -248,6 +257,7 @@ void uci() {
 			}
 			search = new gunborg::Search();
 			search->should_run = true;
+			search->hash_size = hash_size;
 			if (line.find("infinite") != string::npos) {
 				search->max_think_time_ms = INT_MAX;
 			} else {
@@ -288,6 +298,19 @@ void uci() {
 		}
 		if (line.find("perft") != string::npos) {
 
+		}
+		// license info
+		if (line.find("show w") != string::npos) {
+			std::cout << "This program is distributed in the hope that it will be useful,\n" <<
+						"but WITHOUT ANY WARRANTY; without even the implied warranty of\n" <<
+						"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n" <<
+						"GNU General Public License for more details.\n";
+		}
+		if (line.find("show c") != string::npos) {
+			std::cout << "This program is free software: you can redistribute it and/or modify\n" <<
+						"it under the terms of the GNU General Public License as published by\n" <<
+						"the Free Software Foundation, either version 3 of the License, or\n" <<
+						"(at your option) any later version.\n";
 		}
 	}
 }

@@ -26,11 +26,15 @@
 #ifndef CACHE_H_
 #define CACHE_H_
 
-const int HASH_SIZE = 524288;
 
+const int HASH_MB_FACTOR = 131072;
+
+/*
+ * size of Transposition is 8 bytes
+ */
 struct Transposition {
-	int hash = 0;
-	int next_move = 0;
+	uint32_t hash = 0;
+	uint32_t next_move = 0;
 };
 
 #endif /* CACHE_H_ */
