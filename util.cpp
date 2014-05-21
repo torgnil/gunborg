@@ -220,16 +220,16 @@ void print_board(const Board& board) {
 }
 
 void print_bit_mask(uint64_t bit_mask) {
-	for (int i = 63; i >= 0; i--) {
-		uint64_t square = 1ULL << i;
-		if (square & bit_mask) {
-			std::cout << "1";
-		} else {
-			std::cout << "0";
+	for (int i = 7; i >= 0; i--) {
+		for (int j = 0; j < 8; j++) {
+			uint64_t square = 1ULL << (i*8  + j);
+			if (square & bit_mask) {
+				std::cout << "1";
+			} else {
+				std::cout << "0";
+			}
 		}
-		if (i % 8 == 0) {
-			std::cout << "\n";
-		}
+		std::cout << "\n";
 	}
 	std::cout << "\n";
 }
@@ -260,7 +260,7 @@ int perft(Board& board, const int depth, const bool white_turn) {
 		return 1;
 	}
 	int nodes = 0;
-	MoveList children = get_children(board, white_turn);
+	MoveList children = get_moves(board, white_turn);
 	for (auto it : children) {
 		make_move(board, it);
 		nodes += perft(board, depth - 1, !white_turn);

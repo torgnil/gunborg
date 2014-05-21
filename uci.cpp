@@ -184,9 +184,10 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 
 void uci() {
 	thread* search_thread = NULL;
-	Board start_board = start_Pos();
-	bool white_turn = true;
-	int move = 1;
+	FenInfo f =  parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	Board start_board = f.board;
+	bool white_turn = f.white_turn;
+	int move = f.move;
 	gunborg::Search* search = NULL;
 	list history;
 	int hash_size = 4 * HASH_MB_FACTOR;

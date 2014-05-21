@@ -118,7 +118,7 @@ void white_pawn_push() {
 	board.white_pawns = ROW_3;
 	board.white_king = A1;
 	board.black_king = H8;
-	MoveList quites = get_children(to_board2(board), true);
+	MoveList quites = get_moves(to_board2(board), true);
 	assertEquals("should be 11 moves", quites.size(), 11);
 	assertEquals("first move from A3", from_square(quites.front().m), lsb_to_square(A3));
 	assertEquals("first move to A4", to_square(quites.front().m), lsb_to_square(A4));
@@ -132,7 +132,7 @@ void white_pawn_two_square_push() {
 	board.white_pawns = ROW_2;
 	board.white_king = A1;
 	board.black_king = H8;
-	MoveList quites = get_children(to_board2(board), true);
+	MoveList quites = get_moves(to_board2(board), true);
 	assertEquals("should be 17 moves", quites.size(), 17);
 	assertEquals("first move from A2", from_square(quites.front().m), lsb_to_square(A2));
 	assertEquals("first move to A3", to_square(quites.front().m), lsb_to_square(A3));
@@ -144,7 +144,7 @@ void black_pawn_two_square_push() {
 	board.black_pawns = ROW_7;
 	board.white_king = A1;
 	board.black_king = H8;
-	MoveList quites = get_children(to_board2(board), false);
+	MoveList quites = get_moves(to_board2(board), false);
 	assertEquals("should be 17 moves", quites.size(), 17);
 	assertEquals("first move from A7", from_square(quites.front().m), lsb_to_square(A7));
 	assertEquals("first move to A6", to_square(quites.front().m), lsb_to_square(A6));
@@ -156,7 +156,7 @@ void black_pawn_push() {
 	board.black_pawns = ROW_6;
 	board.white_king = A1;
 	board.black_king = H8;
-	MoveList quites = get_children(to_board2(board), false);
+	MoveList quites = get_moves(to_board2(board), false);
 	assertEquals("b should be 11 moves", quites.size(), 11);
 	assertEquals("first move from A6", from_square(quites.front().m), lsb_to_square(A6));
 	assertEquals("first move to A5", to_square(quites.front().m), lsb_to_square(A5));
@@ -169,7 +169,7 @@ void white_blocked_pawn_push() {
 	board.black_pawns = D4;
 	board.white_king = A1;
 	board.black_king = H8;
-	MoveList quites = get_children(to_board2(board), true);
+	MoveList quites = get_moves(to_board2(board), true);
 	assertEquals("should be 12 moves", quites.size(), 12);
 	assertEquals("first move from A3", from_square(quites.front().m), lsb_to_square(C3));
 	assertEquals("first move to A4", to_square(quites.front().m), lsb_to_square(D4));
@@ -182,7 +182,7 @@ void pawn_captures() {
 	board.black_pawns = E6;
 	board.white_king = A1;
 	board.black_king = H8;
-	MoveList children = get_children(to_board2(board), true);
+	MoveList children = get_moves(to_board2(board), true);
 	assertEquals("should be 5 moves", children.size(), 5);
 }
 
@@ -243,22 +243,22 @@ void white_knight_moves() {
 	board.white_king = A1;
 	board.black_king = H8;
 	board.white_knights = D4;
-	MoveList quites = get_children(to_board2(board), true);
+	MoveList quites = get_moves(to_board2(board), true);
 	assertEquals("should be 11 knight moves", quites.size(), 11);
 
 	board.white_knights = A1;
-	quites = get_children(to_board2(board), true);
+	quites = get_moves(to_board2(board), true);
 	assertEquals("should be 5 knight moves", quites.size(), 5);
 
 	board.white_knights = D4;
 	board.white_pawns = C6 | B5;
-	quites = get_children(to_board2(board), true);
+	quites = get_moves(to_board2(board), true);
 	assertEquals("should be 6 knight + 2 pawn moves + 3 king", quites.size(), 11);
 
 	board.white_knights = D4;
 	board.white_pawns = 0;
 	board.black_pawns = C6 | B5;
-	quites = get_children(to_board2(board), true);
+	quites = get_moves(to_board2(board), true);
 	assertEquals("should be 11 knight moves", quites.size(), 11);
 
 }
@@ -266,9 +266,9 @@ void white_knight_moves() {
 void start_moves() {
 	Board_legacy board = start_pos();
 
-	MoveList children = get_children(to_board2(board), true);
+	MoveList children = get_moves(to_board2(board), true);
 	assertEquals("should be 20 white start moves", children.size(), 20);
-	children = get_children(to_board2(board), false);
+	children = get_moves(to_board2(board), false);
 	assertEquals("should be 20 black start moves", children.size(), 20);
 
 }
@@ -281,7 +281,7 @@ void white_castling() {
 	board.b[WHITE][ROOK] = H1;
 
 	board.meta_info_stack.push_back(G1);
-	MoveList children = get_children(board, true);
+	MoveList children = get_moves(board, true);
 	assertEquals("should be 21 white start moves", children.size(), 21);
 	Move castle_move = children.front();
 	assertEquals("from square", from_square(castle_move.m), 4);
@@ -308,7 +308,7 @@ void white_en_passant_capture() {
 	board.black_king = H8;
 
 	Board b = to_board2(board);
-	MoveList children = get_children(b, true);
+	MoveList children = get_moves(b, true);
 	assertEquals("Expect five moves", children.size(), 5);
 	for (auto it : children) {
 		if (is_capture(it.m)) {
@@ -331,7 +331,7 @@ void black_en_passant_capture() {
 	board.black_king = H8;
 
 	Board b = to_board2(board);
-	MoveList children = get_children(b, false);
+	MoveList children = get_moves(b, false);
 	assertEquals("Expect five moves", children.size(), 5);
 	for (auto it : children) {
 		if (is_capture(it.m)) {

@@ -196,6 +196,9 @@ static const int EMPTY = 7;
 #define color(m) ((m >> 20) & 0x1)
 #define is_castling(m) ((m >> 21) & 0x1)
 
+// least significant bit operations
+#define reset_lsb(b) (b & (b-1))
+#define lsb(b) (b & ~(b-1))
 
 // begin code snippet from https://chessprogramming.wikispaces.com/BitScan
 
@@ -243,18 +246,31 @@ inline int bitScanReverse(uint64_t bb) {
 
 // end code snippet
 
+/*
+ * count bits one by one
+ */
+inline int pop_count_sw(uint64_t b) {
+	int result = 0;
+	while(b) {
+		result++;
+		b = reset_lsb(b);
+	}
+	return result;
+}
+
 #ifdef __GNUC__
 	#define lsb_to_square(b) __builtin_ctzll(b)
 	#define msb_to_square(b) (63 - __builtin_clzll(b))
+	#define pop_count(b) (__builtin_popcountl(b))
 #else
 	#define lsb_to_square(b) bitScanForward(b)
 	#define msb_to_square(b) bitScanReverse(b)
+	#define pop_count(b) pop_count_sw(b)
 #endif
 // TODO Macro for _MSC_VER intrinsics
 
 
-#define reset_lsb(b) (b & (b-1))
-#define lsb(b) (b & ~(b-1))
+
 
 typedef std::deque<Board> list;
 typedef std::deque<Move> MoveList;

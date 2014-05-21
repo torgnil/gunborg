@@ -157,7 +157,7 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 }
 
 int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
-		bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int ply) {
+bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int ply) {
 
 	// If, mate we do not need search at greater depths
 	if (board.b[WHITE][KING] == 0) {
@@ -187,7 +187,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		}
 	}
 
-	// null move heuristic - we do this despite in check..
+	// null move heuristic
 	if (!null_move_in_branch && depth > 3) {
 		// skip a turn and see if and see if we get a cut-off at shallower depth
 		// it assumes:
@@ -207,7 +207,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 			return beta;
 		}
 	}
-	MoveList moves = get_children(board, white_turn);
+	MoveList moves = get_moves(board, white_turn);
 	if (moves.empty()) {
 		return 0;
 	}
@@ -238,7 +238,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 	int next_move = 0;
 	for (unsigned int i = 0; i < moves.size(); ++i) {
 		// late move reduction.
-		// we assume sort order is good enough to not search later moves as deep as the first 4
+		// we assume sort order is good enough to not search later moves as deep as the first 9
 		if (depth > 5 && i == 10) {
 			depth -= 2;
 		}
@@ -296,7 +296,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 	start = clock.now();
 
 	Board b2 = board;
-	MoveList root_moves = get_children(b2, white_turn);
+	MoveList root_moves = get_moves(b2, white_turn);
 
 	for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
 		make_move(b2, *it);
@@ -311,6 +311,8 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 	int quites_history[64][64] = { };
 	Transposition * tt = new Transposition[hash_size];
 	b2.hash_key = 0;
+
+	bool in_check = get_attacked_squares(b2, !white_turn) & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
 	for (int depth = 1; depth < 30;) {
 		if (!white_turn) {
 			for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
@@ -327,21 +329,19 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 			// TODO only search best move with alpha, alpha + 1, if fail high/low there is another better move and we have to search all moves
 			pick_next_move(root_moves, i);
 			Move root_move = root_moves[i];
+			if (is_castling(root_move.m) && in_check) {
+				continue;
+			}
 			if (b > a) { //strict?
-				if (is_castling(root_move.m)) {
-					Transposition * empty_tt = new Transposition[1000];
-					int empty_quites_history[64][64] = { };
-					int one_depth_score = alphaBeta(!white_turn, 1, INT_MIN / 2, INT_MAX / 2, b2, empty_tt,
-					true, killers2, empty_quites_history, 1);
-					delete empty_tt;
-					if ((white_turn && one_depth_score < -5000) || (!white_turn && one_depth_score > 5000)) {
-						// we are in check and castling is illegal. The move is not copied to the next iteration.
-						root_move.sort_score = one_depth_score;
-						continue;
-					}
-				}
 				node_count++;
 				make_move(b2, root_move);
+				// check if legal move
+				bool illegal_move = get_attacked_squares(b2, !white_turn)
+						& (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
+				if (illegal_move) {
+					unmake_move(b2, root_move);
+					continue;
+				}
 				int res = -1; // TODO clean up code
 				for (auto hit = history.begin(); hit != history.end(); ++hit) {
 					if (is_equal(b2, *hit)) {
@@ -350,7 +350,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 					}
 				}
 				if (res == -1) {
-					res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, false, killers2, quites_history, 1);
+					res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, in_check, killers2, quites_history, 1);
 				}
 				unmake_move(b2, root_move);
 				if (res > a && white_turn) {

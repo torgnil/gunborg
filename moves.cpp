@@ -42,13 +42,8 @@ uint64_t king_moves[64];
 
 // [V][A] Most valuable victim gives the highest scores
 const int MVVLVA[7][6] = // 7th captured piece type is EN_PASSANT
-		{{ 6, 5, 4, 3, 2, 1 },
-		{ 16, 15, 14, 13, 12, 11 },
-		{ 26, 25, 24, 23, 22, 21 },
-		{ 36, 35, 34, 33, 32, 31 },
-		{ 46, 45, 44, 43, 42, 41 },
-		{ 56, 55, 54, 53, 52, 51 },
-		{ 6, 6, 6, 6, 6, 6 }, };
+		{ { 6, 5, 4, 3, 2, 1 }, { 16, 15, 14, 13, 12, 11 }, { 26, 25, 24, 23, 22, 21 }, { 36, 35, 34, 33, 32, 31 }, {
+				46, 45, 44, 43, 42, 41 }, { 56, 55, 54, 53, 52, 51 }, { 6, 6, 6, 6, 6, 6 }, };
 
 uint64_t south_fill(uint64_t l) {
 	l |= l >> 8; // OR 1 row
@@ -187,6 +182,121 @@ inline uint64_t get_negative_ray_moves(const int& dir, const int& from, const ui
 	uint64_t attacked_squares = ray_moves[dir][from];
 	uint64_t blocker = attacked_squares & occupied_squares;
 	attacked_squares ^= ray_moves[dir][msb_to_square(blocker | A1)];
+	return attacked_squares;
+}
+
+uint64_t get_attacked_squares(const Board& board, const bool white_turn) {
+	uint64_t attacked_squares = 0;
+	uint64_t black_squares = board.b[BLACK][KING] | board.b[BLACK][PAWN] | board.b[BLACK][KNIGHT]
+			| board.b[BLACK][BISHOP] | board.b[BLACK][ROOK] | board.b[BLACK][QUEEN];
+
+	uint64_t white_squares = board.b[WHITE][KING] | board.b[WHITE][PAWN] | board.b[WHITE][KNIGHT]
+			| board.b[WHITE][BISHOP] | board.b[WHITE][ROOK] | board.b[WHITE][QUEEN];
+
+	uint64_t occupied_squares = black_squares | white_squares;
+	uint64_t meta_info = board.meta_info_stack.back();
+	if (white_turn) {
+		// white pawn captures
+		attacked_squares |= ((board.b[WHITE][PAWN] & ~NW_BORDER) << 7) & (black_squares | (meta_info & ROW_6));
+		attacked_squares |= ((board.b[WHITE][PAWN] & ~NE_BORDER) << 9) & (black_squares | (meta_info & ROW_6));
+
+		// white knight moves
+		uint64_t knights = board.b[WHITE][KNIGHT];
+		while (knights) {
+			int from = lsb_to_square(knights);
+			attacked_squares |= knight_moves[from] & ~white_squares;
+			knights = reset_lsb(knights);
+		}
+		// white bishop moves
+		uint64_t bishops = board.b[WHITE][BISHOP];
+		while (bishops) {
+			int from = lsb_to_square(bishops);
+			attacked_squares |= (get_positive_ray_moves(NW, from, occupied_squares)
+					| get_positive_ray_moves(NE, from, occupied_squares)
+					| get_negative_ray_moves(SW, from, occupied_squares)
+					| get_negative_ray_moves(SE, from, occupied_squares)) & ~white_squares;
+			bishops = reset_lsb(bishops);
+		}
+		// white rook moves
+		uint64_t rooks = board.b[WHITE][ROOK];
+		while (rooks) {
+			int from = lsb_to_square(rooks);
+			attacked_squares |= (get_positive_ray_moves(N, from, occupied_squares)
+					| get_positive_ray_moves(E, from, occupied_squares)
+					| get_negative_ray_moves(W, from, occupied_squares)
+					| get_negative_ray_moves(S, from, occupied_squares)) & ~white_squares;
+			rooks = reset_lsb(rooks);
+		}
+		// white queen moves
+		uint64_t queens = board.b[WHITE][QUEEN];
+		while (queens) {
+			int from = lsb_to_square(queens);
+			attacked_squares |= (get_positive_ray_moves(N, from, occupied_squares)
+					| get_positive_ray_moves(E, from, occupied_squares)
+					| get_positive_ray_moves(NW, from, occupied_squares)
+					| get_positive_ray_moves(NE, from, occupied_squares)
+					| get_negative_ray_moves(W, from, occupied_squares)
+					| get_negative_ray_moves(S, from, occupied_squares)
+					| get_negative_ray_moves(SW, from, occupied_squares)
+					| get_negative_ray_moves(SE, from, occupied_squares)) & ~white_squares;
+			queens = reset_lsb(queens);
+		}
+		// white king moves
+		uint64_t king = board.b[WHITE][KING];
+		int from = lsb_to_square(king);
+		attacked_squares |= king_moves[from] & ~white_squares;
+	} else {
+		// black pawn captures
+		attacked_squares |= ((board.b[BLACK][PAWN] & ~SW_BORDER) >> 9) & (white_squares | (meta_info & ROW_3));
+		attacked_squares |= ((board.b[BLACK][PAWN] & ~SE_BORDER) >> 7) & (white_squares | (meta_info & ROW_3));
+
+		// black knight moves
+		uint64_t knights = board.b[BLACK][KNIGHT];
+		while (knights) {
+			int from = lsb_to_square(knights);
+			attacked_squares |= knight_moves[from] & ~black_squares;
+			knights = reset_lsb(knights);
+		}
+		// black bishop moves
+		uint64_t bishops = board.b[BLACK][BISHOP];
+		while (bishops) {
+			int from = lsb_to_square(bishops);
+			attacked_squares |= (get_positive_ray_moves(NW, from, occupied_squares)
+					| get_positive_ray_moves(NE, from, occupied_squares)
+					| get_negative_ray_moves(SW, from, occupied_squares)
+					| get_negative_ray_moves(SE, from, occupied_squares)) & ~black_squares;
+			bishops = reset_lsb(bishops);
+		}
+		// black rook moves
+		uint64_t rooks = board.b[BLACK][ROOK];
+		while (rooks) {
+			int from = lsb_to_square(rooks);
+			attacked_squares |= (get_positive_ray_moves(N, from, occupied_squares)
+					| get_positive_ray_moves(E, from, occupied_squares)
+					| get_negative_ray_moves(S, from, occupied_squares)
+					| get_negative_ray_moves(W, from, occupied_squares)) & ~black_squares;
+			rooks = reset_lsb(rooks);
+		}
+		// black queen moves
+		uint64_t queens = board.b[BLACK][QUEEN];
+		while (queens) {
+			int from = lsb_to_square(queens);
+			attacked_squares |= (get_positive_ray_moves(N, from, occupied_squares)
+					| get_positive_ray_moves(E, from, occupied_squares)
+					| get_positive_ray_moves(NE, from, occupied_squares)
+					| get_positive_ray_moves(NW, from, occupied_squares)
+					| get_negative_ray_moves(S, from, occupied_squares)
+					| get_negative_ray_moves(W, from, occupied_squares)
+					| get_negative_ray_moves(SW, from, occupied_squares)
+					| get_negative_ray_moves(SE, from, occupied_squares)) & ~black_squares;
+			queens = reset_lsb(queens);
+		}
+		// black king moves
+		uint64_t king = board.b[BLACK][KING];
+		int from = lsb_to_square(king);
+		attacked_squares |= king_moves[from] & ~black_squares;
+	}
+
 	return attacked_squares;
 }
 
@@ -393,7 +503,7 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 	return children;
 }
 
-MoveList get_children(const Board& board, const bool white_turn) {
+MoveList get_moves(const Board& board, const bool white_turn) {
 	MoveList children;
 	if ((board.b[WHITE][KING] == 0) || (board.b[BLACK][KING]) == 0) {
 		return children;

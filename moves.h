@@ -41,7 +41,9 @@ inline uint64_t file_fill(uint64_t l) {
 
 MoveList get_captures(const Board& board, const bool white_turn);
 
-MoveList get_children(const Board& board, const bool white_turn);
+MoveList get_moves(const Board& board, const bool white_turn);
+
+uint64_t get_attacked_squares(const Board& board, const bool white_turn);
 
 void make_move(Board& board, Move move);
 

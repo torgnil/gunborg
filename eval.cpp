@@ -62,6 +62,7 @@ int evaluate(const Board& board) {
 
 	uint64_t white_pawns = board.b[WHITE][PAWN];
 	bool end_game = (board.b[WHITE][QUEEN] == 0) && (board.b[BLACK][QUEEN] == 0);
+
 	while (white_pawns) {
 		int i = lsb_to_square(white_pawns);
 		uint64_t square = lsb(white_pawns);
@@ -227,17 +228,5 @@ int evaluate(const Board& board) {
 	if (black_bishops == 2) {
 		score -= 50;
 	}
-//	if (board.meta_info & C1) {
-//		score += 100;
-//	}
-//	if (board.meta_info & G1) {
-//		score += 100;
-//	}
-//	if (board.meta_info & C8) {
-//		score -= 100;
-//	}
-//	if (board.meta_info & G8) {
-//		score -= 100;
-//	}
 	return score;
 }
