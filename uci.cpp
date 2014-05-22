@@ -272,8 +272,6 @@ void uci() {
 				if (!white_turn && b_time != 0) {
 					search->max_think_time_ms = factor * ((b_time + (moves_togo - 1) * b_inc) / moves_togo) - 3;
 				}
-
-				cout << "info string max think time=" << search->max_think_time_ms << endl << flush;
 			}
 
 			search_thread = new thread(&gunborg::Search::search_best_move, search, start_board, white_turn, history);
