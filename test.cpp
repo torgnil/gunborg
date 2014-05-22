@@ -117,13 +117,12 @@ void make_unmake() {
 	Move move;
 	move.m = to_move(lsb_to_square(A4), lsb_to_square(A5), WHITE, PAWN, EMPTY);
 
-	Board b = board;
-	make_move(b, move);
-	assertEquals("Pawn at A5", b.b[WHITE][PAWN], A5);
-	assertEquals("make hash", b.hash_key, move.m);
-	unmake_move(b, move);
-	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN], A4);
-	assertEquals("unmake hash", b.hash_key, 0);
+	make_move(board, move);
+	assertEquals("Pawn at A5", board.b[WHITE][PAWN], A5);
+	assertEquals("make hash", board.hash_key, move.m);
+	unmake_move(board, move);
+	assertEquals("Pawn unmaked to A4", board.b[WHITE][PAWN], A4);
+	assertEquals("unmake hash", board.hash_key, 0);
 }
 
 void make_unmake_capture() {
@@ -135,13 +134,12 @@ void make_unmake_capture() {
 	Move move;
 	move.m = to_capture_move(lsb_to_square(A4), lsb_to_square(B5), PAWN, PAWN, WHITE, EMPTY);
 
-	Board b = board;
-	make_move(b, move);
-	assertEquals("Pawn at B5", b.b[WHITE][PAWN], B5);
-	assertEquals("Pawn is captured", b.b[BLACK][PAWN], 0);
-	unmake_move(b, move);
-	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN], A4);
-	assertEquals("Captured pawn unmaked to B5", b.b[BLACK][PAWN], B5);
+	make_move(board, move);
+	assertEquals("Pawn at B5", board.b[WHITE][PAWN], B5);
+	assertEquals("Pawn is captured", board.b[BLACK][PAWN], 0);
+	unmake_move(board, move);
+	assertEquals("Pawn unmaked to A4", board.b[WHITE][PAWN], A4);
+	assertEquals("Captured pawn unmaked to B5", board.b[BLACK][PAWN], B5);
 
 }
 
@@ -154,13 +152,12 @@ void make_unmake_king_capture() {
 	Move move;
 	move.m = to_capture_move(lsb_to_square(A4), lsb_to_square(B5), PAWN, KING, WHITE, EMPTY);
 
-	Board b = board;
-	make_move(b, move);
-	assertEquals("Pawn at B5", b.b[WHITE][PAWN], B5);
-	assertEquals("Pawn is captured", b.b[BLACK][KING], 0);
-	unmake_move(b, move);
-	assertEquals("Pawn unmaked to A4", b.b[WHITE][PAWN], A4);
-	assertEquals("Captured king unmaked to B5", b.b[BLACK][KING], B5);
+	make_move(board, move);
+	assertEquals("Pawn at B5", board.b[WHITE][PAWN], B5);
+	assertEquals("Pawn is captured", board.b[BLACK][KING], 0);
+	unmake_move(board, move);
+	assertEquals("Pawn unmaked to A4", board.b[WHITE][PAWN], A4);
+	assertEquals("Captured king unmaked to B5", board.b[BLACK][KING], B5);
 
 }
 
@@ -234,17 +231,16 @@ void white_en_passant_capture() {
 	board.b[WHITE][KING] = A1;
 	board.b[BLACK][KING] = H8;
 
-	Board b = board;
-	MoveList children = get_moves(b, true);
+	MoveList children = get_moves(board, true);
 	assertEquals("Expect five moves", children.size(), 5);
 	for (auto it : children) {
 		if (is_capture(it.m)) {
 			assertEquals("capture on e.p square", to_square(it.m), 43);
 			assertEquals("pawn mvvlva", it.sort_score, 1000006);
-			make_move(b, it);
-			assertEquals("black pawn is captured", b.b[BLACK][PAWN], 0);
-			unmake_move(b, it);
-			assertEquals("black pawn is back", b.b[BLACK][PAWN], D5);
+			make_move(board, it);
+			assertEquals("black pawn is captured", board.b[BLACK][PAWN], 0);
+			unmake_move(board, it);
+			assertEquals("black pawn is back", board.b[BLACK][PAWN], D5);
 		}
 	}
 }
@@ -257,17 +253,16 @@ void black_en_passant_capture() {
 	board.b[WHITE][KING] = A1;
 	board.b[BLACK][KING] = H8;
 
-	Board b = board;
-	MoveList children = get_moves(b, false);
+	MoveList children = get_moves(board, false);
 	assertEquals("Expect five moves", children.size(), 5);
 	for (auto it : children) {
 		if (is_capture(it.m)) {
 			assertEquals("capture on e.p square", to_square(it.m), 20);
 			assertEquals("pawn mvvlva", it.sort_score, 1000006);
-			make_move(b, it);
-			assertEquals("white pawn is captured", b.b[WHITE][PAWN], 0);
-			unmake_move(b, it);
-			assertEquals("white pawn is back", b.b[WHITE][PAWN], E4);
+			make_move(board, it);
+			assertEquals("white pawn is captured", board.b[WHITE][PAWN], 0);
+			unmake_move(board, it);
+			assertEquals("white pawn is back", board.b[WHITE][PAWN], E4);
 		}
 	}
 }
