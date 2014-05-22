@@ -31,7 +31,7 @@ struct FenInfo {
 };
 
 void uci();
-Board start_Pos();
+FenInfo start_pos();
 FenInfo parse_fen(std::string fen);
 
 #endif /* UCI_H_ */

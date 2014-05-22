@@ -34,24 +34,9 @@
 
 using namespace std;
 
-Board start_Pos() {
-	Board start_pos;
-	start_pos.meta_info_stack.push_back(C1 + G1 + C8 + G8);
 
-	start_pos.b[WHITE][PAWN] = ROW_2;
-	start_pos.b[WHITE][KING] = E1;
-	start_pos.b[WHITE][KNIGHT] = B1 + G1;
-	start_pos.b[WHITE][BISHOP] = C1 + F1;
-	start_pos.b[WHITE][ROOK] = A1 + H1;
-	start_pos.b[WHITE][QUEEN] = D1;
-	start_pos.b[BLACK][PAWN] = ROW_7;
-	start_pos.b[BLACK][KING] = E8;
-	start_pos.b[BLACK][KNIGHT] = B8 + G8;
-	start_pos.b[BLACK][BISHOP] = C8 + F8;
-	start_pos.b[BLACK][ROOK] = A8 + H8;
-	start_pos.b[BLACK][QUEEN] = D8;
-
-	return start_pos;
+FenInfo start_pos() {
+	return parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
 FenInfo parse_fen(string fen) {
@@ -184,10 +169,12 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 
 void uci() {
 	thread* search_thread = NULL;
-	FenInfo f =  parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-	Board start_board = f.board;
-	bool white_turn = f.white_turn;
-	int move = f.move;
+
+	FenInfo fen_info =  start_pos();
+	Board start_board = fen_info.board;
+	bool white_turn = fen_info.white_turn;
+	int move = fen_info.move;
+
 	gunborg::Search* search = NULL;
 	list history;
 	int hash_size = 4 * HASH_MB_FACTOR;
@@ -205,7 +192,10 @@ void uci() {
 		}
 		if (line.find("ucinewgame") != string::npos) {
 			// new game
-			start_board = start_Pos();
+			FenInfo fen_info = start_pos();
+			start_board = fen_info.board;
+			white_turn = fen_info.white_turn;
+			move = fen_info.move;
 		}
 		if (line.find("setoption name Hash") != string::npos) {
 			int hash_size_in_mb = parse_int_parameter(line, "value");
@@ -219,8 +209,10 @@ void uci() {
 			// parse position
 			// position [fen <fenstring> | startpos ]  moves <move1> .... <movei>
 			if (line.find("startpos") != string::npos) {
-				start_board = start_Pos();
-				white_turn = true;
+				FenInfo fen_info = start_pos();
+				start_board = fen_info.board;
+				white_turn = fen_info.white_turn;
+				move = fen_info.move;
 			}
 			string::size_type pos = line.find("fen");
 			if (pos != string::npos) {
