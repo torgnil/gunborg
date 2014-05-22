@@ -59,12 +59,6 @@ uint64_t north_fill(uint64_t l) {
 	return l;
 }
 
-/*
- * castling is poorly implemented (perft(6) from 4 to 4.5 seconds).
- *
- * meta-info-stack:100-200 ms extra for perft(6)
- */
-
 void make_move(Board& board, Move move) {
 	board.b[color(move.m)][piece(move.m)] &= ~(1ULL << from_square(move.m));
 	board.b[color(move.m)][piece(move.m)] |= (1ULL << to_square(move.m));
