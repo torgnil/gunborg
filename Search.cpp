@@ -251,14 +251,14 @@ bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int pl
 
 		make_move(board, child);
 
-		int res = alphaBeta(!white_turn, depth - 1 - depth_reduction, alpha, beta, board, tt, null_move_in_branch, killers, history,
-				ply + 1);
+		int res = alphaBeta(!white_turn, depth - 1 - depth_reduction, alpha, beta, board, tt, null_move_in_branch,
+				killers, history, ply + 1);
 
 		if (depth_reduction != 0 && res > alpha && res < beta) {
 			// score improved "unexpected" at reduced depth
 			// re-search at normal depth
 			res = alphaBeta(!white_turn, depth - 1, alpha, beta, board, tt, null_move_in_branch, killers, history,
-							ply + 1);
+					ply + 1);
 		}
 
 		unmake_move(board, child);
@@ -333,7 +333,6 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 		MoveList next_iteration_root_moves;
 		int pv[depth];
 		for (unsigned int i = 0; i < root_moves.size(); i++) {
-			// TODO only search best move with alpha, alpha + 1, if fail high/low there is another better move and we have to search all moves
 			pick_next_move(root_moves, i);
 			Move root_move = root_moves[i];
 			if (is_castling(root_move.m) && in_check) {
@@ -357,7 +356,30 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 					}
 				}
 				if (res == -1) {
-					res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, in_check, killers2, quites_history, 1);
+					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
+					if (i > 0 && depth > 1) {
+						if (white_turn) {
+							int high = a + 1;
+							res = alphaBeta(!white_turn, depth - 1, a, high, b2, tt, in_check, killers2, quites_history, 1);
+							if (res == high) {
+								res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, in_check, killers2,
+										quites_history, 1);
+							} else {
+								res = a - i; // keep sort order
+							}
+						} else {
+							int low = b - 1;
+							res = alphaBeta(!white_turn, depth - 1, low, b, b2, tt, in_check, killers2, quites_history,	1);
+							if (res == low) {
+								res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, in_check, killers2,
+										quites_history, 1);
+							} else {
+								res = b + i; // keep sort order
+							}
+						}
+					} else {
+						res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, in_check, killers2, quites_history, 1);
+					}
 				}
 				unmake_move(b2, root_move);
 				if (res > a && white_turn) {
