@@ -267,6 +267,24 @@ void black_en_passant_capture() {
 	}
 }
 
+void legal_moves_when_in_check() {
+	FenInfo fen_info = parse_fen("6k1/pp3pp1/4p2p/8/3P3P/3R2P1/q1K5/4R3 w - - 2 37");
+	Board board = fen_info.board;
+	MoveList children = get_moves(board, fen_info.white_turn);
+
+	bool in_check = get_attacked_squares(board, !fen_info.white_turn);
+	assertEquals("in check", in_check, true);
+	int legal_moves = 0;
+	for (auto it  = children.begin(); it != children.end(); ++it) {
+		make_move(board, *it);
+		if (!(get_attacked_squares(board, !fen_info.white_turn) & board.b[WHITE][KING])) {
+			legal_moves++;
+		}
+		unmake_move(board, *it);
+	}
+	assertEquals("three legal moves", legal_moves, 3);
+}
+
 void run_tests() {
 	init();
 
@@ -286,6 +304,8 @@ void run_tests() {
 
 	white_en_passant_capture();
 	black_en_passant_capture();
+
+	legal_moves_when_in_check();
 
 	std::cout << test_count << " tests executed" << std::endl;
 }
