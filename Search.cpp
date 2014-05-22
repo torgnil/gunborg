@@ -237,24 +237,31 @@ bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int pl
 	t.hash = board.hash_key;
 	int next_move = 0;
 	for (unsigned int i = 0; i < moves.size(); ++i) {
-		// late move reduction.
-		// we assume sort order is good enough to not search later moves as deep as the first 9
-		if (depth > 5 && i == 10) {
-			depth -= 2;
-		}
 
 		pick_next_move(moves, i);
 		Move child = moves[i];
 		node_count++;
+
+		// late move reduction.
+		// we assume sort order is good enough to not search later moves as deep as the first 5
+		int depth_reduction = 0;
+		if (depth > 4 && i > 5 && !is_capture(child.m)) {
+			depth_reduction = 2;
+		}
+
 		make_move(board, child);
 
-		int res = alphaBeta(!white_turn, depth - 1, alpha, beta, board, tt, null_move_in_branch, killers, history,
+		int res = alphaBeta(!white_turn, depth - 1 - depth_reduction, alpha, beta, board, tt, null_move_in_branch, killers, history,
 				ply + 1);
-		unmake_move(board, child);
-		if (res > alpha && res < beta) {
-			// only cache exact scores
 
+		if (depth_reduction != 0 && res > alpha && res < beta) {
+			// score improved "unexpected" at reduced depth
+			// re-search at normal depth
+			res = alphaBeta(!white_turn, depth - 1, alpha, beta, board, tt, null_move_in_branch, killers, history,
+							ply + 1);
 		}
+
+		unmake_move(board, child);
 
 		if (res > alpha && white_turn) {
 			next_move = child.m;
@@ -306,7 +313,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 
 	int alpha = INT_MIN;
 	int beta = INT_MAX;
-	int START_WINDOW_SIZE = 32;
+	int START_WINDOW_SIZE = 25;
 	Move killers2[32][2];
 	int quites_history[64][64] = { };
 	Transposition * tt = new Transposition[hash_size];
