@@ -263,7 +263,10 @@ int perft(Board& board, const int depth, const bool white_turn) {
 	MoveList children = get_moves(board, white_turn);
 	for (auto it : children) {
 		make_move(board, it);
-		nodes += perft(board, depth - 1, !white_turn);
+		bool in_check = get_attacked_squares(board, !white_turn) & (white_turn ? board.b[WHITE][KING] : board.b[BLACK][KING]);
+		if (!in_check) {
+			nodes += perft(board, depth - 1, !white_turn);
+		}
 		unmake_move(board, it);
 	}
 	return nodes;
