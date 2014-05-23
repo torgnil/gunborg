@@ -28,8 +28,6 @@
 // score in centipawns
 int evaluate(const Board& board) {
 	int score = 0;
-	int white_bishops = 0;
-	int black_bishops = 0;
 
 	uint64_t white_pawn_protection_squares = ((board.b[WHITE][PAWN] & ~A_FILE) << 7)
 			| ((board.b[WHITE][PAWN] & ~H_FILE) << 9);
@@ -60,27 +58,26 @@ int evaluate(const Board& board) {
 	uint64_t white_double_pawn_mask = north_fill(board.b[WHITE][PAWN] << 8);
 	uint64_t black_double_pawn_mask = south_fill(board.b[BLACK][PAWN] >> 8);
 
-	uint64_t white_pawns = board.b[WHITE][PAWN];
 	bool end_game = (board.b[WHITE][QUEEN] == 0) && (board.b[BLACK][QUEEN] == 0);
+
+	uint64_t white_pawns = board.b[WHITE][PAWN];
+
+	uint64_t white_passed_pawns = ~black_pawn_blocking_squares & white_pawns;
+	score += pop_count(white_passed_pawns) * PASSED_PAWN_BONUS;
+
+	uint64_t white_doubled_pawns = white_double_pawn_mask & white_pawns;
+	score -= pop_count(white_doubled_pawns) * DOUBLED_PAWN_PENALTY;
 
 	while (white_pawns) {
 		int i = lsb_to_square(white_pawns);
 		uint64_t square = lsb(white_pawns);
 		score += WHITE_PAWN_SQUARE_TABLE[i];
-		if ((black_pawn_blocking_squares & square) == 0) {
-			score += PASSED_PAWN_BONUS;
-		}
-		if (square & white_pawn_protection_squares) {
-			score += PROTECTED_PAWN_BONUS;
-		}
-		if (square & white_double_pawn_mask) {
-			score -= DOUBLED_PAWN_PENALTY;
-		}
 		if (~(((square & ~A_FILE) >> 1) & white_pawn_files) && ~(((square & ~H_FILE) << 1) & white_pawn_files)) {
 			score -= ISOLATED_PAWN_PENALTY;
 		}
 		white_pawns = reset_lsb(white_pawns);
 	}
+
 	uint64_t white_king = board.b[WHITE][KING];
 	while (white_king) {
 		uint64_t square = lsb(white_king);
@@ -105,13 +102,16 @@ int evaluate(const Board& board) {
 		}
 		white_king = reset_lsb(white_king);
 	}
-	uint64_t w_bishops = board.b[WHITE][BISHOP];
-	while (w_bishops) {
-		int i = lsb_to_square(w_bishops);
-		score += BISHOP_SQUARE_TABLE[i];
-		white_bishops++;
-		w_bishops = reset_lsb(w_bishops);
+	uint64_t white_bishops = board.b[WHITE][BISHOP];
+	if (pop_count(white_bishops) == 2) {
+		score += 50;
 	}
+	while (white_bishops) {
+		int i = lsb_to_square(white_bishops);
+		score += BISHOP_SQUARE_TABLE[i];
+		white_bishops = reset_lsb(white_bishops);
+	}
+
 	uint64_t white_knights = board.b[WHITE][KNIGHT];
 	while (white_knights) {
 		int i = lsb_to_square(white_knights);
@@ -119,49 +119,43 @@ int evaluate(const Board& board) {
 		white_knights = reset_lsb(white_knights);
 	}
 	uint64_t white_rooks = board.b[WHITE][ROOK];
+	uint64_t white_queens = board.b[WHITE][QUEEN];
+
+	uint64_t white_open_file_pieces = open_files & (white_rooks | white_queens);
+	score += pop_count(white_open_file_pieces)*OPEN_FILE_BONUS;
+
+	uint64_t white_semi_open_file_pieces = white_semi_open_files & (white_rooks | white_queens);
+	score += pop_count(white_semi_open_file_pieces)*SEMI_OPEN_FILE_BONUS;
+
 	while (white_rooks) {
 		int i = lsb_to_square(white_rooks);
-		uint64_t square = lsb(white_rooks);
 		score += WHITE_ROOK_SQUARE_TABLE[i];
-		if (open_files & square) {
-			score += OPEN_FILE_BONUS;
-		} else if (white_semi_open_files & square) {
-			score += SEMI_OPEN_FILE_BONUS;
-		}
 		white_rooks = reset_lsb(white_rooks);
 	}
-	uint64_t white_queens = board.b[WHITE][QUEEN];
 	while (white_queens) {
-		uint64_t square = lsb(white_queens);
 		score += 900;
-		if (open_files & square) {
-			score += OPEN_FILE_BONUS;
-		} else if (white_semi_open_files & square) {
-			score += SEMI_OPEN_FILE_BONUS;
-		}
 		white_queens = reset_lsb(white_queens);
 	}
 
 	uint64_t black_pawns = board.b[BLACK][PAWN];
+
+	uint64_t black_passed_pawns = ~white_pawn_blocking_squares & black_pawns;
+	score -= pop_count(black_passed_pawns) * PASSED_PAWN_BONUS;
+
+	uint64_t black_doubled_pawns = black_double_pawn_mask & black_pawns;
+	score += pop_count(black_doubled_pawns) * DOUBLED_PAWN_PENALTY;
+
 	while (black_pawns) {
 		int i = lsb_to_square(black_pawns);
 		uint64_t square = lsb(black_pawns);
 		score -= BLACK_PAWN_SQUARE_TABLE[i];
-		if ((white_pawn_blocking_squares & square) == 0) {
-			score -= PASSED_PAWN_BONUS;
-		}
-		if (square & black_pawn_protection_squares) {
-			score -= PROTECTED_PAWN_BONUS;
-		}
-		if (square & black_double_pawn_mask) {
-			score += DOUBLED_PAWN_PENALTY;
-		}
 		if (~(((square & ~A_FILE) >> 1) & black_pawn_files) && ~(((square & ~H_FILE) << 1) & black_pawn_files)) {
 			score += ISOLATED_PAWN_PENALTY;
 		}
 		black_pawns = reset_lsb(black_pawns);
 	}
 	uint64_t black_king = board.b[BLACK][KING];
+
 	while (black_king) {
 		uint64_t square = lsb(black_king);
 		if (end_game) {
@@ -185,13 +179,17 @@ int evaluate(const Board& board) {
 		}
 		black_king = reset_lsb(black_king);
 	}
-	uint64_t b_bishops = board.b[BLACK][BISHOP];
-	while (b_bishops) {
-		int i = lsb_to_square(b_bishops);
-		score -= BISHOP_SQUARE_TABLE[i];
-		black_bishops++;
-		b_bishops = reset_lsb(b_bishops);
+
+	uint64_t black_bishops = board.b[BLACK][BISHOP];
+	if (pop_count(black_bishops) == 2) {
+		score -= 50;
 	}
+	while (black_bishops) {
+		int i = lsb_to_square(black_bishops);
+		score -= BISHOP_SQUARE_TABLE[i];
+		black_bishops = reset_lsb(black_bishops);
+	}
+
 	uint64_t black_knights = board.b[BLACK][KNIGHT];
 	while (black_knights) {
 		int i = lsb_to_square(black_knights);
@@ -199,34 +197,23 @@ int evaluate(const Board& board) {
 		black_knights = reset_lsb(black_knights);
 	}
 	uint64_t black_rooks = board.b[BLACK][ROOK];
+	uint64_t black_queens = board.b[BLACK][QUEEN];
+
+	uint64_t black_open_file_pieces = open_files & (black_rooks | black_queens);
+	score -= pop_count(black_open_file_pieces)*OPEN_FILE_BONUS;
+
+	uint64_t black_semi_open_file_pieces = black_semi_open_files & (black_rooks | black_queens);
+	score -= pop_count(black_semi_open_file_pieces)*SEMI_OPEN_FILE_BONUS;
+
 	while (black_rooks) {
 		int i = lsb_to_square(black_rooks);
-		uint64_t square = lsb(black_rooks);
 		score -= BLACK_ROOK_SQUARE_TABLE[i];
-		if (open_files & square) {
-			score -= OPEN_FILE_BONUS;
-		} else if (black_semi_open_files & square) {
-			score -= SEMI_OPEN_FILE_BONUS;
-		}
 		black_rooks = reset_lsb(black_rooks);
 	}
-	uint64_t black_queens = board.b[BLACK][QUEEN];
 	while (black_queens) {
-		uint64_t square = lsb(black_queens);
 		score -= 900;
-		if (open_files & square) {
-			score -= OPEN_FILE_BONUS;
-		} else if (black_semi_open_files & square) {
-			score -= SEMI_OPEN_FILE_BONUS;
-		}
 		black_queens = reset_lsb(black_queens);
 	}
 
-	if (white_bishops == 2) {
-		score += 50;
-	}
-	if (black_bishops == 2) {
-		score -= 50;
-	}
 	return score;
 }
