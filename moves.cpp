@@ -189,110 +189,67 @@ uint64_t get_attacked_squares(const Board& board, const bool white_turn) {
 
 	uint64_t occupied_squares = black_squares | white_squares;
 	uint64_t meta_info = board.meta_info_stack.back();
+
+	int side = white_turn ? WHITE : BLACK;
+	uint64_t side_squares = white_turn ? white_squares : black_squares;
+
+	// knight moves
+	uint64_t knights = board.b[side][KNIGHT];
+	while (knights) {
+		int from = lsb_to_square(knights);
+		attacked_squares |= knight_moves[from];
+		knights = reset_lsb(knights);
+	}
+	// bishop moves
+	uint64_t bishops = board.b[side][BISHOP];
+	while (bishops) {
+		int from = lsb_to_square(bishops);
+		attacked_squares |= get_positive_ray_moves(NW, from, occupied_squares)
+				| get_positive_ray_moves(NE, from, occupied_squares)
+				| get_negative_ray_moves(SW, from, occupied_squares)
+				| get_negative_ray_moves(SE, from, occupied_squares);
+		bishops = reset_lsb(bishops);
+	}
+	// rook moves
+	uint64_t rooks = board.b[side][ROOK];
+	while (rooks) {
+		int from = lsb_to_square(rooks);
+		attacked_squares |= get_positive_ray_moves(N, from, occupied_squares)
+				| get_positive_ray_moves(E, from, occupied_squares)
+				| get_negative_ray_moves(W, from, occupied_squares)
+				| get_negative_ray_moves(S, from, occupied_squares);
+		rooks = reset_lsb(rooks);
+	}
+	// queen moves
+	uint64_t queens = board.b[side][QUEEN];
+	while (queens) {
+		int from = lsb_to_square(queens);
+		attacked_squares |= get_positive_ray_moves(N, from, occupied_squares)
+				| get_positive_ray_moves(E, from, occupied_squares)
+				| get_positive_ray_moves(NW, from, occupied_squares)
+				| get_positive_ray_moves(NE, from, occupied_squares)
+				| get_negative_ray_moves(W, from, occupied_squares)
+				| get_negative_ray_moves(S, from, occupied_squares)
+				| get_negative_ray_moves(SW, from, occupied_squares)
+				| get_negative_ray_moves(SE, from, occupied_squares);
+		queens = reset_lsb(queens);
+	}
+	// king moves
+	uint64_t king = board.b[side][KING];
+	int from = lsb_to_square(king);
+	attacked_squares |= king_moves[from];
+
 	if (white_turn) {
 		// white pawn captures
 		attacked_squares |= ((board.b[WHITE][PAWN] & ~NW_BORDER) << 7) & (black_squares | (meta_info & ROW_6));
 		attacked_squares |= ((board.b[WHITE][PAWN] & ~NE_BORDER) << 9) & (black_squares | (meta_info & ROW_6));
-
-		// white knight moves
-		uint64_t knights = board.b[WHITE][KNIGHT];
-		while (knights) {
-			int from = lsb_to_square(knights);
-			attacked_squares |= knight_moves[from];
-			knights = reset_lsb(knights);
-		}
-		// white bishop moves
-		uint64_t bishops = board.b[WHITE][BISHOP];
-		while (bishops) {
-			int from = lsb_to_square(bishops);
-			attacked_squares |= get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares);
-			bishops = reset_lsb(bishops);
-		}
-		// white rook moves
-		uint64_t rooks = board.b[WHITE][ROOK];
-		while (rooks) {
-			int from = lsb_to_square(rooks);
-			attacked_squares |= get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares);
-			rooks = reset_lsb(rooks);
-		}
-		// white queen moves
-		uint64_t queens = board.b[WHITE][QUEEN];
-		while (queens) {
-			int from = lsb_to_square(queens);
-			attacked_squares |= get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares);
-			queens = reset_lsb(queens);
-		}
-		// white king moves
-		uint64_t king = board.b[WHITE][KING];
-		int from = lsb_to_square(king);
-		attacked_squares |= king_moves[from];
-		attacked_squares &= ~white_squares;
 	} else {
 		// black pawn captures
 		attacked_squares |= ((board.b[BLACK][PAWN] & ~SW_BORDER) >> 9) & (white_squares | (meta_info & ROW_3));
 		attacked_squares |= ((board.b[BLACK][PAWN] & ~SE_BORDER) >> 7) & (white_squares | (meta_info & ROW_3));
-
-		// black knight moves
-		uint64_t knights = board.b[BLACK][KNIGHT];
-		while (knights) {
-			int from = lsb_to_square(knights);
-			attacked_squares |= knight_moves[from];
-			knights = reset_lsb(knights);
-		}
-		// black bishop moves
-		uint64_t bishops = board.b[BLACK][BISHOP];
-		while (bishops) {
-			int from = lsb_to_square(bishops);
-			attacked_squares |= get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares);
-			bishops = reset_lsb(bishops);
-		}
-		// black rook moves
-		uint64_t rooks = board.b[BLACK][ROOK];
-		while (rooks) {
-			int from = lsb_to_square(rooks);
-			attacked_squares |= get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares);
-			rooks = reset_lsb(rooks);
-		}
-		// black queen moves
-		uint64_t queens = board.b[BLACK][QUEEN];
-		while (queens) {
-			int from = lsb_to_square(queens);
-			attacked_squares |= get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_positive_ray_moves(NW, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares);
-			queens = reset_lsb(queens);
-		}
-		// black king moves
-		uint64_t king = board.b[BLACK][KING];
-		int from = lsb_to_square(king);
-		attacked_squares |= king_moves[from];
-		attacked_squares &= ~black_squares;
 	}
 
+	attacked_squares &= ~side_squares;
 	return attacked_squares;
 }
 
@@ -309,6 +266,89 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 
 	uint64_t occupied_squares = black_squares | white_squares;
 	uint64_t meta_info = board.meta_info_stack.back();
+
+	int side = white_turn ? WHITE : BLACK;
+	int opponent = 1 - side;
+
+	uint64_t opponent_squares = white_turn ? black_squares : white_squares;
+
+	// knight moves
+	uint64_t knights = board.b[side][KNIGHT];
+	while (knights) {
+		int from = lsb_to_square(knights);
+		uint64_t to_squares = knight_moves[from] & opponent_squares;
+		while (to_squares) {
+			int to = lsb_to_square(to_squares);
+			uint64_t lsb = lsb(to_squares);
+			add_capture_move(from, to, side, KNIGHT, piece_at_board(board, lsb, opponent), children, EMPTY);
+			to_squares -= lsb;
+		}
+		knights = reset_lsb(knights);
+	}
+	// bishop moves
+	uint64_t bishops = board.b[side][BISHOP];
+	while (bishops) {
+		int from = lsb_to_square(bishops);
+		uint64_t to_squares = (get_positive_ray_moves(NW, from, occupied_squares)
+				| get_positive_ray_moves(NE, from, occupied_squares)
+				| get_negative_ray_moves(SW, from, occupied_squares)
+				| get_negative_ray_moves(SE, from, occupied_squares)) & opponent_squares;
+		while (to_squares) {
+			int to = lsb_to_square(to_squares);
+			uint64_t lsb = lsb(to_squares);
+			add_capture_move(from, to, side, BISHOP, piece_at_board(board, lsb, opponent), children, EMPTY);
+			to_squares -= lsb;
+		}
+		bishops = reset_lsb(bishops);
+	}
+	// rook moves
+	uint64_t rooks = board.b[side][ROOK];
+	while (rooks) {
+		int from = lsb_to_square(rooks);
+		uint64_t to_squares = (get_positive_ray_moves(N, from, occupied_squares)
+				| get_positive_ray_moves(E, from, occupied_squares)
+				| get_negative_ray_moves(W, from, occupied_squares)
+				| get_negative_ray_moves(S, from, occupied_squares)) & opponent_squares;
+		while (to_squares) {
+			int to = lsb_to_square(to_squares);
+			uint64_t lsb = lsb(to_squares);
+			add_capture_move(from, to, side, ROOK, piece_at_board(board, lsb, opponent), children, EMPTY);
+			to_squares -= lsb;
+		}
+		rooks = reset_lsb(rooks);
+	}
+	// queen moves
+	uint64_t queens = board.b[side][QUEEN];
+	while (queens) {
+		int from = lsb_to_square(queens);
+		uint64_t to_squares = (get_positive_ray_moves(N, from, occupied_squares)
+				| get_positive_ray_moves(E, from, occupied_squares)
+				| get_positive_ray_moves(NW, from, occupied_squares)
+				| get_positive_ray_moves(NE, from, occupied_squares)
+				| get_negative_ray_moves(W, from, occupied_squares)
+				| get_negative_ray_moves(S, from, occupied_squares)
+				| get_negative_ray_moves(SW, from, occupied_squares)
+				| get_negative_ray_moves(SE, from, occupied_squares)) & opponent_squares;
+		while (to_squares) {
+			int to = lsb_to_square(to_squares);
+			uint64_t lsb = lsb(to_squares);
+			add_capture_move(from, to, side, QUEEN, piece_at_board(board, lsb, opponent), children, EMPTY);
+			to_squares -= lsb;
+		}
+		queens = reset_lsb(queens);
+	}
+
+	// king moves
+	uint64_t king = board.b[side][KING];
+	int from = lsb_to_square(king);
+	uint64_t to_squares = king_moves[from] & opponent_squares;
+	while (to_squares) {
+		int to = lsb_to_square(to_squares);
+		uint64_t lsb = lsb(to_squares);
+		add_capture_move(from, to, side, KING, piece_at_board(board, lsb, opponent), children, EMPTY);
+		to_squares -= lsb;
+	}
+
 	if (white_turn) {
 		// white pawn captures
 		uint64_t capture_squares_w = ((board.b[WHITE][PAWN] & ~NW_BORDER) << 7) & (black_squares | (meta_info & ROW_6));
@@ -326,81 +366,6 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 			int promotion = to > 55 ? QUEEN : EMPTY;
 			add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), children, promotion);
 			capture_squares_e = reset_lsb(capture_squares_e);
-		}
-		// white knight moves
-		uint64_t knights = board.b[WHITE][KNIGHT];
-		while (knights) {
-			int from = lsb_to_square(knights);
-			uint64_t to_squares = knight_moves[from] & black_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				add_capture_move(from, to, WHITE, KNIGHT, piece_at_board(board, lsb, BLACK), children, EMPTY);
-				to_squares -= lsb;
-			}
-			knights = reset_lsb(knights);
-		}
-		// white bishop moves
-		uint64_t bishops = board.b[WHITE][BISHOP];
-		while (bishops) {
-			int from = lsb_to_square(bishops);
-			uint64_t to_squares = (get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares)) & black_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				add_capture_move(from, to, WHITE, BISHOP, piece_at_board(board, lsb, BLACK), children, EMPTY);
-				to_squares -= lsb;
-			}
-			bishops = reset_lsb(bishops);
-		}
-		// white rook moves
-		uint64_t rooks = board.b[WHITE][ROOK];
-		while (rooks) {
-			int from = lsb_to_square(rooks);
-			uint64_t to_squares = (get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)) & black_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				add_capture_move(from, to, WHITE, ROOK, piece_at_board(board, lsb, BLACK), children, EMPTY);
-				to_squares -= lsb;
-			}
-			rooks = reset_lsb(rooks);
-		}
-		// white queen moves
-		uint64_t queens = board.b[WHITE][QUEEN];
-		while (queens) {
-			int from = lsb_to_square(queens);
-			uint64_t to_squares = (get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares)) & black_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				add_capture_move(from, to, WHITE, QUEEN, piece_at_board(board, lsb, BLACK), children, EMPTY);
-				to_squares -= lsb;
-			}
-			queens = reset_lsb(queens);
-		}
-		// white king moves
-		uint64_t king = board.b[WHITE][KING];
-		int from = lsb_to_square(king);
-		uint64_t to_squares = king_moves[from] & black_squares;
-		while (to_squares) {
-			int to = lsb_to_square(to_squares);
-			uint64_t lsb = lsb(to_squares);
-			add_capture_move(from, to, WHITE, KING, piece_at_board(board, lsb, BLACK), children, EMPTY);
-			to_squares -= lsb;
 		}
 	} else {
 		// black pawn captures
@@ -420,81 +385,6 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 			add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), children, promotion);
 			capture_squares_e = reset_lsb(capture_squares_e);
 		}
-		// black knight moves
-		uint64_t knights = board.b[BLACK][KNIGHT];
-		while (knights) {
-			int from = lsb_to_square(knights);
-			uint64_t to_squares = knight_moves[from] & white_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				add_capture_move(from, to, BLACK, KNIGHT, piece_at_board(board, lsb, WHITE), children, EMPTY);
-				to_squares -= lsb;
-			}
-			knights = reset_lsb(knights);
-		}
-		// black bishop moves
-		uint64_t bishops = board.b[BLACK][BISHOP];
-		while (bishops) {
-			int from = lsb_to_square(bishops);
-			uint64_t to_squares = (get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares)) & white_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				add_capture_move(from, to, BLACK, BISHOP, piece_at_board(board, lsb, WHITE), children, EMPTY);
-				to_squares -= lsb;
-			}
-			bishops = reset_lsb(bishops);
-		}
-		// black rook moves
-		uint64_t rooks = board.b[BLACK][ROOK];
-		while (rooks) {
-			int from = lsb_to_square(rooks);
-			uint64_t to_squares = (get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)) & white_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				add_capture_move(from, to, BLACK, ROOK, piece_at_board(board, lsb, WHITE), children, EMPTY);
-				to_squares -= lsb;
-			}
-			rooks = reset_lsb(rooks);
-		}
-		// black queen moves
-		uint64_t queens = board.b[BLACK][QUEEN];
-		while (queens) {
-			int from = lsb_to_square(queens);
-			uint64_t to_squares = (get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_positive_ray_moves(NW, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares)) & white_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				add_capture_move(from, to, BLACK, QUEEN, piece_at_board(board, lsb, WHITE), children, EMPTY);
-				to_squares -= lsb;
-			}
-			queens = reset_lsb(queens);
-		}
-		// black king moves
-		uint64_t king = board.b[BLACK][KING];
-		int from = lsb_to_square(king);
-		uint64_t to_squares = king_moves[from] & white_squares;
-		while (to_squares) {
-			uint64_t lsb = lsb(to_squares);
-			int to = lsb_to_square(to_squares);
-			add_capture_move(from, to, BLACK, KING, piece_at_board(board, lsb, WHITE), children, EMPTY);
-			to_squares -= lsb;
-		}
 	}
 	return children;
 }
@@ -512,6 +402,94 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 
 	uint64_t occupied_squares = black_squares | white_squares;
 	uint64_t meta_info = board.meta_info_stack.back();
+
+	int side = white_turn ? WHITE : BLACK;
+	int opponent = 1 - side;
+
+	uint64_t side_squares = white_turn ? white_squares : black_squares;
+	uint64_t opponent_squares = white_turn ? black_squares : white_squares;
+
+	//knight moves
+	uint64_t knights = board.b[side][KNIGHT];
+	while (knights) {
+		int from = lsb_to_square(knights);
+		uint64_t to_squares = knight_moves[from] & ~side_squares;
+		while (to_squares) {
+			int to = lsb_to_square(to_squares);
+			uint64_t lsb = lsb(to_squares);
+			if (lsb & opponent_squares) {
+				add_capture_move(from, to, side, KNIGHT, piece_at_board(board, lsb, opponent), children, EMPTY);
+			} else {
+				add_quite_move(from, to, side, KNIGHT, children, EMPTY);
+			}
+			to_squares -= lsb;
+		}
+		knights = reset_lsb(knights);
+	}
+	uint64_t bishops = board.b[side][BISHOP];
+	while (bishops) {
+		int from = lsb_to_square(bishops);
+		uint64_t to_squares = get_positive_ray_moves(NW, from, occupied_squares)
+				| get_positive_ray_moves(NE, from, occupied_squares)
+				| get_negative_ray_moves(SW, from, occupied_squares)
+				| get_negative_ray_moves(SE, from, occupied_squares);
+		while (to_squares) {
+			int to = lsb_to_square(to_squares);
+			uint64_t lsb = lsb(to_squares);
+			if (lsb & opponent_squares) {
+				add_capture_move(from, to, side, BISHOP, piece_at_board(board, lsb, opponent), children, EMPTY);
+			} else if (lsb & ~occupied_squares) {
+				add_quite_move(from, to, side, BISHOP, children, EMPTY);
+			}
+			to_squares -= lsb;
+		}
+		bishops = reset_lsb(bishops);
+	}
+	// rook moves
+	uint64_t rooks = board.b[side][ROOK];
+	while (rooks) {
+		int from = lsb_to_square(rooks);
+		uint64_t to_squares = get_positive_ray_moves(N, from, occupied_squares)
+				| get_positive_ray_moves(E, from, occupied_squares)
+				| get_negative_ray_moves(W, from, occupied_squares)
+				| get_negative_ray_moves(S, from, occupied_squares);
+		while (to_squares) {
+			int to = lsb_to_square(to_squares);
+			uint64_t lsb = lsb(to_squares);
+			if (lsb & opponent_squares) {
+				add_capture_move(from, to, side, ROOK, piece_at_board(board, lsb, opponent), children, EMPTY);
+			} else if (lsb & ~occupied_squares) {
+				add_quite_move(from, to, side, ROOK, children, EMPTY);
+			}
+			to_squares -= lsb;
+		}
+		rooks = reset_lsb(rooks);
+	}
+	// queen moves
+	uint64_t queens = board.b[side][QUEEN];
+	while (queens) {
+		int from = lsb_to_square(queens);
+		uint64_t to_squares = get_positive_ray_moves(N, from, occupied_squares)
+				| get_positive_ray_moves(E, from, occupied_squares)
+				| get_positive_ray_moves(NW, from, occupied_squares)
+				| get_positive_ray_moves(NE, from, occupied_squares)
+				| get_negative_ray_moves(W, from, occupied_squares)
+				| get_negative_ray_moves(S, from, occupied_squares)
+				| get_negative_ray_moves(SW, from, occupied_squares)
+				| get_negative_ray_moves(SE, from, occupied_squares);
+		while (to_squares) {
+			int to = lsb_to_square(to_squares);
+			uint64_t lsb = lsb(to_squares);
+			if (lsb & opponent_squares) {
+				add_capture_move(from, to, side, QUEEN, piece_at_board(board, lsb, opponent), children, EMPTY);
+			} else if (lsb & ~occupied_squares) {
+				add_quite_move(from, to, side, QUEEN, children, EMPTY);
+			}
+			to_squares -= lsb;
+		}
+		queens = reset_lsb(queens);
+	}
+
 	if (white_turn) {
 		// white pawn push
 		uint64_t to_squares = (board.b[WHITE][PAWN] & ~ROW_8) << 8;
@@ -546,87 +524,6 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 			int promotion = to > 55 ? QUEEN : EMPTY;
 			add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), children, promotion);
 			capture_squares_e = reset_lsb(capture_squares_e);
-		}
-		// white knight moves
-		uint64_t knights = board.b[WHITE][KNIGHT];
-		while (knights) {
-			int from = lsb_to_square(knights);
-			uint64_t to_squares = knight_moves[from] & ~white_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				if (lsb & black_squares) {
-					add_capture_move(from, to, WHITE, KNIGHT, piece_at_board(board, lsb, BLACK), children, EMPTY);
-				} else {
-					add_quite_move(from, to, WHITE, KNIGHT, children, EMPTY);
-				}
-				to_squares -= lsb;
-			}
-			knights = reset_lsb(knights);
-		}
-		// white bishop moves
-		uint64_t bishops = board.b[WHITE][BISHOP];
-		while (bishops) {
-			int from = lsb_to_square(bishops);
-			uint64_t to_squares = get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares);
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				if (lsb & black_squares) {
-					add_capture_move(from, to, WHITE, BISHOP, piece_at_board(board, lsb, BLACK), children, EMPTY);
-				} else if (lsb & ~occupied_squares) {
-					add_quite_move(from, to, WHITE, BISHOP, children, EMPTY);
-				}
-				to_squares -= lsb;
-			}
-			bishops = reset_lsb(bishops);
-		}
-		// white rook moves
-		uint64_t rooks = board.b[WHITE][ROOK];
-		while (rooks) {
-			int from = lsb_to_square(rooks);
-			uint64_t to_squares = get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares);
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				if (lsb & black_squares) {
-					add_capture_move(from, to, WHITE, ROOK, piece_at_board(board, lsb, BLACK), children, EMPTY);
-				} else if (lsb & ~occupied_squares) {
-					add_quite_move(from, to, WHITE, ROOK, children, EMPTY);
-				}
-				to_squares -= lsb;
-			}
-			rooks = reset_lsb(rooks);
-		}
-		// white queen moves
-		uint64_t queens = board.b[WHITE][QUEEN];
-		while (queens) {
-			int from = lsb_to_square(queens);
-			uint64_t to_squares = get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares);
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				if (lsb & black_squares) {
-					add_capture_move(from, to, WHITE, QUEEN, piece_at_board(board, lsb, BLACK), children, EMPTY);
-				} else if (lsb & ~occupied_squares) {
-					add_quite_move(from, to, WHITE, QUEEN, children, EMPTY);
-				}
-				to_squares -= lsb;
-			}
-			queens = reset_lsb(queens);
 		}
 		// white king moves
 		uint64_t king = board.b[WHITE][KING];
@@ -683,87 +580,6 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 			int promotion = to < 8 ? QUEEN : EMPTY;
 			add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), children, promotion);
 			capture_squares_e = reset_lsb(capture_squares_e);
-		}
-		// black knight moves
-		uint64_t knights = board.b[BLACK][KNIGHT];
-		while (knights) {
-			int from = lsb_to_square(knights);
-			uint64_t to_squares = knight_moves[from] & ~black_squares;
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				if (lsb & white_squares) {
-					add_capture_move(from, to, BLACK, KNIGHT, piece_at_board(board, lsb, WHITE), children, EMPTY);
-				} else {
-					add_quite_move(from, to, BLACK, KNIGHT, children, EMPTY);
-				}
-				to_squares -= lsb;
-			}
-			knights = reset_lsb(knights);
-		}
-		// black bishop moves
-		uint64_t bishops = board.b[BLACK][BISHOP];
-		while (bishops) {
-			int from = lsb_to_square(bishops);
-			uint64_t to_squares = get_positive_ray_moves(NW, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares);
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				if (lsb & white_squares) {
-					add_capture_move(from, to, BLACK, BISHOP, piece_at_board(board, lsb, WHITE), children, EMPTY);
-				} else if (lsb & ~occupied_squares) {
-					add_quite_move(from, to, BLACK, BISHOP, children, EMPTY);
-				}
-				to_squares -= lsb;
-			}
-			bishops = reset_lsb(bishops);
-		}
-		// black rook moves
-		uint64_t rooks = board.b[BLACK][ROOK];
-		while (rooks) {
-			int from = lsb_to_square(rooks);
-			uint64_t to_squares = get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares);
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				if (lsb & white_squares) {
-					add_capture_move(from, to, BLACK, ROOK, piece_at_board(board, lsb, WHITE), children, EMPTY);
-				} else if (lsb & ~occupied_squares) {
-					add_quite_move(from, to, BLACK, ROOK, children, EMPTY);
-				}
-				to_squares -= lsb;
-			}
-			rooks = reset_lsb(rooks);
-		}
-		// black queen moves
-		uint64_t queens = board.b[BLACK][QUEEN];
-		while (queens) {
-			int from = lsb_to_square(queens);
-			uint64_t to_squares = get_positive_ray_moves(N, from, occupied_squares)
-					| get_positive_ray_moves(E, from, occupied_squares)
-					| get_positive_ray_moves(NE, from, occupied_squares)
-					| get_positive_ray_moves(NW, from, occupied_squares)
-					| get_negative_ray_moves(S, from, occupied_squares)
-					| get_negative_ray_moves(W, from, occupied_squares)
-					| get_negative_ray_moves(SW, from, occupied_squares)
-					| get_negative_ray_moves(SE, from, occupied_squares);
-			while (to_squares) {
-				int to = lsb_to_square(to_squares);
-				uint64_t lsb = lsb(to_squares);
-				if (lsb & white_squares) {
-					add_capture_move(from, to, BLACK, QUEEN, piece_at_board(board, lsb, WHITE), children, EMPTY);
-				} else if (lsb & ~occupied_squares) {
-					add_quite_move(from, to, BLACK, QUEEN, children, EMPTY);
-				}
-				to_squares -= lsb;
-			}
-			queens = reset_lsb(queens);
 		}
 		// black king moves
 		uint64_t king = board.b[BLACK][KING];

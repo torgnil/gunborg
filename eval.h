@@ -26,15 +26,16 @@
 
 #include "board.h"
 
-static const int DOUBLED_PAWN_PENALTY = 10;
-static const int ISOLATED_PAWN_PENALTY = 5;
-static const int PROTECTED_PAWN_BONUS = 2;
-static const int PASSED_PAWN_BONUS = 35;
-static const int OPEN_FILE_BONUS = 15;
-static const int SEMI_OPEN_FILE_BONUS = 7;
+
+const int DOUBLED_PAWN_PENALTY = 10;
+const int ISOLATED_PAWN_PENALTY = 5;
+const int PROTECTED_PAWN_BONUS = 2;
+const int PASSED_PAWN_BONUS = 35;
+const int OPEN_FILE_BONUS = 15;
+const int SEMI_OPEN_FILE_BONUS = 7;
 
 // the value of a white pawn at all squares
-static const int WHITE_PAWN_SQUARE_TABLE[] = {
+const int WHITE_PAWN_SQUARE_TABLE[] = {
 		// A1
 		100, 100, 100, 100, 100, 100, 100, 100, // H1
 		100, 100, 100, 100, 100, 100, 100, 100,
@@ -47,7 +48,7 @@ static const int WHITE_PAWN_SQUARE_TABLE[] = {
 		};
 
 // the value of a black pawn at all squares
-static const int BLACK_PAWN_SQUARE_TABLE[] = {
+const int BLACK_PAWN_SQUARE_TABLE[] = {
 		// A1
 		100, 100, 100, 100, 100, 100, 100, 100, // H1
 		107, 111, 113, 113, 113, 113, 111, 107,
@@ -60,7 +61,7 @@ static const int BLACK_PAWN_SQUARE_TABLE[] = {
 		};
 
 // affect elo negative right now, test again when retrying last move at alpha/beta fail is implemented
-static const int KNIGHT_SQUARE_TABLE[] = {
+const int KNIGHT_SQUARE_TABLE[] = {
 		290, 295, 295, 295, 295, 295, 295, 290,
 		295, 300, 300, 300, 300, 300, 300, 295,
 		295, 300, 309, 309, 309, 309, 300, 295,
@@ -70,7 +71,7 @@ static const int KNIGHT_SQUARE_TABLE[] = {
 		295, 300, 300, 300, 300, 300, 300, 295,
 		290, 295, 295, 295, 295, 295, 295, 290, };
 
-static const int BISHOP_SQUARE_TABLE[] = {
+const int BISHOP_SQUARE_TABLE[] = {
 		275, 295, 295, 295, 295, 295, 295, 275,
 		295, 300, 300, 300, 300, 306, 300, 295,
 		295, 300, 300, 300, 300, 300, 300, 295,
@@ -80,7 +81,7 @@ static const int BISHOP_SQUARE_TABLE[] = {
 		295, 300, 300, 300, 300, 300, 300, 295,
 		275, 295, 295, 295, 295, 295, 295, 275, };
 
-static const int WHITE_ROOK_SQUARE_TABLE[] = {
+const int WHITE_ROOK_SQUARE_TABLE[] = {
 		// A1
 		500, 500, 500, 510, 510, 500, 500, 500,
 		500, 500, 500, 500, 500, 500, 500, 500,
@@ -91,7 +92,7 @@ static const int WHITE_ROOK_SQUARE_TABLE[] = {
 		515, 515, 515, 515, 515, 515, 515, 515,
 		500, 500, 500, 500, 500, 500, 500, 500, }; //H8
 
-static const int BLACK_ROOK_SQUARE_TABLE[] = {
+const int BLACK_ROOK_SQUARE_TABLE[] = {
 		// A1
 		500, 500, 500, 500, 500, 500, 500, 500,
 		515, 515, 515, 515, 515, 515, 515, 515,
@@ -102,7 +103,7 @@ static const int BLACK_ROOK_SQUARE_TABLE[] = {
 		500, 500, 500, 500, 500, 500, 500, 500,
 		500, 500, 500, 510, 510, 500, 500, 500, }; //H8
 
-static const int KING_SQUARE_TABLE_ENDGAME[] = {
+const int KING_SQUARE_TABLE_ENDGAME[] = {
 		9980, 9990, 9990, 9990, 9990, 9990, 9990, 9980,
 		9990, 9995, 9995, 9995, 9995, 9995, 9995, 9990,
 		9995, 10000, 10000, 10005, 10005, 10000, 10000, 9995,

@@ -267,7 +267,7 @@ void black_en_passant_capture() {
 	}
 }
 
-void legal_moves_when_in_check() {
+void forced_move() {
 	FenInfo fen_info = parse_fen("6k1/pp3pp1/4p2p/8/3P3P/3R2P1/q1K5/4R3 w - - 2 37");
 	Board board = fen_info.board;
 	MoveList children = get_moves(board, fen_info.white_turn);
@@ -305,7 +305,7 @@ void run_tests() {
 	white_en_passant_capture();
 	black_en_passant_capture();
 
-	legal_moves_when_in_check();
+	forced_move();
 
 	std::cout << test_count << " tests executed" << std::endl;
 }

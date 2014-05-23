@@ -110,7 +110,10 @@ void pick_next_move(MoveList& moves, const int no_sorted_moves) {
 		}
 		i++;
 	}
-	std::swap(moves[no_sorted_moves], moves[max_index]);
+	Move tmp = moves[max_index];
+	moves[max_index] = moves[no_sorted_moves];
+	moves[no_sorted_moves] = tmp;
+//	std::swap(moves[no_sorted_moves], moves[max_index]);
 }
 
 int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Board& board) {
