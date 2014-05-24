@@ -42,7 +42,7 @@ FenInfo start_pos() {
 FenInfo parse_fen(string fen) {
 
 	Board board;
-	board.meta_info_stack.push_back(0);
+	uint64_t meta_info = 0;
 	int row = 8;
 	int file = 1;
 	for (int i = 0; !(row == 1 && file == 9); i++) {
@@ -95,6 +95,30 @@ FenInfo parse_fen(string fen) {
 			file = 1;
 		}
 	}
+	// 1. position
+	// 2. turn
+	// 3. castle rights
+	// 4. en passant squares
+	// 5. moves since capture and/or pawn move
+	// 6. move number.
+
+	vector<string> fen_strs = split(fen);
+	string castling_rights_str = fen_strs[2];
+	if (castling_rights_str.find('K') != string::npos) {
+		meta_info |= G1;
+	}
+	if (castling_rights_str.find('Q') != string::npos) {
+		meta_info |= C1;
+	}
+	if (castling_rights_str.find('k') != string::npos) {
+		meta_info |= G8;
+	}
+	if (castling_rights_str.find('q') != string::npos) {
+		meta_info |= C8;
+	}
+
+	board.meta_info_stack.push_back(meta_info);
+
 	FenInfo fen_info;
 	fen_info.board = board;
 	if (fen.find("w") != string::npos) {
@@ -103,18 +127,8 @@ FenInfo parse_fen(string fen) {
 		fen_info.white_turn = false;
 	}
 
-	// 1. position
-	// 2. turn
-	// 3. castle rights
-	// 4. en passant squares
-	// 5. moves since capture and/or pawn move
-	// 6. move number.
-	string sub_str = fen;
-	for (int i = 0; i < 5; i++) {
-		string::size_type pos = sub_str.find(' ');
-		sub_str = sub_str.substr(pos + 1);
-	}
-	fen_info.move = atoi(sub_str.c_str());
+	fen_info.move = atoi(fen_strs[5].c_str());
+
 	return fen_info;
 }
 
@@ -273,7 +287,6 @@ void uci() {
 					search->max_think_time_ms = factor * ((b_time + (moves_togo - 1) * b_inc) / moves_togo) - 3;
 				}
 			}
-
 			search_thread = new thread(&gunborg::Search::search_best_move, search, start_board, white_turn, history);
 		}
 		if (line.find("stop") != string::npos) {
