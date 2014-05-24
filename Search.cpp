@@ -355,6 +355,23 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 						res = 0;
 					}
 				}
+				// check if stale mate
+				bool opponent_has_legal_move = false;
+				MoveList oppenent_moves = get_moves(b2, !white_turn);
+				for (auto it = oppenent_moves.begin(); it != oppenent_moves.end(); ++it) {
+					make_move(b2, *it);
+					bool illegal_move = get_attacked_squares(b2, white_turn)
+											& (white_turn ? b2.b[BLACK][KING] : b2.b[WHITE][KING]);
+					if (!illegal_move) {
+						opponent_has_legal_move = true;
+						unmake_move(b2,*it);
+						break;
+					}
+					unmake_move(b2,*it);
+				}
+				if (!opponent_has_legal_move) {
+					res = 0;
+				}
 				if (res == -1) {
 					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
 					if (i > 0 && depth > 1) {
