@@ -156,8 +156,36 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 	return beta;
 }
 
+inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, int beta) {
+	if (depth > 3) {
+		return false;
+	}
+	int static_eval = evaluate(board);
+	if (depth == 1) {
+		// futility pruning. we do not hope to improve a position more than 300 in one move
+		if ((white_turn && (static_eval + 300) < alpha) || (!white_turn && (static_eval - 300) > beta)) {
+			return true;
+		}
+	}
+	if (depth == 2) {
+		// extended futility pruning. we do not hope to improve a position more than 500 in two plies
+		int static_eval = evaluate(board);
+		if ((white_turn && (static_eval + 500) < alpha) || (!white_turn && (static_eval - 500) > beta)) {
+			return true;
+		}
+	}
+	if (depth == 3) {
+		// extended futility pruning. we do not hope to improve a position more than 900 in two plies
+		int static_eval = evaluate(board);
+		if ((white_turn && (static_eval + 900) < alpha) || (!white_turn && (static_eval - 900) > beta)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
-bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int ply) {
+		bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int ply) {
 
 	// If, mate we do not need search at greater depths
 	if (board.b[WHITE][KING] == 0) {
@@ -168,23 +196,8 @@ bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int pl
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 	}
-	if (depth == 1) {
-		// futility pruning. we do not hope for improving a position more than 300 in one move...
-		int static_eval = evaluate(board);
-		if (white_turn && (static_eval + 300) < alpha) {
-			return capture_quiescence_eval_search(white_turn, alpha, beta, board);
-		}
-		if (!white_turn && (static_eval - 300) > beta) {
-			return capture_quiescence_eval_search(white_turn, alpha, beta, board);
-		}
-	}
-	if (depth == 2) {
-		// extended futility pruning. we do not hope for improving a position more than 500 in two plies...
-		// not really proven to +ELO but does not worse performance at least
-		int static_eval = evaluate(board);
-		if ((white_turn && (static_eval + 500) < alpha) || (!white_turn && (static_eval - 500) > beta)) {
-			return capture_quiescence_eval_search(white_turn, alpha, beta, board);
-		}
+	if (should_prune(depth, white_turn, board, alpha, beta)) {
+		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 	}
 
 	// null move heuristic
@@ -299,7 +312,7 @@ bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int pl
 	return beta;
 }
 
-void Search::search_best_move(const Board& board, const bool white_turn, list history) {
+void Search::search_best_move(const Board& board, const bool white_turn, const list history) {
 	start = clock.now();
 
 	Board b2 = board;
@@ -355,22 +368,30 @@ void Search::search_best_move(const Board& board, const bool white_turn, list hi
 						res = 0;
 					}
 				}
-				// check if stale mate
-				bool opponent_has_legal_move = false;
-				MoveList oppenent_moves = get_moves(b2, !white_turn);
-				for (auto it = oppenent_moves.begin(); it != oppenent_moves.end(); ++it) {
-					make_move(b2, *it);
-					bool illegal_move = get_attacked_squares(b2, white_turn)
-											& (white_turn ? b2.b[BLACK][KING] : b2.b[WHITE][KING]);
-					if (!illegal_move) {
-						opponent_has_legal_move = true;
-						unmake_move(b2,*it);
-						break;
+				if (res == -1) {
+					// check if stale mate
+					bool opponent_in_check = get_attacked_squares(b2, white_turn)
+												& (white_turn ? b2.b[BLACK][KING] : b2.b[WHITE][KING]);
+					bool opponent_has_legal_move = false;
+					if (!opponent_in_check) {
+						MoveList oppenent_moves = get_moves(b2, !white_turn);
+						for (auto it = oppenent_moves.begin(); it != oppenent_moves.end(); ++it) {
+							make_move(b2, *it);
+							bool illegal_move = get_attacked_squares(b2, white_turn)
+													& (white_turn ? b2.b[BLACK][KING] : b2.b[WHITE][KING]);
+							if (!illegal_move) {
+								opponent_has_legal_move = true;
+								unmake_move(b2,*it);
+								break;
+							}
+							unmake_move(b2,*it);
+						}
+					} else {
+						opponent_has_legal_move = true; // or mated..
 					}
-					unmake_move(b2,*it);
-				}
-				if (!opponent_has_legal_move) {
-					res = 0;
+					if (!opponent_has_legal_move) {
+						res = 0;
+					}
 				}
 				if (res == -1) {
 					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
