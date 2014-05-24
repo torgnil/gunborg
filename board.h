@@ -247,7 +247,7 @@ inline int bitScanReverse(uint64_t bb) {
 // end code snippet
 
 /*
- * count bits one by one
+ * population count - number of bits set to 1
  */
 inline int pop_count_sw(uint64_t b) {
 	int result = 0;
