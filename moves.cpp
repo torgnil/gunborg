@@ -540,10 +540,10 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 			to_squares -= lsb;
 		}
 		// castling
-		if ((meta_info & G1) && !(occupied_squares & white_king_side_castle_squares)) {
+		if ((meta_info & G1) && !(occupied_squares & white_king_side_castle_squares) && (board.b[WHITE][ROOK] & H1)) {
 			add_castle_move(from, lsb_to_square(G1), WHITE, children);
 		}
-		if ((meta_info & C1) && !(occupied_squares & white_queen_side_castle_squares)) {
+		if ((meta_info & C1) && !(occupied_squares & white_queen_side_castle_squares) && (board.b[WHITE][ROOK] & A1)) {
 			add_castle_move(from, lsb_to_square(C1), WHITE, children);
 		}
 	} else {
@@ -596,10 +596,10 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 			to_squares -= lsb;
 		}
 		// castling
-		if ((meta_info & G8) && !(occupied_squares & black_king_side_castle_squares)) {
+		if ((meta_info & G8) && !(occupied_squares & black_king_side_castle_squares) && (board.b[BLACK][ROOK] & H8)) {
 			add_castle_move(from, lsb_to_square(G8), BLACK, children);
 		}
-		if ((meta_info & C8) && !(occupied_squares & black_queen_side_castle_squares)) {
+		if ((meta_info & C8) && !(occupied_squares & black_queen_side_castle_squares) && (board.b[BLACK][ROOK] & A8)) {
 			add_castle_move(from, lsb_to_square(C8), BLACK, children);
 		}
 	}
