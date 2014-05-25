@@ -261,7 +261,7 @@ inline int pop_count_sw(uint64_t b) {
 #ifdef __GNUC__
 	#define lsb_to_square(b) __builtin_ctzll(b)
 	#define msb_to_square(b) (63 - __builtin_clzll(b))
-	#define pop_count(b) (__builtin_popcountl(b))
+	#define pop_count(b) (__builtin_popcountll(b))
 #else
 	#define lsb_to_square(b) bitScanForward(b)
 	#define msb_to_square(b) bitScanReverse(b)
