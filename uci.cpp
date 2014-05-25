@@ -278,23 +278,13 @@ void uci() {
 					moves_togo = ESTIMATED_NO_MOVES - move;
 					moves_togo = moves_togo < 10 ? 10 : moves_togo;
 				}
-				// use more time at the beginning
-				int factor = 2;
+				// use more time at move 1 - 20
+				int factor = 2 - min(max(10, move), 20) / 20;
 				if (white_turn && w_time != 0) {
-					int time_left = w_time + (moves_togo - 1) * w_inc;
-					int think_time = factor * time_left/ moves_togo;
-					if (think_time > time_left) {
-						think_time = time_left;
-					}
-					search->max_think_time_ms = think_time - 5;
+					search->max_think_time_ms = factor * ((w_time + (moves_togo - 1) * w_inc) / moves_togo) - 3;
 				}
 				if (!white_turn && b_time != 0) {
-					int time_left = b_time + (moves_togo - 1) * b_inc;
-					int think_time = factor * time_left/ moves_togo;
-					if (think_time > time_left) {
-						think_time = time_left;
-					}
-					search->max_think_time_ms = think_time - 5;
+					search->max_think_time_ms = factor * ((b_time + (moves_togo - 1) * b_inc) / moves_togo) - 3;
 				}
 			}
 			search_thread = new thread(&gunborg::Search::search_best_move, search, start_board, white_turn, history);
