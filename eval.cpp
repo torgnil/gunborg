@@ -35,17 +35,8 @@ int evaluate(const Board& board) {
 			| ((board.b[BLACK][PAWN] & ~H_FILE) >> 7);
 
 	// The idea is if a white pawn is on any of these squares then it is not a passed pawn
-	uint64_t black_pawn_blocking_squares = (board.b[BLACK][PAWN] >> 8) | black_pawn_protection_squares;
-	black_pawn_blocking_squares = black_pawn_blocking_squares | (black_pawn_blocking_squares >> 8);
-	black_pawn_blocking_squares = black_pawn_blocking_squares | (black_pawn_blocking_squares >> 8);
-	black_pawn_blocking_squares = black_pawn_blocking_squares | (black_pawn_blocking_squares >> 8);
-	black_pawn_blocking_squares = black_pawn_blocking_squares | (black_pawn_blocking_squares >> 8);
-
-	uint64_t white_pawn_blocking_squares = (board.b[WHITE][PAWN] << 8) | white_pawn_protection_squares;
-	white_pawn_blocking_squares = white_pawn_blocking_squares | (white_pawn_blocking_squares << 8);
-	white_pawn_blocking_squares = white_pawn_blocking_squares | (white_pawn_blocking_squares << 8);
-	white_pawn_blocking_squares = white_pawn_blocking_squares | (white_pawn_blocking_squares << 8);
-	white_pawn_blocking_squares = white_pawn_blocking_squares | (white_pawn_blocking_squares << 8);
+	uint64_t black_pawn_blocking_squares = south_fill((board.b[BLACK][PAWN] >> 8) | black_pawn_protection_squares);
+	uint64_t white_pawn_blocking_squares = north_fill((board.b[WHITE][PAWN] << 8) | white_pawn_protection_squares);
 
 	uint64_t white_pawn_files = file_fill(board.b[WHITE][PAWN]);
 	uint64_t black_pawn_files = file_fill(board.b[BLACK][PAWN]);
@@ -77,11 +68,13 @@ int evaluate(const Board& board) {
 	uint64_t white_doubled_pawns = white_double_pawn_mask & white_pawns;
 	score -= pop_count(white_doubled_pawns) * DOUBLED_PAWN_PENALTY;
 
-	uint64_t white_isolated_pawn_mask = (((((white_pawn_files & ~A_FILE) >> 1) & ~white_pawn_files) << 1) | A_FILE) &
-			(((((white_pawn_files & ~H_FILE) << 1) & ~white_pawn_files) >> 1) | H_FILE);
-
-	uint64_t white_isolated_pawns = white_pawns & white_isolated_pawn_mask;
+	uint64_t white_isolated_pawns = white_pawns & ~file_fill(white_pawn_protection_squares);
 	score -= pop_count(white_isolated_pawns) * ISOLATED_PAWN_PENALTY;
+
+	// a backward pawn cannot advance without being taken by opponent's pawn
+	uint64_t black_dominated_stop_squares = ~north_fill(white_pawn_protection_squares) & black_pawn_protection_squares;
+	uint64_t white_backward_pawns =  south_fill(black_dominated_stop_squares) & white_pawns;
+	score -= pop_count(white_backward_pawns) * BACKWARD_PAWN_PENALTY;
 
 	while (white_pawns) {
 		int i = lsb_to_square(white_pawns);
@@ -164,11 +157,12 @@ int evaluate(const Board& board) {
 	uint64_t black_doubled_pawns = black_double_pawn_mask & black_pawns;
 	score += pop_count(black_doubled_pawns) * DOUBLED_PAWN_PENALTY;
 
-	uint64_t black_isolated_pawn_mask = (((((black_pawn_files & ~A_FILE) >> 1) & ~black_pawn_files) << 1) | A_FILE) &
-			(((((black_pawn_files & ~H_FILE) << 1) & ~black_pawn_files) >> 1) | H_FILE);
-
-	uint64_t black_isolated_pawns = black_pawns & black_isolated_pawn_mask;
+	uint64_t black_isolated_pawns = black_pawns & ~file_fill(black_pawn_protection_squares);
 	score += pop_count(black_isolated_pawns) * ISOLATED_PAWN_PENALTY;
+
+	uint64_t white_dominated_stop_squares = ~south_fill(black_pawn_protection_squares) & white_pawn_protection_squares;
+	uint64_t black_backward_pawns =  north_fill(white_dominated_stop_squares) & black_pawns;
+	score += pop_count(black_backward_pawns) * BACKWARD_PAWN_PENALTY;
 
 	while (black_pawns) {
 		int i = lsb_to_square(black_pawns);
