@@ -25,6 +25,12 @@
 #include "eval.h"
 #include "moves.h"
 
+namespace {
+
+const int MAX_MATERIAL = 3100;
+
+}
+
 // score in centipawns
 int evaluate(const Board& board) {
 	int score = 0;
@@ -51,14 +57,15 @@ int evaluate(const Board& board) {
 
 	int white_piece_material = pop_count(board.b[WHITE][QUEEN]) * 900
 			+ pop_count(board.b[WHITE][ROOK]) * 500
-			+ pop_count(board.b[WHITE][BISHOP]) * 300;
+			+ pop_count(board.b[WHITE][BISHOP]) * 300
+			+ pop_count(board.b[WHITE][KNIGHT]) * 300;
 
 	int black_piece_material = pop_count(board.b[BLACK][QUEEN]) * 900
 			+ pop_count(board.b[BLACK][ROOK]) * 500
-			+ pop_count(board.b[BLACK][BISHOP]) * 300;
+			+ pop_count(board.b[BLACK][BISHOP]) * 300
+			+ pop_count(board.b[BLACK][KNIGHT]) * 300;
 
-
-	bool end_game = (board.b[WHITE][QUEEN] == 0) && (board.b[BLACK][QUEEN] == 0);
+	int total_material = white_piece_material + black_piece_material;
 
 	uint64_t white_pawns = board.b[WHITE][PAWN];
 
@@ -78,42 +85,43 @@ int evaluate(const Board& board) {
 
 	while (white_pawns) {
 		int i = lsb_to_square(white_pawns);
-		score += WHITE_PAWN_SQUARE_TABLE[i];
+		score += WHITE_PAWN_SQUARE_TABLE_ENDGAME[i] - WHITE_PAWN_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
+		score += WHITE_PAWN_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
 		white_pawns = reset_lsb(white_pawns);
 	}
 
 	uint64_t white_king = board.b[WHITE][KING];
 	while (white_king) {
 		int i = lsb_to_square(white_king);
-		if (end_game) {
-			score += KING_SQUARE_TABLE_ENDGAME[i];
-		} else {
-			score += KING_SQUARE_TABLE[i];
-			// king safety
-			uint64_t pawn_mask = (7ULL << (i + 7)) & ROW_2;
 
-			int king_safety_penalty = 0;
+		score += KING_SQUARE_TABLE_ENDGAME[i] - KING_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
+		score += KING_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
 
-			uint64_t open_files_around_king = open_files & pawn_mask;
-			king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
+		// king safety
+		uint64_t pawn_mask = (7ULL << (i + 7)) & ROW_2;
 
-			// pawns in front of the king
-			uint64_t pawn_missing_front_of_king = ~board.b[WHITE][PAWN] & pawn_mask;
-			king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
+		int king_safety_penalty = 0;
 
-			// no pawns on the two squares in front of the king
-			uint64_t pawn_missing_two_squares_front_of_king = ~board.b[WHITE][PAWN] & (pawn_missing_front_of_king << 8);
-			king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
+		uint64_t open_files_around_king = open_files & pawn_mask;
+		king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
 
-			// scale the penalty by opponent material
-			// we want to exchange pieces when king is unsafe
-			king_safety_penalty *= black_piece_material;
-			king_safety_penalty /= 3100;
+		// pawns in front of the king
+		uint64_t pawn_missing_front_of_king = ~board.b[WHITE][PAWN] & pawn_mask;
+		king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
 
-			score -= king_safety_penalty;
-		}
+		// no pawns on the two squares in front of the king
+		uint64_t pawn_missing_two_squares_front_of_king = ~board.b[WHITE][PAWN] & (pawn_missing_front_of_king << 8);
+		king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
+
+		// scale the penalty by opponent material
+		// we want to exchange pieces when king is unsafe
+		king_safety_penalty *= black_piece_material;
+		king_safety_penalty /= MAX_MATERIAL;
+
+		score -= king_safety_penalty;
 		white_king = reset_lsb(white_king);
 	}
+
 	uint64_t white_bishops = board.b[WHITE][BISHOP];
 	if (pop_count(white_bishops) == 2) {
 		score += 50;
@@ -166,41 +174,39 @@ int evaluate(const Board& board) {
 
 	while (black_pawns) {
 		int i = lsb_to_square(black_pawns);
-		score -= BLACK_PAWN_SQUARE_TABLE[i];
+		score -= BLACK_PAWN_SQUARE_TABLE_ENDGAME[i]  - BLACK_PAWN_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
+		score -= BLACK_PAWN_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
 		black_pawns = reset_lsb(black_pawns);
 	}
 	uint64_t black_king = board.b[BLACK][KING];
 
 	while (black_king) {
 		int i = lsb_to_square(black_king);
-		if (end_game) {
-			score -= KING_SQUARE_TABLE_ENDGAME[i];
-		} else {
-			score -= KING_SQUARE_TABLE[i];
+		score -= KING_SQUARE_TABLE_ENDGAME[i] - KING_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
+		score -= KING_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
 
-			int king_safety_penalty = 0;
+		int king_safety_penalty = 0;
 
-			// king safety
-			uint64_t pawn_mask = (7ULL << (i - 9)) & ROW_7;
+		// king safety
+		uint64_t pawn_mask = (7ULL << (i - 9)) & ROW_7;
 
-			uint64_t open_files_around_king = open_files & pawn_mask;
-			king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
+		uint64_t open_files_around_king = open_files & pawn_mask;
+		king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
 
-			// pawns in front of the king
-			uint64_t pawn_missing_front_of_king = ~board.b[BLACK][PAWN] & pawn_mask;
-			king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
+		// pawns in front of the king
+		uint64_t pawn_missing_front_of_king = ~board.b[BLACK][PAWN] & pawn_mask;
+		king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
 
-			// no pawns on the to squares in front of the king
-			uint64_t pawn_missing_two_squares_front_of_king = ~board.b[BLACK][PAWN] & (pawn_missing_front_of_king >> 8);
-			king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
+		// no pawns on the to squares in front of the king
+		uint64_t pawn_missing_two_squares_front_of_king = ~board.b[BLACK][PAWN] & (pawn_missing_front_of_king >> 8);
+		king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
 
-			// scale the penalty by opponent material
-			// we want to exchange pieces when king is unsafe
-			king_safety_penalty *= white_piece_material;
-			king_safety_penalty /= 3100;
+		// scale the penalty by opponent material
+		// we want to exchange pieces when king is unsafe
+		king_safety_penalty *= white_piece_material;
+		king_safety_penalty /= MAX_MATERIAL;
 
-			score += king_safety_penalty;
-		}
+		score += king_safety_penalty;
 		black_king = reset_lsb(black_king);
 	}
 
