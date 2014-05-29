@@ -707,3 +707,23 @@ void init() {
 		ray_moves[SE][i] = to_squares;
 	}
 }
+
+bool is_illegal_castling_move(const Move& move, const uint64_t attacked_squares_by_opponent) {
+	if (!is_castling(move.m)) {
+		return false;
+	}
+	uint64_t to_square = 1ULL << to_square(move.m);
+	if (to_square == C1) {
+		return (C1 | D1 | E1) & attacked_squares_by_opponent;
+	}
+	if (to_square == G1) {
+		return (E1 | F1 | G1) & attacked_squares_by_opponent;
+	}
+	if (to_square == C8) {
+		return (C8 | D8 | E8) & attacked_squares_by_opponent;
+	}
+	if (to_square == G8) {
+		return (E8 | F8 | G8) & attacked_squares_by_opponent;
+	}
+	return false;
+}

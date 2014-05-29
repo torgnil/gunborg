@@ -185,7 +185,7 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 }
 
 int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
-		bool null_move_in_branch, Move (&killers)[32][2], int (&history)[64][64], int ply) {
+		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply) {
 
 	// If, mate we do not need search at greater depths
 	if (board.b[WHITE][KING] == 0) {
@@ -201,7 +201,7 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 	}
 
 	// null move heuristic
-	if (!null_move_in_branch && depth > 3) {
+	if (!null_move_not_allowed && depth > 3) {
 		// skip a turn and see if and see if we get a cut-off at shallower depth
 		// it assumes:
 		// 1. That the disadvantage of forfeiting one's turn is greater than the disadvantage of performing a shallower search.
@@ -264,13 +264,13 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 
 		make_move(board, child);
 
-		int res = alphaBeta(!white_turn, depth - 1 - depth_reduction, alpha, beta, board, tt, null_move_in_branch,
+		int res = alphaBeta(!white_turn, depth - 1 - depth_reduction, alpha, beta, board, tt, null_move_not_allowed,
 				killers, history, ply + 1);
 
 		if (depth_reduction != 0 && res > alpha && res < beta) {
 			// score improved "unexpected" at reduced depth
 			// re-search at normal depth
-			res = alphaBeta(!white_turn, depth - 1, alpha, beta, board, tt, null_move_in_branch, killers, history,
+			res = alphaBeta(!white_turn, depth - 1, alpha, beta, board, tt, null_move_not_allowed, killers, history,
 					ply + 1);
 		}
 
@@ -332,7 +332,9 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 	Transposition * tt = new Transposition[hash_size];
 	b2.hash_key = 0;
 
-	bool in_check = get_attacked_squares(b2, !white_turn) & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
+	uint64_t attacked_squares_by_opponent = get_attacked_squares(b2, !white_turn);
+	bool in_check = attacked_squares_by_opponent & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
+
 	for (int depth = 1; depth < 30;) {
 		if (!white_turn) {
 			for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
@@ -348,7 +350,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 		for (unsigned int i = 0; i < root_moves.size(); i++) {
 			pick_next_move(root_moves, i);
 			Move root_move = root_moves[i];
-			if (is_castling(root_move.m) && in_check) {
+			if (is_illegal_castling_move(root_move, attacked_squares_by_opponent)) {
 				continue;
 			}
 			if (b > a) { //strict?
