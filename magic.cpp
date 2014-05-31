@@ -361,6 +361,7 @@ void init_ray_moves() {
 		ray_moves[SE][i] = to_squares;
 	}
 }
+
 void init_magic_lookup_table() {
 
 	init_ray_moves();
@@ -380,7 +381,7 @@ void init_magic_lookup_table() {
 		bishop_lookup.shift = 64 - BISHOP_BITS[square];
 		bishop_lookup_table[square] = bishop_lookup;
 
-		// enumerate over all possible combinations of bits set in the mask
+		// loop over all possible combinations of bits set in the mask
 		uint64_t occupied_squares = 0;
 		do {
 			uint64_t to_squares = get_positive_ray_moves(NW, square, occupied_squares)
@@ -391,7 +392,6 @@ void init_magic_lookup_table() {
 			int key = get_lookup_offset(occupied_squares, BISHOP_MAGICS[square], 64 - BISHOP_BITS[square]);
 			bishop_attack_table_ptr[key] = to_squares;
 			occupied_squares = (occupied_squares - b_mask) & b_mask;
-
 			attack_table_offset++;
 		} while (occupied_squares);
 
@@ -407,7 +407,7 @@ void init_magic_lookup_table() {
 		rook_lookup.shift = 64 - ROOK_BITS[square];
 		rook_lookup_table[square] = rook_lookup;
 
-		// enumerate over all possible combinations of bits set in the mask
+		// loop over all possible combinations of bits set in the mask
 		occupied_squares = 0;
 		do {
 			uint64_t to_squares = get_positive_ray_moves(N, square, occupied_squares)
