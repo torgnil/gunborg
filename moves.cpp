@@ -22,22 +22,14 @@
  */
 
 #include "moves.h"
+#include "magic.h"
 
 int rook_castle_to_squares[64];
 int rook_castle_from_squares[64];
 
 // pre-calculated move masks
-const int N = 0;
-const int NE = 1;
-const int E = 2;
-const int SE = 3;
-const int S = 4;
-const int SW = 5;
-const int W = 6;
-const int NW = 7;
 
 uint64_t knight_moves[64];
-uint64_t ray_moves[8][64];
 uint64_t king_moves[64];
 
 // [V][A] Most valuable victim gives the highest scores
@@ -159,26 +151,6 @@ inline void add_castle_move(int from, int to, int color, MoveList& moves) {
 	moves.push_front(move);
 }
 
-/**
- * Ray for direction N E NE NW
- */
-inline uint64_t get_positive_ray_moves(const int& dir, const int& from, const uint64_t& occupied_squares) {
-	uint64_t attacked_squares = ray_moves[dir][from];
-	uint64_t blocker = attacked_squares & occupied_squares;
-	attacked_squares ^= ray_moves[dir][lsb_to_square(blocker | H8)];
-	return attacked_squares;
-}
-
-/**
- * Ray for direction S W SW SE
- */
-inline uint64_t get_negative_ray_moves(const int& dir, const int& from, const uint64_t& occupied_squares) {
-	uint64_t attacked_squares = ray_moves[dir][from];
-	uint64_t blocker = attacked_squares & occupied_squares;
-	attacked_squares ^= ray_moves[dir][msb_to_square(blocker | A1)];
-	return attacked_squares;
-}
-
 uint64_t get_attacked_squares(const Board& board, const bool white_turn) {
 	uint64_t attacked_squares = 0;
 	uint64_t black_squares = board.b[BLACK][KING] | board.b[BLACK][PAWN] | board.b[BLACK][KNIGHT]
@@ -204,34 +176,21 @@ uint64_t get_attacked_squares(const Board& board, const bool white_turn) {
 	uint64_t bishops = board.b[side][BISHOP];
 	while (bishops) {
 		int from = lsb_to_square(bishops);
-		attacked_squares |= get_positive_ray_moves(NW, from, occupied_squares)
-				| get_positive_ray_moves(NE, from, occupied_squares)
-				| get_negative_ray_moves(SW, from, occupied_squares)
-				| get_negative_ray_moves(SE, from, occupied_squares);
+		attacked_squares |= bishop_attacks(occupied_squares, from);
 		bishops = reset_lsb(bishops);
 	}
 	// rook moves
 	uint64_t rooks = board.b[side][ROOK];
 	while (rooks) {
 		int from = lsb_to_square(rooks);
-		attacked_squares |= get_positive_ray_moves(N, from, occupied_squares)
-				| get_positive_ray_moves(E, from, occupied_squares)
-				| get_negative_ray_moves(W, from, occupied_squares)
-				| get_negative_ray_moves(S, from, occupied_squares);
+		attacked_squares |= rook_attacks(occupied_squares, from);
 		rooks = reset_lsb(rooks);
 	}
 	// queen moves
 	uint64_t queens = board.b[side][QUEEN];
 	while (queens) {
 		int from = lsb_to_square(queens);
-		attacked_squares |= get_positive_ray_moves(N, from, occupied_squares)
-				| get_positive_ray_moves(E, from, occupied_squares)
-				| get_positive_ray_moves(NW, from, occupied_squares)
-				| get_positive_ray_moves(NE, from, occupied_squares)
-				| get_negative_ray_moves(W, from, occupied_squares)
-				| get_negative_ray_moves(S, from, occupied_squares)
-				| get_negative_ray_moves(SW, from, occupied_squares)
-				| get_negative_ray_moves(SE, from, occupied_squares);
+		attacked_squares |= queen_attacks(occupied_squares, from);
 		queens = reset_lsb(queens);
 	}
 	// king moves
@@ -289,10 +248,7 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 	uint64_t bishops = board.b[side][BISHOP];
 	while (bishops) {
 		int from = lsb_to_square(bishops);
-		uint64_t to_squares = (get_positive_ray_moves(NW, from, occupied_squares)
-				| get_positive_ray_moves(NE, from, occupied_squares)
-				| get_negative_ray_moves(SW, from, occupied_squares)
-				| get_negative_ray_moves(SE, from, occupied_squares)) & opponent_squares;
+		uint64_t to_squares = bishop_attacks(occupied_squares, from) & opponent_squares;
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
@@ -305,10 +261,7 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 	uint64_t rooks = board.b[side][ROOK];
 	while (rooks) {
 		int from = lsb_to_square(rooks);
-		uint64_t to_squares = (get_positive_ray_moves(N, from, occupied_squares)
-				| get_positive_ray_moves(E, from, occupied_squares)
-				| get_negative_ray_moves(W, from, occupied_squares)
-				| get_negative_ray_moves(S, from, occupied_squares)) & opponent_squares;
+		uint64_t to_squares = rook_attacks(occupied_squares, from) & opponent_squares;
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
@@ -321,14 +274,7 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 	uint64_t queens = board.b[side][QUEEN];
 	while (queens) {
 		int from = lsb_to_square(queens);
-		uint64_t to_squares = (get_positive_ray_moves(N, from, occupied_squares)
-				| get_positive_ray_moves(E, from, occupied_squares)
-				| get_positive_ray_moves(NW, from, occupied_squares)
-				| get_positive_ray_moves(NE, from, occupied_squares)
-				| get_negative_ray_moves(W, from, occupied_squares)
-				| get_negative_ray_moves(S, from, occupied_squares)
-				| get_negative_ray_moves(SW, from, occupied_squares)
-				| get_negative_ray_moves(SE, from, occupied_squares)) & opponent_squares;
+		uint64_t to_squares = queen_attacks(occupied_squares, from) & opponent_squares;
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
@@ -429,10 +375,7 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 	uint64_t bishops = board.b[side][BISHOP];
 	while (bishops) {
 		int from = lsb_to_square(bishops);
-		uint64_t to_squares = get_positive_ray_moves(NW, from, occupied_squares)
-				| get_positive_ray_moves(NE, from, occupied_squares)
-				| get_negative_ray_moves(SW, from, occupied_squares)
-				| get_negative_ray_moves(SE, from, occupied_squares);
+		uint64_t to_squares = bishop_attacks(occupied_squares, from);
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
@@ -449,10 +392,7 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 	uint64_t rooks = board.b[side][ROOK];
 	while (rooks) {
 		int from = lsb_to_square(rooks);
-		uint64_t to_squares = get_positive_ray_moves(N, from, occupied_squares)
-				| get_positive_ray_moves(E, from, occupied_squares)
-				| get_negative_ray_moves(W, from, occupied_squares)
-				| get_negative_ray_moves(S, from, occupied_squares);
+		uint64_t to_squares = rook_attacks(occupied_squares, from);
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
@@ -469,14 +409,7 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 	uint64_t queens = board.b[side][QUEEN];
 	while (queens) {
 		int from = lsb_to_square(queens);
-		uint64_t to_squares = get_positive_ray_moves(N, from, occupied_squares)
-				| get_positive_ray_moves(E, from, occupied_squares)
-				| get_positive_ray_moves(NW, from, occupied_squares)
-				| get_positive_ray_moves(NE, from, occupied_squares)
-				| get_negative_ray_moves(W, from, occupied_squares)
-				| get_negative_ray_moves(S, from, occupied_squares)
-				| get_negative_ray_moves(SW, from, occupied_squares)
-				| get_negative_ray_moves(SE, from, occupied_squares);
+		uint64_t to_squares = queen_attacks(occupied_squares, from);
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
@@ -634,78 +567,8 @@ void init() {
 
 		king_moves[i] = to_squares;
 	}
-	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1ULL << i;
-		uint64_t to_squares = 0;
-		while (b & ~ROW_8) {
-			b = b << 8UL;
-			to_squares |= b;
-		}
-		ray_moves[N][i] = to_squares;
-	}
-	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1ULL << i;
-		uint64_t to_squares = 0;
-		while (b & ~ROW_1) {
-			b = b >> 8UL;
-			to_squares |= b;
-		}
-		ray_moves[S][i] = to_squares;
-	}
-	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1ULL << i;
-		uint64_t to_squares = 0;
-		while (b & ~H_FILE) {
-			b = b << 1ULL;
-			to_squares |= b;
-		}
-		ray_moves[E][i] = to_squares;
-	}
-	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1ULL << i;
-		uint64_t to_squares = 0;
-		while (b & ~A_FILE) {
-			b = b >> 1ULL;
-			to_squares |= b;
-		}
-		ray_moves[W][i] = to_squares;
-	}
-	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1ULL << i;
-		uint64_t to_squares = 0;
-		while (b & ~NW_BORDER) {
-			b = b << 7UL;
-			to_squares |= b;
-		}
-		ray_moves[NW][i] = to_squares;
-	}
-	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1ULL << i;
-		uint64_t to_squares = 0;
-		while (b & ~SW_BORDER) {
-			b = b >> 9UL;
-			to_squares |= b;
-		}
-		ray_moves[SW][i] = to_squares;
-	}
-	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1ULL << i;
-		uint64_t to_squares = 0;
-		while (b & ~NE_BORDER) {
-			b = b << 9UL;
-			to_squares |= b;
-		}
-		ray_moves[NE][i] = to_squares;
-	}
-	for (int i = 0; i < 64; i++) {
-		uint64_t b = 1ULL << i;
-		uint64_t to_squares = 0;
-		while (b & ~SE_BORDER) {
-			b = b >> 7UL;
-			to_squares |= b;
-		}
-		ray_moves[SE][i] = to_squares;
-	}
+
+	init_magic_lookup_table();
 }
 
 bool is_illegal_castling_move(const Move& move, const uint64_t attacked_squares_by_opponent) {
