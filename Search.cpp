@@ -258,8 +258,8 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		// late move reduction.
 		// we assume sort order is good enough to not search later moves as deep as the first 5
 		int depth_reduction = 0;
-		if (depth > 4 && i > 5 && !is_capture(child.m)) {
-			depth_reduction = 2;
+		if (depth > 2 && i > 5 && !is_capture(child.m)) {
+			depth_reduction = 1;
 		}
 
 		make_move(board, child);
