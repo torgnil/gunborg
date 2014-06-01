@@ -47,21 +47,7 @@ int main(int argc, char* argv[]) {
 			<< "This is free software, and you are welcome to redistribute it\n"
 			<< "under certain conditions; type `show c' for details.\n";
 
-	if (argc == 2 && strcmp(argv[1], "perft") == 0) {
-		std::chrono::high_resolution_clock clock;
-		std::chrono::high_resolution_clock::time_point start;
-
-		string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-		Board b2 = parse_fen(fen).board;
-		for (int i = 1; i <= 6; i++) {
-			start = clock.now();
-			std::cout << "perft depth(" << i << ") nodes: "
-					<< perft(b2, i, true);
-			int time_elapsed = std::chrono::duration_cast
-					< std::chrono::milliseconds > (clock.now() - start).count();
-			std::cout << " in " << time_elapsed << " ms\n";
-		}
-	} else if (argc == 2 && strcmp(argv[1], "test") == 0) {
+	if (argc == 2 && strcmp(argv[1], "test") == 0) {
 		run_tests();
 	} else {
 		thread uci_thread(uci);

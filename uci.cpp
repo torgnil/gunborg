@@ -300,8 +300,22 @@ void uci() {
 		if (line.find("quit") != string::npos) {
 			return;
 		}
+		// non uci commands
 		if (line.find("perft") != string::npos) {
+			std::chrono::high_resolution_clock clock;
+			std::chrono::high_resolution_clock::time_point start;
 
+			int depth = parse_int_parameter(line, "depth");
+			depth = depth  == 0 ? 5 : depth;
+
+			for (int i = 1; i <= depth; i++) {
+				start = clock.now();
+				std::cout << "perft depth(" << i << ") nodes: "
+						<< perft(start_board, i, white_turn);
+				int time_elapsed = std::chrono::duration_cast
+						< std::chrono::milliseconds > (clock.now() - start).count();
+				std::cout << " in " << time_elapsed << " ms\n";
+			}
 		}
 		// license info
 		if (line.find("show w") != string::npos) {
