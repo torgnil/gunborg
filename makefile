@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-D__GXX_EXPERIMENTAL_CXX0X__ -O3 -Wall -std=c++11 -Wl,--no-as-needed
+CFLAGS=-D__GXX_EXPERIMENTAL_CXX0X__ -O3 -Wall -std=c++0x -Wl,--no-as-needed
 LDFLAGS=-pthread -flto -O3
 SOURCES=*cpp
 EXECUTABLE=gunborg
