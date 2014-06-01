@@ -127,8 +127,9 @@ FenInfo parse_fen(string fen) {
 		fen_info.white_turn = false;
 	}
 
-	fen_info.move = atoi(fen_strs[5].c_str());
-
+	if (fen_strs.size() > 4) {
+		fen_info.move = atoi(fen_strs[5].c_str());
+	}
 	return fen_info;
 }
 

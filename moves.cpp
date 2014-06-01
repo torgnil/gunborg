@@ -160,7 +160,6 @@ uint64_t get_attacked_squares(const Board& board, const bool white_turn) {
 			| board.b[WHITE][BISHOP] | board.b[WHITE][ROOK] | board.b[WHITE][QUEEN];
 
 	uint64_t occupied_squares = black_squares | white_squares;
-	uint64_t meta_info = board.meta_info_stack.back();
 
 	int side = white_turn ? WHITE : BLACK;
 	uint64_t side_squares = white_turn ? white_squares : black_squares;
@@ -200,12 +199,12 @@ uint64_t get_attacked_squares(const Board& board, const bool white_turn) {
 
 	if (white_turn) {
 		// white pawn captures
-		attacked_squares |= ((board.b[WHITE][PAWN] & ~NW_BORDER) << 7) & (black_squares | (meta_info & ROW_6));
-		attacked_squares |= ((board.b[WHITE][PAWN] & ~NE_BORDER) << 9) & (black_squares | (meta_info & ROW_6));
+		attacked_squares |= (board.b[WHITE][PAWN] & ~NW_BORDER) << 7;
+		attacked_squares |= (board.b[WHITE][PAWN] & ~NE_BORDER) << 9;
 	} else {
 		// black pawn captures
-		attacked_squares |= ((board.b[BLACK][PAWN] & ~SW_BORDER) >> 9) & (white_squares | (meta_info & ROW_3));
-		attacked_squares |= ((board.b[BLACK][PAWN] & ~SE_BORDER) >> 7) & (white_squares | (meta_info & ROW_3));
+		attacked_squares |= (board.b[BLACK][PAWN] & ~SW_BORDER) >> 9;
+		attacked_squares |= (board.b[BLACK][PAWN] & ~SE_BORDER) >> 7;
 	}
 
 	attacked_squares &= ~side_squares;
