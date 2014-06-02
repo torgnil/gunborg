@@ -66,7 +66,7 @@ int evaluate(const Board& board) {
 			+ pop_count(board.b[BLACK][KNIGHT]) * 300;
 
 	int total_material = white_piece_material + black_piece_material;
-	if (total_material == 300 && pop_count(board.b[WHITE][PAWN] | board.b[BLACK][PAWN]) == 0) {
+	if (total_material <= 300 && pop_count(board.b[WHITE][PAWN] | board.b[BLACK][PAWN]) == 0) {
 		return 0; // draw by insufficient mating material
 	}
 
