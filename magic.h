@@ -27,14 +27,49 @@
 #include <inttypes.h>
 
 /*
- * Must be called first
+ * Must be called first to initialize the attack sets
  */
 void init_magic_lookup_table();
 
-uint64_t bishop_attacks(uint64_t occupied_squares, int square);
+/*
+ * Magic bit boards.
+ *
+ * A pre-generated lookup table holds all possible rook and bishop attack sets.
+ *
+ * Square + occupied_squares mask, using some magic numbers, gives the correct index in the table.
+ *
+ * See http://chessprogramming.wikispaces.com/Magic+Bitboards
+ */
 
-uint64_t rook_attacks(uint64_t occupied_squares, int square);
+struct AttackSetLookup {
+	uint64_t* attack_set_table_ptr;  // pointer to attack_table for each particular square
+	uint64_t mask;  // to mask relevant squares of both lines (no outer squares)
+	uint64_t magic; // magic 64-bit factor
+	int shift; // shift right (64 - number of bits)
+};
 
-uint64_t queen_attacks(uint64_t occupied_squares, int square);
+extern AttackSetLookup bishop_lookup_table[64];
+extern AttackSetLookup rook_lookup_table[64];
+
+
+inline int get_lookup_offset(uint64_t occupied_squares, uint64_t magic, int shift) {
+	return (int) ((occupied_squares * magic) >> shift);
+}
+
+inline uint64_t bishop_attacks(uint64_t occupied_squares, int square) {
+	int index = get_lookup_offset(occupied_squares & bishop_lookup_table[square].mask,
+			bishop_lookup_table[square].magic, bishop_lookup_table[square].shift);
+	return bishop_lookup_table[square].attack_set_table_ptr[index];
+}
+
+inline uint64_t rook_attacks(uint64_t occupied_squares, int square) {
+	int index = get_lookup_offset(occupied_squares & rook_lookup_table[square].mask, rook_lookup_table[square].magic,
+			rook_lookup_table[square].shift);
+	return rook_lookup_table[square].attack_set_table_ptr[index];
+}
+
+inline uint64_t queen_attacks(uint64_t occupied_squares, int square) {
+	return bishop_attacks(occupied_squares, square) | rook_attacks(occupied_squares, square);
+}
 
 #endif /* MAGIC_H_ */
