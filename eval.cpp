@@ -38,6 +38,20 @@ int nega_evaluate(const Board& board, bool white_turn) {
 
 // score in centipawns
 int evaluate(const Board& board) {
+	int white_piece_material = pop_count(board.b[WHITE][QUEEN]) * 900
+			+ pop_count(board.b[WHITE][ROOK]) * 500
+			+ pop_count(board.b[WHITE][BISHOP]) * 300
+			+ pop_count(board.b[WHITE][KNIGHT]) * 300;
+
+	int black_piece_material = pop_count(board.b[BLACK][QUEEN]) * 900
+			+ pop_count(board.b[BLACK][ROOK]) * 500
+			+ pop_count(board.b[BLACK][BISHOP]) * 300
+			+ pop_count(board.b[BLACK][KNIGHT]) * 300;
+
+	int total_material = white_piece_material + black_piece_material;
+	if (total_material <= 300 && (board.b[WHITE][PAWN] | board.b[BLACK][PAWN]) == 0) {
+		return 0; // draw by insufficient mating material
+	}
 	int score = 0;
 
 	uint64_t white_pawn_protection_squares = ((board.b[WHITE][PAWN] & ~A_FILE) << 7)
@@ -60,20 +74,6 @@ int evaluate(const Board& board) {
 	uint64_t white_double_pawn_mask = north_fill(board.b[WHITE][PAWN] << 8);
 	uint64_t black_double_pawn_mask = south_fill(board.b[BLACK][PAWN] >> 8);
 
-	int white_piece_material = pop_count(board.b[WHITE][QUEEN]) * 900
-			+ pop_count(board.b[WHITE][ROOK]) * 500
-			+ pop_count(board.b[WHITE][BISHOP]) * 300
-			+ pop_count(board.b[WHITE][KNIGHT]) * 300;
-
-	int black_piece_material = pop_count(board.b[BLACK][QUEEN]) * 900
-			+ pop_count(board.b[BLACK][ROOK]) * 500
-			+ pop_count(board.b[BLACK][BISHOP]) * 300
-			+ pop_count(board.b[BLACK][KNIGHT]) * 300;
-
-	int total_material = white_piece_material + black_piece_material;
-	if (total_material <= 300 && pop_count(board.b[WHITE][PAWN] | board.b[BLACK][PAWN]) == 0) {
-		return 0; // draw by insufficient mating material
-	}
 
 	uint64_t white_pawns = board.b[WHITE][PAWN];
 
