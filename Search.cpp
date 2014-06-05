@@ -41,7 +41,6 @@ namespace gunborg {
 Search::Search() {
 	max_think_time_ms = 10000;
 	node_count = 0;
-	quiescence_node_count = 0;
 	total_generated_moves = 0;
 }
 
@@ -133,7 +132,6 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 	for (unsigned int i = 0; i < capture_moves.size(); ++i) {
 		pick_next_move(capture_moves, i);
 		Move move = capture_moves[i];
-		quiescence_node_count++;
 		make_move(board, move);
 		int res = -capture_quiescence_eval_search(!white_turn, -beta, -alpha, board);
 		unmake_move(board, move);
@@ -175,14 +173,7 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 	return false;
 }
 
-
-int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
-		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply) {
-	return white_turn ? nega_alphaBeta(white_turn, depth, alpha, beta, board, tt, null_move_not_allowed, killers, history, ply)
-				: -nega_alphaBeta(white_turn, depth, -beta, -alpha, board, tt, null_move_not_allowed, killers, history, ply);
-}
-
-int Search::nega_alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
+int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
 		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply) {
 
 	// If, mate we do not need search at greater depths
@@ -205,7 +196,7 @@ int Search::nega_alphaBeta(bool white_turn, int depth, int alpha, int beta, Boar
 		// 1. That the disadvantage of forfeiting one's turn is greater than the disadvantage of performing a shallower search.
 		// 2. That the beta cut-offs prunes enough branches to be worth the time searching at reduced depth
 		int R = 2; // depth reduction
-		int res = -nega_alphaBeta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1);
+		int res = -alpha_beta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1);
 		if (res >= beta) {
 			return beta;
 		}
@@ -257,13 +248,13 @@ int Search::nega_alphaBeta(bool white_turn, int depth, int alpha, int beta, Boar
 
 		make_move(board, child);
 
-		int res = -nega_alphaBeta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
+		int res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
 				killers, history, ply + 1);
 
 		if (depth_reduction != 0 && res > alpha && res < beta) {
 			// score improved "unexpected" at reduced depth
 			// re-search at normal depth
-			res = -nega_alphaBeta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
+			res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
 					ply + 1);
 		}
 
@@ -304,7 +295,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 
 	for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
 		make_move(b2, *it);
-		it->sort_score = evaluate(b2);
+		it->sort_score = nega_evaluate(b2, white_turn);
 		unmake_move(b2, *it);
 	}
 
@@ -320,13 +311,8 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 	bool in_check = attacked_squares_by_opponent & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
 
 	for (int depth = 1; depth < 30;) {
-		if (!white_turn) {
-			for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
-				it->sort_score = -it->sort_score;
-			}
-		}
 
-		int score = white_turn ? alpha : beta;
+		int score = alpha;
 		int a = alpha;
 		int b = beta;
 		MoveList next_iteration_root_moves;
@@ -382,54 +368,24 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 				if (res == -1) {
 					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
 					if (i > 0 && depth > 1) {
-						if (white_turn) {
-							int high = a + 1;
-							res = alphaBeta(!white_turn, depth - 1, a, high, b2, tt, in_check, killers2, quites_history, 1);
-							if (res == high) {
-								res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, in_check, killers2,
-										quites_history, 1);
-							} else {
-								res = a - i; // keep sort order
-							}
+						int high = a + 1;
+						res = -alpha_beta(!white_turn, depth - 1, -high, -a, b2, tt, in_check, killers2, quites_history, 1);
+						if (res >= high) {
+							// full window is necessary
+							res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2,
+									quites_history, 1);
 						} else {
-							int low = b - 1;
-							res = alphaBeta(!white_turn, depth - 1, low, b, b2, tt, in_check, killers2, quites_history,	1);
-							if (res == low) {
-								res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, in_check, killers2,
-										quites_history, 1);
-							} else {
-								res = b + i; // keep sort order
-							}
+							res = a - i; // keep sort order
 						}
 					} else {
-						res = alphaBeta(!white_turn, depth - 1, a, b, b2, tt, in_check, killers2, quites_history, 1);
+						res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1);
 					}
 				}
 				unmake_move(b2, root_move);
-				if (res > a && white_turn) {
+				if (res > a) {
 					score = res;
 					a = res;
 					// TODO extract method get_pv
-					for (int p = 1; p < depth; p++) {
-						pv[p] = 0;
-					}
-					pv[0] = root_move.m;
-					int next_pv_move = root_move.m;
-					uint32_t hash = b2.hash_key;
-					for (int p = 1; p < depth - 1; p++) {
-						hash ^= next_pv_move;
-						Transposition next = tt[hash % hash_size];
-						if (next.hash == hash && next.next_move != 0) {
-							pv[p] = next.next_move;
-							next_pv_move = next.next_move;
-						} else {
-							break;
-						}
-					}
-				}
-				if (res < b && !white_turn) {
-					score = res;
-					b = res;
 					for (int p = 1; p < depth; p++) {
 						pv[p] = 0;
 					}
@@ -451,7 +407,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 			} else {
 				// beta fail
 				// we just know that the rest of the moves are worse than the best move, or is this un-reachable code?
-				root_move.sort_score = white_turn ? a - i : b + i; // keep sort order
+				root_move.sort_score = a - i; // keep sort order
 			}
 			next_iteration_root_moves.push_back(root_move);
 		}
@@ -459,9 +415,9 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 				> (clock.now() - start).count();
 		if (score > alpha && score < beta) {
 			std::string pvstring = pvstring_from_stack(pv, depth);
-			// uci score is from engine perspective
-			int engine_score = white_turn ? score : -score;
-			std::cout << "info score cp " << engine_score << " depth " << depth << " time "
+
+			// uci info with score from engine's perspective
+			std::cout << "info score cp " << score << " depth " << depth << " time "
 					<< time_elapsed_last_depth_ms << " nodes " << node_count << " pv " << pvstring << "\n"
 					<< std::flush;
 
@@ -490,13 +446,10 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 		alpha = score - START_WINDOW_SIZE / 2;
 		beta = score + START_WINDOW_SIZE / 2;
 
-		// if mate is found at this depth, just stop searching for better moves. Cause there are none.. The best move at the last depth will prolong the inevitably as long as possible.
-		if ((white_turn && score < -5000) || (!white_turn && score > 5000)) {
-			// we are mated...
-			break;
-		}
+		// if mate is found at this depth, just stop searching for better moves.
+		// Cause there are none.. The best move at the last depth will prolong the inevitably as long as possible or deliver mate.
 		if (abs(score) > 5000) {
-			// deliver mate
+			// deliver mate or be mated
 			break;
 		}
 

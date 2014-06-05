@@ -152,8 +152,15 @@ const int KING_SQUARE_TABLE_ENDGAME[] = {
 		9980, 9990, 9990, 9990, 9990, 9990, 9990, 9980
 };
 
+/**
+ * High score: good for white
+ * Low score: good for black
+ */
 int evaluate(const Board& board);
 
+/**
+ * Score from side's perspective
+ */
 int nega_evaluate(const Board& board, bool white_turn);
 
 
