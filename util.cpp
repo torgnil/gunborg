@@ -262,12 +262,8 @@ int perft(Board& board, const int depth, const bool white_turn) {
 	int nodes = 0;
 	MoveList children = get_moves(board, white_turn);
 	for (auto it : children) {
-		if (is_illegal_castling_move(it, get_attacked_squares(board, !white_turn))) {
-			continue;
-		}
-		make_move(board, it);
-		bool in_check = get_attacked_squares(board, !white_turn) & (white_turn ? board.b[WHITE][KING] : board.b[BLACK][KING]);
-		if (!in_check) {
+		bool legal = make_move(board, it);
+		if (legal) {
 			nodes += perft(board, depth - 1, !white_turn);
 		}
 		unmake_move(board, it);

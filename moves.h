@@ -47,9 +47,12 @@ uint64_t get_attacked_squares(const Board& board, const bool white_turn);
 
 bool is_illegal_castling_move(const Move& root_move, uint64_t attacked_squares_by_opponent);
 
-void make_move(Board& board, Move move);
+/**
+ * Returns true if legal move.
+ */
+bool make_move(Board& board, Move move);
 
-void unmake_move(Board& board, Move move);
+void unmake_move(Board& board, Move& move);
 
 void init();
 

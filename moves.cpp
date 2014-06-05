@@ -51,7 +51,8 @@ uint64_t north_fill(uint64_t l) {
 	return l;
 }
 
-void make_move(Board& board, Move move) {
+
+bool make_move(Board& board, Move move) {
 	board.b[color(move.m)][piece(move.m)] &= ~(1ULL << from_square(move.m));
 	board.b[color(move.m)][piece(move.m)] |= (1ULL << to_square(move.m));
 	uint64_t meta_info = board.meta_info_stack.back();
@@ -69,7 +70,11 @@ void make_move(Board& board, Move move) {
 		board.b[color(move.m)][piece(move.m)] &= ~(1ULL << to_square(move.m));
 		board.b[color(move.m)][promotion_piece] |= (1ULL << to_square(move.m));
 	}
+	bool illegal_castling = false;
 	if (is_castling(move.m)) {
+		if (is_illegal_castling_move(move, get_attacked_squares(board, color(move.m)))) {
+			illegal_castling = true;
+		}
 		board.b[color(move.m)][ROOK] &= ~(1ULL << rook_castle_from_squares[to_square(move.m)]);
 		board.b[color(move.m)][ROOK] |= (1ULL << rook_castle_to_squares[to_square(move.m)]);
 	}
@@ -101,9 +106,14 @@ void make_move(Board& board, Move move) {
 	}
 	board.meta_info_stack.push_back(meta_info);
 	board.hash_key = board.hash_key ^ move.m;
+
+	if (illegal_castling || (get_attacked_squares(board, color(move.m)) & board.b[color(move.m)][KING])) {
+		return false;
+	}
+	return true;
 }
 
-void unmake_move(Board& board, Move move) {
+void unmake_move(Board& board, Move& move) {
 	board.b[color(move.m)][piece(move.m)] |= (1ULL << from_square(move.m));
 	board.b[color(move.m)][piece(move.m)] &= ~(1ULL << to_square(move.m));
 	int captured_piece = captured_piece(move.m);
@@ -571,9 +581,6 @@ void init() {
 }
 
 bool is_illegal_castling_move(const Move& move, const uint64_t attacked_squares_by_opponent) {
-	if (!is_castling(move.m)) {
-		return false;
-	}
 	uint64_t to_square = 1ULL << to_square(move.m);
 	if (to_square == C1) {
 		return (C1 | D1 | E1) & attacked_squares_by_opponent;

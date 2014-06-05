@@ -133,6 +133,7 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 		pick_next_move(capture_moves, i);
 		Move move = capture_moves[i];
 		make_move(board, move);
+
 		int res = -capture_quiescence_eval_search(!white_turn, -beta, -alpha, board);
 		unmake_move(board, move);
 		if (res >= beta || time_to_stop()) {
@@ -233,6 +234,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	Transposition t;
 	t.hash = board.hash_key;
 	int next_move = 0;
+	bool has_legal_move = false;
 	for (unsigned int i = 0; i < moves.size(); ++i) {
 
 		pick_next_move(moves, i);
@@ -246,7 +248,12 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			depth_reduction = 1;
 		}
 
-		make_move(board, child);
+		bool legal_move = make_move(board, child);
+		if (!legal_move) {
+			unmake_move(board, child);
+			continue;
+		}
+		has_legal_move = true;
 
 		int res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
 				killers, history, ply + 1);
@@ -284,6 +291,14 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	}
 	t.next_move = next_move;
 	tt[board.hash_key % hash_size] = t;
+	if (!has_legal_move) {
+		bool in_check = get_attacked_squares(board, !white_turn);
+		if (in_check) {
+			return -10000;
+		} else {
+			return 0; // stalemate
+		}
+	}
 	return alpha;
 }
 
@@ -320,16 +335,10 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 		for (unsigned int i = 0; i < root_moves.size(); i++) {
 			pick_next_move(root_moves, i);
 			Move root_move = root_moves[i];
-			if (is_illegal_castling_move(root_move, attacked_squares_by_opponent)) {
-				continue;
-			}
 			if (b > a) { //strict?
 				node_count++;
-				make_move(b2, root_move);
-				// check if legal move
-				bool illegal_move = get_attacked_squares(b2, !white_turn)
-						& (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
-				if (illegal_move) {
+				bool legal_move = make_move(b2, root_move);
+				if (!legal_move) {
 					unmake_move(b2, root_move);
 					continue;
 				}
@@ -344,25 +353,21 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 					// check if stale mate
 					bool opponent_in_check = get_attacked_squares(b2, white_turn)
 												& (white_turn ? b2.b[BLACK][KING] : b2.b[WHITE][KING]);
-					bool opponent_has_legal_move = false;
 					if (!opponent_in_check) {
+						bool opponent_has_legal_move = false;
 						MoveList oppenent_moves = get_moves(b2, !white_turn);
 						for (auto it = oppenent_moves.begin(); it != oppenent_moves.end(); ++it) {
-							make_move(b2, *it);
-							bool illegal_move = get_attacked_squares(b2, white_turn)
-													& (white_turn ? b2.b[BLACK][KING] : b2.b[WHITE][KING]);
-							if (!illegal_move) {
+							bool legal_move = make_move(b2, *it);
+							if (legal_move) {
 								opponent_has_legal_move = true;
 								unmake_move(b2,*it);
 								break;
 							}
 							unmake_move(b2,*it);
 						}
-					} else {
-						opponent_has_legal_move = true; // or mated..
-					}
-					if (!opponent_has_legal_move) {
-						res = 0;
+						if (!opponent_has_legal_move) {
+							res = 0;
+						}
 					}
 				}
 				if (res == -1) {
