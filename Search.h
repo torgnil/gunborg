@@ -43,6 +43,7 @@ private:
 	int total_generated_moves;
 
 	int alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt, bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply);
+	int nega_alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt, bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply);
 	int capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Board& board);
 
 	bool time_to_stop();

@@ -115,16 +115,13 @@ void pick_next_move(MoveList& moves, const int no_sorted_moves) {
 
 int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Board& board) {
 	if (board.b[WHITE][KING] == 0) {
-		return -10000;
+		return white_turn ? -10000 : 10000;
 	} else if (board.b[BLACK][KING] == 0) {
-		return 10000;
+		return white_turn ? 10000 : -10000;
 	}
 
-	int static_eval = evaluate(board);
-	if (static_eval > alpha && white_turn) {
-		return static_eval;
-	}
-	if (static_eval < beta && !white_turn) {
+	int static_eval = nega_evaluate(board, white_turn);
+	if (static_eval > alpha) {
 		return static_eval;
 	}
 
@@ -138,60 +135,61 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 		Move move = capture_moves[i];
 		quiescence_node_count++;
 		make_move(board, move);
-		int res = capture_quiescence_eval_search(!white_turn, alpha, beta, board);
+		int res = -capture_quiescence_eval_search(!white_turn, -beta, -alpha, board);
 		unmake_move(board, move);
-		if (res > alpha && white_turn) {
+		if (res >= beta || time_to_stop()) {
+			return beta;
+		}
+		if (res > alpha) {
 			alpha = res;
 		}
-		if (res < beta && !white_turn) {
-			beta = res;
-		}
-		if (beta <= alpha || time_to_stop()) {
-			break;
-		}
 	}
-	if (white_turn) {
-		return alpha;
-	}
-	return beta;
+	return alpha;
 }
 
 inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, int beta) {
 	if (depth > 3) {
 		return false;
 	}
-	int static_eval = evaluate(board);
 	if (depth == 1) {
+		int static_eval = nega_evaluate(board, white_turn);
 		// futility pruning. we do not hope to improve a position more than 300 in one move
-		if ((white_turn && (static_eval + 300) < alpha) || (!white_turn && (static_eval - 300) > beta)) {
+		if (static_eval + 300 < alpha) {
 			return true;
 		}
 	}
 	if (depth == 2) {
 		// extended futility pruning. we do not hope to improve a position more than 500 in two plies
-		int static_eval = evaluate(board);
-		if ((white_turn && (static_eval + 500) < alpha) || (!white_turn && (static_eval - 500) > beta)) {
+		int static_eval = nega_evaluate(board, white_turn);
+		if (static_eval + 500 < alpha) {
 			return true;
 		}
 	}
 	if (depth == 3) {
 		// extended futility pruning. we do not hope to improve a position more than 900 in three plies
-		int static_eval = evaluate(board);
-		if ((white_turn && (static_eval + 900) < alpha) || (!white_turn && (static_eval - 900) > beta)) {
+		int static_eval = nega_evaluate(board, white_turn);
+		if (static_eval + 900 < alpha) {
 			return true;
 		}
 	}
 	return false;
 }
 
+
 int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
+		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply) {
+	return white_turn ? nega_alphaBeta(white_turn, depth, alpha, beta, board, tt, null_move_not_allowed, killers, history, ply)
+				: -nega_alphaBeta(white_turn, depth, -beta, -alpha, board, tt, null_move_not_allowed, killers, history, ply);
+}
+
+int Search::nega_alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
 		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply) {
 
 	// If, mate we do not need search at greater depths
 	if (board.b[WHITE][KING] == 0) {
-		return -10000;
+		return white_turn ? -10000 : 10000;
 	} else if (board.b[BLACK][KING] == 0) {
-		return 10000;
+		return white_turn ? 10000 : -10000;
 	}
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
@@ -207,17 +205,12 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 		// 1. That the disadvantage of forfeiting one's turn is greater than the disadvantage of performing a shallower search.
 		// 2. That the beta cut-offs prunes enough branches to be worth the time searching at reduced depth
 		int R = 2; // depth reduction
-		int res = alphaBeta(!white_turn, depth - 1 - R, alpha, beta, board, tt, true, killers, history, ply + 1);
-		if (white_turn && res > alpha) {
-			alpha = res;
-		} else if (!white_turn && res < beta) {
-			beta = res;
-		}
-		if (beta <= alpha) {
-			if (white_turn) {
-				return alpha;
-			}
+		int res = -nega_alphaBeta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1);
+		if (res >= beta) {
 			return beta;
+		}
+		if (res > alpha) {
+			alpha = res;
 		}
 	}
 	MoveList moves = get_moves(board, white_turn);
@@ -264,52 +257,43 @@ int Search::alphaBeta(bool white_turn, int depth, int alpha, int beta, Board& bo
 
 		make_move(board, child);
 
-		int res = alphaBeta(!white_turn, depth - 1 - depth_reduction, alpha, beta, board, tt, null_move_not_allowed,
+		int res = -nega_alphaBeta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
 				killers, history, ply + 1);
 
 		if (depth_reduction != 0 && res > alpha && res < beta) {
 			// score improved "unexpected" at reduced depth
 			// re-search at normal depth
-			res = alphaBeta(!white_turn, depth - 1, alpha, beta, board, tt, null_move_not_allowed, killers, history,
+			res = -nega_alphaBeta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
 					ply + 1);
 		}
 
 		unmake_move(board, child);
 
-		if (res > alpha && white_turn) {
-			next_move = child.m;
-			alpha = res;
-			//history heuristics
-			if (!is_capture(child.m)) {
-				history[from_square(child.m)][to_square(child.m)] += depth;
-			}
-			// update pv
-		}
-		if (res < beta && !white_turn) {
-			next_move = child.m;
-			beta = res;
-			//history heuristics
-			if (!is_capture(child.m)) {
-				history[from_square(child.m)][to_square(child.m)] += depth;
-			}
-			// update pv
-		}
-		if (beta <= alpha || time_to_stop()) {
+		if (res >= beta || time_to_stop()) {
 			if (!is_capture(child.m)) {
 				if (killers[ply - 1][0].m != child.m) {
 					killers[ply - 1][1] = killers[ply - 1][0];
 					killers[ply - 1][0] = child;
 				}
 			}
-			break;
+			next_move = child.m;
+			t.next_move = next_move;
+			tt[board.hash_key % hash_size] = t;
+			return beta;
+		}
+
+		if (res > alpha) {
+			next_move = child.m;
+			alpha = res;
+			//history heuristics
+			if (!is_capture(child.m)) {
+				history[from_square(child.m)][to_square(child.m)] += depth;
+			}
 		}
 	}
 	t.next_move = next_move;
 	tt[board.hash_key % hash_size] = t;
-	if (white_turn) {
-		return alpha;
-	}
-	return beta;
+	return alpha;
 }
 
 void Search::search_best_move(const Board& board, const bool white_turn, const list history) {

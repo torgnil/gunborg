@@ -31,6 +31,11 @@ const int MAX_MATERIAL = 3100;
 
 }
 
+// returns the score from the playing side's perspective
+int nega_evaluate(const Board& board, bool white_turn) {
+	return white_turn ? evaluate(board) : -evaluate(board);
+}
+
 // score in centipawns
 int evaluate(const Board& board) {
 	int score = 0;

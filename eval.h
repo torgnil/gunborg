@@ -154,4 +154,7 @@ const int KING_SQUARE_TABLE_ENDGAME[] = {
 
 int evaluate(const Board& board);
 
+int nega_evaluate(const Board& board, bool white_turn);
+
+
 #endif /* EVAL_H_ */
