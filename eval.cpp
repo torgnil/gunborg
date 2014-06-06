@@ -132,7 +132,7 @@ int evaluate(const Board& board) {
 
 	uint64_t white_bishops = board.b[WHITE][BISHOP];
 	if (pop_count(white_bishops) == 2) {
-		score += 50;
+		score += BISHOP_PAIR_BONUS;
 	}
 	while (white_bishops) {
 		int i = lsb_to_square(white_bishops);
@@ -220,7 +220,7 @@ int evaluate(const Board& board) {
 
 	uint64_t black_bishops = board.b[BLACK][BISHOP];
 	if (pop_count(black_bishops) == 2) {
-		score -= 50;
+		score -= BISHOP_PAIR_BONUS;
 	}
 	while (black_bishops) {
 		int i = lsb_to_square(black_bishops);

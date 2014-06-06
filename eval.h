@@ -34,6 +34,7 @@ const int PASSED_PAWN_BONUS = 35;
 const int OPEN_FILE_BONUS = 15;
 const int SEMI_OPEN_FILE_BONUS = 7;
 const int UNSAFE_KING_PENALTY = 10;
+const int BISHOP_PAIR_BONUS = 50;
 
 // the value of a white pawn at all squares
 const int WHITE_PAWN_SQUARE_TABLE[] = {
