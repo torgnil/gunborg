@@ -41,7 +41,6 @@ namespace gunborg {
 Search::Search() {
 	max_think_time_ms = 10000;
 	node_count = 0;
-	total_generated_moves = 0;
 }
 
 inline bool Search::time_to_stop() {
@@ -129,11 +128,16 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 		// the end point of the quiescence search
 		return static_eval;
 	}
+	bool has_legal_capture = false;
 	for (unsigned int i = 0; i < capture_moves.size(); ++i) {
 		pick_next_move(capture_moves, i);
 		Move move = capture_moves[i];
-		make_move(board, move);
-
+		bool legal_move = make_move(board, move);
+		if (!legal_move) {
+			unmake_move(board, move);
+			continue;
+		}
+		has_legal_capture = true;
 		int res = -capture_quiescence_eval_search(!white_turn, -beta, -alpha, board);
 		unmake_move(board, move);
 		if (res >= beta || time_to_stop()) {
@@ -142,6 +146,9 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 		if (res > alpha) {
 			alpha = res;
 		}
+	}
+	if (!has_legal_capture) {
+		return static_eval;
 	}
 	return alpha;
 }
@@ -177,12 +184,6 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
 		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply) {
 
-	// If, mate we do not need search at greater depths
-	if (board.b[WHITE][KING] == 0) {
-		return white_turn ? -10000 : 10000;
-	} else if (board.b[BLACK][KING] == 0) {
-		return white_turn ? 10000 : -10000;
-	}
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 	}
@@ -229,7 +230,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			}
 		}
 	}
-	total_generated_moves += moves.size();
 
 	Transposition t;
 	t.hash = board.hash_key;
@@ -289,8 +289,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			}
 		}
 	}
-	t.next_move = next_move;
-	tt[board.hash_key % hash_size] = t;
 	if (!has_legal_move) {
 		bool in_check = get_attacked_squares(board, !white_turn);
 		if (in_check) {
@@ -299,6 +297,9 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			return 0; // stalemate
 		}
 	}
+	t.next_move = next_move;
+	tt[board.hash_key % hash_size] = t;
+
 	return alpha;
 }
 
@@ -342,7 +343,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 					unmake_move(b2, root_move);
 					continue;
 				}
-				int res = -1; // TODO clean up code
+				int res = -1;
 				for (auto hit = history.begin(); hit != history.end(); ++hit) {
 					if (is_equal(b2, *hit)) {
 						// draw by repetition
