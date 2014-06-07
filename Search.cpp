@@ -182,7 +182,7 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 }
 
 int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
-		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply) {
+		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, bool is_extended) {
 
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
@@ -198,7 +198,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		// 1. That the disadvantage of forfeiting one's turn is greater than the disadvantage of performing a shallower search.
 		// 2. That the beta cut-offs prunes enough branches to be worth the time searching at reduced depth
 		int R = 2; // depth reduction
-		int res = -alpha_beta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1);
+		int res = -alpha_beta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1, is_extended);
 		if (res >= beta) {
 			return beta;
 		}
@@ -238,54 +238,60 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	for (unsigned int i = 0; i < moves.size(); ++i) {
 
 		pick_next_move(moves, i);
-		Move child = moves[i];
+		Move move = moves[i];
 		node_count++;
-
-		// late move reduction.
-		// we assume sort order is good enough to not search later moves as deep as the first 5
-		int depth_reduction = 0;
-		if (depth > 2 && i > 5 && !is_capture(child.m)) {
-			depth_reduction = 1;
-		}
-
-		bool legal_move = make_move(board, child);
+		bool legal_move = make_move(board, move);
 		if (!legal_move) {
-			unmake_move(board, child);
+			unmake_move(board, move);
 			continue;
 		}
 		has_legal_move = true;
 
-		int res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
-				killers, history, ply + 1);
+		// late move reduction.
+		// we assume sort order is good enough to not search later moves as deep as the first 5
+		int depth_reduction = 0;
+		if (depth > 2 && i > 5 && !is_capture(move.m)) {
+			depth_reduction = 1;
+		}
+		if (!is_extended) {
+			// if this is a checking move, extend the search one ply
+			if (get_attacked_squares(board, white_turn) & board.b[white_turn ? BLACK : WHITE][KING]) {
+				is_extended = true;
+				depth_reduction = -1;
+			}
+		}
 
-		if (depth_reduction != 0 && res > alpha && res < beta) {
+		int res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
+				killers, history, ply + 1, is_extended);
+
+		if (depth_reduction > 0 && res > alpha && res < beta) {
 			// score improved "unexpected" at reduced depth
 			// re-search at normal depth
 			res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
-					ply + 1);
+					ply + 1, is_extended);
 		}
 
-		unmake_move(board, child);
+		unmake_move(board, move);
 
 		if (res >= beta || time_to_stop()) {
-			if (!is_capture(child.m)) {
-				if (killers[ply - 1][0].m != child.m) {
+			if (!is_capture(move.m)) {
+				if (killers[ply - 1][0].m != move.m) {
 					killers[ply - 1][1] = killers[ply - 1][0];
-					killers[ply - 1][0] = child;
+					killers[ply - 1][0] = move;
 				}
 			}
-			next_move = child.m;
+			next_move = move.m;
 			t.next_move = next_move;
 			tt[board.hash_key % hash_size] = t;
 			return beta;
 		}
 
 		if (res > alpha) {
-			next_move = child.m;
+			next_move = move.m;
 			alpha = res;
 			//history heuristics
-			if (!is_capture(child.m)) {
-				history[from_square(child.m)][to_square(child.m)] += depth;
+			if (!is_capture(move.m)) {
+				history[from_square(move.m)][to_square(move.m)] += depth;
 			}
 		}
 	}
@@ -375,16 +381,16 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
 					if (i > 0 && depth > 1) {
 						int high = a + 1;
-						res = -alpha_beta(!white_turn, depth - 1, -high, -a, b2, tt, in_check, killers2, quites_history, 1);
+						res = -alpha_beta(!white_turn, depth - 1, -high, -a, b2, tt, in_check, killers2, quites_history, 1, false);
 						if (res >= high) {
 							// full window is necessary
 							res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2,
-									quites_history, 1);
+									quites_history, 1, false);
 						} else {
 							res = a - i; // keep sort order
 						}
 					} else {
-						res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1);
+						res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1, false);
 					}
 				}
 				unmake_move(b2, root_move);
