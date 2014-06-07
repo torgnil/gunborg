@@ -260,8 +260,8 @@ int perft(Board& board, const int depth, const bool white_turn) {
 		return 1;
 	}
 	int nodes = 0;
-	MoveList children = get_moves(board, white_turn);
-	for (auto it : children) {
+	MoveList moves = get_moves(board, white_turn);
+	for (auto it : moves) {
 		bool legal = make_move(board, it);
 		if (legal) {
 			nodes += perft(board, depth - 1, !white_turn);

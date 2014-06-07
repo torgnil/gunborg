@@ -107,8 +107,8 @@ void pawn_captures() {
 	board.b[BLACK][PAWN] = E6;
 	board.b[WHITE][KING] = A1;
 	board.b[BLACK][KING] = H8;
-	MoveList children = get_moves(board, true);
-	assert_equals("should be 5 moves", children.size(), 5);
+	MoveList moves = get_moves(board, true);
+	assert_equals("should be 5 moves", moves.size(), 5);
 }
 
 void make_unmake() {
@@ -191,10 +191,10 @@ void white_knight_moves() {
 void start_moves() {
 	Board board = start_pos().board;
 
-	MoveList children = get_moves(board, true);
-	assert_equals("should be 20 white start moves", children.size(), 20);
-	children = get_moves(board, false);
-	assert_equals("should be 20 black start moves", children.size(), 20);
+	MoveList moves = get_moves(board, true);
+	assert_equals("should be 20 white start moves", moves.size(), 20);
+	moves = get_moves(board, false);
+	assert_equals("should be 20 black start moves", moves.size(), 20);
 
 }
 
@@ -206,9 +206,9 @@ void white_castling() {
 	board.b[WHITE][ROOK] = H1;
 
 	board.meta_info_stack.push_back(G1);
-	MoveList children = get_moves(board, true);
-	assert_equals("should be 21 white start moves", children.size(), 21);
-	Move castle_move = children.front();
+	MoveList moves = get_moves(board, true);
+	assert_equals("should be 21 white start moves", moves.size(), 21);
+	Move castle_move = moves.front();
 	assert_equals("from square", from_square(castle_move.m), 4);
 	assert_equals("to square", to_square(castle_move.m), 6);
 	assert_equals("piece is king", piece(castle_move.m), KING);
@@ -232,9 +232,9 @@ void white_en_passant_capture() {
 	board.b[WHITE][KING] = A1;
 	board.b[BLACK][KING] = H8;
 
-	MoveList children = get_moves(board, true);
-	assert_equals("Expect five moves", children.size(), 5);
-	for (auto it : children) {
+	MoveList moves = get_moves(board, true);
+	assert_equals("Expect five moves", moves.size(), 5);
+	for (auto it : moves) {
 		if (is_capture(it.m)) {
 			assert_equals("capture on e.p square", to_square(it.m), 43);
 			assert_equals("pawn mvvlva", it.sort_score, 1000006);
@@ -254,9 +254,9 @@ void black_en_passant_capture() {
 	board.b[WHITE][KING] = A1;
 	board.b[BLACK][KING] = H8;
 
-	MoveList children = get_moves(board, false);
-	assert_equals("Expect five moves", children.size(), 5);
-	for (auto it : children) {
+	MoveList moves = get_moves(board, false);
+	assert_equals("Expect five moves", moves.size(), 5);
+	for (auto it : moves) {
 		if (is_capture(it.m)) {
 			assert_equals("capture on e.p square", to_square(it.m), 20);
 			assert_equals("pawn mvvlva", it.sort_score, 1000006);
@@ -271,12 +271,12 @@ void black_en_passant_capture() {
 void forced_move() {
 	FenInfo fen_info = parse_fen("6k1/pp3pp1/4p2p/8/3P3P/3R2P1/q1K5/4R3 w - - 2 37");
 	Board board = fen_info.board;
-	MoveList children = get_moves(board, fen_info.white_turn);
+	MoveList moves = get_moves(board, fen_info.white_turn);
 
 	bool in_check = get_attacked_squares(board, !fen_info.white_turn);
 	assert_equals("in check", in_check, true);
 	int legal_moves = 0;
-	for (auto it  = children.begin(); it != children.end(); ++it) {
+	for (auto it  = moves.begin(); it != moves.end(); ++it) {
 		make_move(board, *it);
 		if (!(get_attacked_squares(board, !fen_info.white_turn) & board.b[WHITE][KING])) {
 			legal_moves++;
