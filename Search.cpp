@@ -296,7 +296,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 	}
 	if (!has_legal_move) {
-		bool in_check = get_attacked_squares(board, !white_turn);
+		bool in_check = get_attacked_squares(board, !white_turn) & board.b[white_turn ? WHITE : BLACK][KING];
 		if (in_check) {
 			return -10000;
 		} else {
