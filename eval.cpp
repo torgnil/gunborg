@@ -78,7 +78,7 @@ int evaluate(const Board& board) {
 	uint64_t white_pawns = board.b[WHITE][PAWN];
 
 	uint64_t white_passed_pawns = ~black_pawn_blocking_squares & white_pawns;
-	score += pop_count(white_passed_pawns) * PASSED_PAWN_BONUS;
+	score += pop_count(white_passed_pawns) * PASSED_PAWN_BONUS * (MAX_MATERIAL - total_material) / MAX_MATERIAL;
 
 	uint64_t white_doubled_pawns = white_double_pawn_mask & white_pawns;
 	score -= pop_count(white_doubled_pawns) * DOUBLED_PAWN_PENALTY;
@@ -168,7 +168,7 @@ int evaluate(const Board& board) {
 	uint64_t black_pawns = board.b[BLACK][PAWN];
 
 	uint64_t black_passed_pawns = ~white_pawn_blocking_squares & black_pawns;
-	score -= pop_count(black_passed_pawns) * PASSED_PAWN_BONUS;
+	score -= pop_count(black_passed_pawns) * PASSED_PAWN_BONUS * (MAX_MATERIAL - total_material) / MAX_MATERIAL;
 
 	uint64_t black_doubled_pawns = black_double_pawn_mask & black_pawns;
 	score += pop_count(black_doubled_pawns) * DOUBLED_PAWN_PENALTY;
