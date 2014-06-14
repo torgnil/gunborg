@@ -30,11 +30,11 @@
 const int DOUBLED_PAWN_PENALTY = 12;
 const int ISOLATED_PAWN_PENALTY = 14;
 const int BACKWARD_PAWN_PENALTY = 8;
-const int PASSED_PAWN_BONUS = 20;
+const int PASSED_PAWN_BONUS = 29;
 const int OPEN_FILE_BONUS = 14;
 const int SEMI_OPEN_FILE_BONUS = 8;
 const int UNSAFE_KING_PENALTY = 9;
-const int BISHOP_PAIR_BONUS = 48;
+const int BISHOP_PAIR_BONUS = 47;
 
 // the value of a white pawn at all squares
 const int WHITE_PAWN_SQUARE_TABLE[] = {
@@ -101,10 +101,10 @@ const int KNIGHT_SQUARE_TABLE[] = {
 const int BISHOP_SQUARE_TABLE[] = {
 		275, 295, 295, 295, 295, 295, 295, 275,
 		295, 300, 300, 300, 300, 300, 300, 295,
-		295, 300, 300, 300, 300, 300, 300, 295,
-		295, 300, 300, 300, 300, 300, 300, 295,
-		295, 300, 300, 300, 300, 300, 300, 295,
-		295, 300, 300, 300, 300, 300, 300, 295,
+		295, 300, 312, 310, 310, 312, 300, 295,
+		295, 300, 310, 309, 309, 310, 300, 295,
+		295, 300, 310, 309, 309, 310, 300, 295,
+		295, 300, 312, 310, 310, 312, 300, 295,
 		295, 300, 300, 300, 300, 300, 300, 295,
 		275, 295, 295, 295, 295, 295, 295, 275, };
 
