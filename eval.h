@@ -27,14 +27,14 @@
 #include "board.h"
 
 
-const int DOUBLED_PAWN_PENALTY = 10;
-const int ISOLATED_PAWN_PENALTY = 15;
-const int BACKWARD_PAWN_PENALTY = 7;
-const int PASSED_PAWN_BONUS = 35;
-const int OPEN_FILE_BONUS = 15;
-const int SEMI_OPEN_FILE_BONUS = 7;
-const int UNSAFE_KING_PENALTY = 10;
-const int BISHOP_PAIR_BONUS = 50;
+const int DOUBLED_PAWN_PENALTY = 12;
+const int ISOLATED_PAWN_PENALTY = 14;
+const int BACKWARD_PAWN_PENALTY = 8;
+const int PASSED_PAWN_BONUS = 20;
+const int OPEN_FILE_BONUS = 16;
+const int SEMI_OPEN_FILE_BONUS = 14;
+const int UNSAFE_KING_PENALTY = 9;
+const int BISHOP_PAIR_BONUS = 48;
 
 // the value of a white pawn at all squares
 const int WHITE_PAWN_SQUARE_TABLE[] = {
