@@ -31,8 +31,8 @@ const int DOUBLED_PAWN_PENALTY = 12;
 const int ISOLATED_PAWN_PENALTY = 14;
 const int BACKWARD_PAWN_PENALTY = 8;
 const int PASSED_PAWN_BONUS = 20;
-const int OPEN_FILE_BONUS = 16;
-const int SEMI_OPEN_FILE_BONUS = 14;
+const int OPEN_FILE_BONUS = 14;
+const int SEMI_OPEN_FILE_BONUS = 8;
 const int UNSAFE_KING_PENALTY = 9;
 const int BISHOP_PAIR_BONUS = 48;
 
