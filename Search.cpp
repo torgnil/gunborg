@@ -165,9 +165,9 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 		}
 	}
 	if (depth == 2) {
-		// extended futility pruning. we do not hope to improve a position more than 500 in two plies
+		// extended futility pruning. we do not hope to improve a position more than 520 in two plies
 		int static_eval = nega_evaluate(board, white_turn);
-		if (static_eval + 500 < alpha) {
+		if (static_eval + 520 < alpha) {
 			return true;
 		}
 	}
