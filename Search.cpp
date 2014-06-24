@@ -323,7 +323,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 
 	int alpha = INT_MIN;
 	int beta = INT_MAX;
-	int START_WINDOW_SIZE = 25;
+	int START_WINDOW_SIZE = 20;
 	Move killers2[32][2];
 	int quites_history[64][64] = { };
 	Transposition * tt = new Transposition[hash_size];
