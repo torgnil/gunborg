@@ -146,6 +146,7 @@ int evaluate(const Board& board) {
 	while (white_bishops) {
 		int i = lsb_to_square(white_bishops);
 		score += BISHOP_SQUARE_TABLE[i];
+		score += BISHOP_MOBILITY_BONUS * pop_count(bishop_attacks(occupied_squares, i) & ~white_squares);
 		white_bishops = reset_lsb(white_bishops);
 	}
 
@@ -235,6 +236,7 @@ int evaluate(const Board& board) {
 	while (black_bishops) {
 		int i = lsb_to_square(black_bishops);
 		score -= BISHOP_SQUARE_TABLE[63 - i];
+		score -= BISHOP_MOBILITY_BONUS * pop_count(bishop_attacks(occupied_squares, i) & ~black_squares);
 		black_bishops = reset_lsb(black_bishops);
 	}
 
