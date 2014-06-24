@@ -93,8 +93,8 @@ int evaluate(const Board& board) {
 
 	while (white_pawns) {
 		int i = lsb_to_square(white_pawns);
-		score += WHITE_PAWN_SQUARE_TABLE_ENDGAME[i] - WHITE_PAWN_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
-		score += WHITE_PAWN_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
+		score += PAWN_SQUARE_TABLE_ENDGAME[i] - PAWN_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
+		score += PAWN_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
 		white_pawns = reset_lsb(white_pawns);
 	}
 
@@ -157,7 +157,7 @@ int evaluate(const Board& board) {
 
 	while (white_rooks) {
 		int i = lsb_to_square(white_rooks);
-		score += WHITE_ROOK_SQUARE_TABLE[i];
+		score += ROOK_SQUARE_TABLE[i];
 		white_rooks = reset_lsb(white_rooks);
 	}
 	while (white_queens) {
@@ -182,8 +182,8 @@ int evaluate(const Board& board) {
 
 	while (black_pawns) {
 		int i = lsb_to_square(black_pawns);
-		score -= BLACK_PAWN_SQUARE_TABLE_ENDGAME[i]  - BLACK_PAWN_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
-		score -= BLACK_PAWN_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
+		score -= PAWN_SQUARE_TABLE_ENDGAME[63 - i]  - PAWN_SQUARE_TABLE_ENDGAME[63 -i] * total_material/MAX_MATERIAL;
+		score -= PAWN_SQUARE_TABLE[63 - i] * total_material/MAX_MATERIAL;
 		black_pawns = reset_lsb(black_pawns);
 	}
 	uint64_t black_king = board.b[BLACK][KING];
@@ -224,14 +224,14 @@ int evaluate(const Board& board) {
 	}
 	while (black_bishops) {
 		int i = lsb_to_square(black_bishops);
-		score -= BISHOP_SQUARE_TABLE[i];
+		score -= BISHOP_SQUARE_TABLE[63 - i];
 		black_bishops = reset_lsb(black_bishops);
 	}
 
 	uint64_t black_knights = board.b[BLACK][KNIGHT];
 	while (black_knights) {
 		int i = lsb_to_square(black_knights);
-		score -= KNIGHT_SQUARE_TABLE[i];
+		score -= KNIGHT_SQUARE_TABLE[63 - i];
 		black_knights = reset_lsb(black_knights);
 	}
 	uint64_t black_rooks = board.b[BLACK][ROOK];
@@ -245,7 +245,7 @@ int evaluate(const Board& board) {
 
 	while (black_rooks) {
 		int i = lsb_to_square(black_rooks);
-		score -= BLACK_ROOK_SQUARE_TABLE[i];
+		score -= ROOK_SQUARE_TABLE[63 - i];
 		black_rooks = reset_lsb(black_rooks);
 	}
 	while (black_queens) {
