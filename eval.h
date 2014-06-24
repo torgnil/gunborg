@@ -35,6 +35,7 @@ const int OPEN_FILE_BONUS = 14;
 const int SEMI_OPEN_FILE_BONUS = 8;
 const int UNSAFE_KING_PENALTY = 9;
 const int BISHOP_PAIR_BONUS = 47;
+const int ROOK_MOBILITY_BONUS = 3;
 
 // the value of a white pawn at all squares from white's perspective
 const int PAWN_SQUARE_TABLE[] = {

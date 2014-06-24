@@ -23,6 +23,7 @@
 
 #include "board.h"
 #include "eval.h"
+#include "magic.h"
 #include "moves.h"
 
 namespace {
@@ -38,6 +39,14 @@ int nega_evaluate(const Board& board, bool white_turn) {
 
 // score in centipawns
 int evaluate(const Board& board) {
+	uint64_t black_squares = board.b[BLACK][KING] | board.b[BLACK][PAWN] | board.b[BLACK][KNIGHT]
+			| board.b[BLACK][BISHOP] | board.b[BLACK][ROOK] | board.b[BLACK][QUEEN];
+
+	uint64_t white_squares = board.b[WHITE][KING] | board.b[WHITE][PAWN] | board.b[WHITE][KNIGHT]
+			| board.b[WHITE][BISHOP] | board.b[WHITE][ROOK] | board.b[WHITE][QUEEN];
+
+	uint64_t occupied_squares = black_squares | white_squares;
+
 	int white_piece_material = pop_count(board.b[WHITE][QUEEN]) * 900
 			+ pop_count(board.b[WHITE][ROOK]) * 500
 			+ pop_count(board.b[WHITE][BISHOP]) * 300
@@ -158,6 +167,7 @@ int evaluate(const Board& board) {
 	while (white_rooks) {
 		int i = lsb_to_square(white_rooks);
 		score += ROOK_SQUARE_TABLE[i];
+		score += ROOK_MOBILITY_BONUS * pop_count(rook_attacks(occupied_squares, i) & ~white_squares);
 		white_rooks = reset_lsb(white_rooks);
 	}
 	while (white_queens) {
@@ -246,6 +256,7 @@ int evaluate(const Board& board) {
 	while (black_rooks) {
 		int i = lsb_to_square(black_rooks);
 		score -= ROOK_SQUARE_TABLE[63 - i];
+		score -= ROOK_MOBILITY_BONUS * pop_count(rook_attacks(occupied_squares, i) & ~black_squares);
 		black_rooks = reset_lsb(black_rooks);
 	}
 	while (black_queens) {
