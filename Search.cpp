@@ -248,10 +248,12 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		has_legal_move = true;
 
 		// late move reduction.
-		// we assume sort order is good enough to not search later moves as deep as the first 5
+		// we assume sort order is good enough to not search later moves as deep as the first
 		int depth_reduction = 0;
 		if (depth > 2 && i > 5 && !is_capture(move.m)) {
 			depth_reduction = 1;
+		} else if (depth > 2 && i > 10) {
+			depth_reduction = 2;
 		}
 		if (!is_extended) {
 			// if this is a checking move, extend the search one ply
