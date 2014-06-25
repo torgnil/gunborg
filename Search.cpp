@@ -252,8 +252,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		int depth_reduction = 0;
 		if (depth > 2 && i > 5 && !is_capture(move.m)) {
 			depth_reduction = 1;
-		} else if (depth > 2 && i > 10) {
-			depth_reduction = 2;
 		}
 		if (!is_extended) {
 			// if this is a checking move, extend the search one ply
@@ -325,7 +323,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 
 	int alpha = INT_MIN;
 	int beta = INT_MAX;
-	int START_WINDOW_SIZE = 20;
+	int START_WINDOW_SIZE = 25;
 	Move killers2[32][2];
 	int quites_history[64][64] = { };
 	Transposition * tt = new Transposition[hash_size];
