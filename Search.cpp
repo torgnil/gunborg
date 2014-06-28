@@ -394,7 +394,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 					}
 				}
 				unmake_move(b2, root_move);
-				if (res > a) {
+				if (res > a && (!time_to_stop() || i == 0)) {
 					score = res;
 					a = res;
 					// TODO extract method get_pv
