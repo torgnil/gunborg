@@ -310,16 +310,28 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 		while (capture_squares_w) {
 			int to = lsb_to_square(capture_squares_w);
 			int from = to - 7;
-			int promotion = to > 55 ? QUEEN : EMPTY;
-			add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, promotion);
+			if (to <= 55) {
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, EMPTY);
+			} else {
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, QUEEN);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, ROOK);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, BISHOP);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, KNIGHT);
+			}
 			capture_squares_w = reset_lsb(capture_squares_w);
 		}
 		uint64_t capture_squares_e = ((board.b[WHITE][PAWN] & ~NE_BORDER) << 9) & (black_squares | (meta_info & ROW_6));
 		while (capture_squares_e) {
 			int to = lsb_to_square(capture_squares_e);
 			int from = to - 9;
-			int promotion = to > 55 ? QUEEN : EMPTY;
-			add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, promotion);
+			if (to <= 55) {
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, EMPTY);
+			} else {
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, QUEEN);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, ROOK);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, BISHOP);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, KNIGHT);
+			}
 			capture_squares_e = reset_lsb(capture_squares_e);
 		}
 	} else {
@@ -328,16 +340,28 @@ MoveList get_captures(const Board& board, const bool white_turn) {
 		while (capture_squares_w) {
 			int to = lsb_to_square(capture_squares_w);
 			int from = to + 9;
-			int promotion = to < 8 ? QUEEN : EMPTY;
-			add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, promotion);
+			if (to >= 8) {
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, EMPTY);
+			} else {
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, QUEEN);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, ROOK);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, BISHOP);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, KNIGHT);
+			}
 			capture_squares_w = reset_lsb(capture_squares_w);
 		}
 		uint64_t capture_squares_e = ((board.b[BLACK][PAWN] & ~SE_BORDER) >> 7) & (white_squares | (meta_info & ROW_3));
 		while (capture_squares_e) {
 			int to = lsb_to_square(capture_squares_e);
 			int from = to + 7;
-			int promotion = to < 8 ? QUEEN : EMPTY;
-			add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, promotion);
+			if (to >= 8) {
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, EMPTY);
+			} else {
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, QUEEN);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, ROOK);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, BISHOP);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, KNIGHT);
+			}
 			capture_squares_e = reset_lsb(capture_squares_e);
 		}
 	}
@@ -440,8 +464,14 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			int from = to - 8;
-			int promotion = to > 55 ? QUEEN : EMPTY;
-			add_quite_move(from, to, WHITE, PAWN, moves, promotion);
+			if (to <= 55) {
+				add_quite_move(from, to, WHITE, PAWN, moves, EMPTY);
+			} else {
+				add_quite_move(from, to, WHITE, PAWN, moves, QUEEN);
+				add_quite_move(from, to, WHITE, PAWN, moves, ROOK);
+				add_quite_move(from, to, WHITE, PAWN, moves, BISHOP);
+				add_quite_move(from, to, WHITE, PAWN, moves, KNIGHT);
+			}
 			to_squares = reset_lsb(to_squares);
 		}
 		while (two_step_squares) {
@@ -455,16 +485,28 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 		while (capture_squares_w) {
 			int to = lsb_to_square(capture_squares_w);
 			int from = to - 7;
-			int promotion = to > 55 ? QUEEN : EMPTY;
-			add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, promotion);
+			if (to <= 55) {
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, EMPTY);
+			} else {
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, QUEEN);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, ROOK);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, BISHOP);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, KNIGHT);
+			}
 			capture_squares_w = reset_lsb(capture_squares_w);
 		}
 		uint64_t capture_squares_e = ((board.b[WHITE][PAWN] & ~NE_BORDER) << 9) & (black_squares | (meta_info & ROW_6));
 		while (capture_squares_e) {
 			int to = lsb_to_square(capture_squares_e);
 			int from = to - 9;
-			int promotion = to > 55 ? QUEEN : EMPTY;
-			add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, promotion);
+			if (to <= 55) {
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, EMPTY);
+			} else {
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, QUEEN);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, ROOK);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, BISHOP);
+				add_capture_move(from, to, WHITE, PAWN, piece_at_square(board, to, BLACK), moves, KNIGHT);
+			}
 			capture_squares_e = reset_lsb(capture_squares_e);
 		}
 		// white king moves
@@ -496,8 +538,14 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			int from = to + 8;
-			int promotion = to < 8 ? QUEEN : EMPTY;
-			add_quite_move(from, to, BLACK, PAWN, moves, promotion);
+			if (to >= 8) {
+				add_quite_move(from, to, BLACK, PAWN, moves, EMPTY);
+			} else {
+				add_quite_move(from, to, BLACK, PAWN, moves, QUEEN);
+				add_quite_move(from, to, BLACK, PAWN, moves, ROOK);
+				add_quite_move(from, to, BLACK, PAWN, moves, BISHOP);
+				add_quite_move(from, to, BLACK, PAWN, moves, KNIGHT);
+			}
 			to_squares = reset_lsb(to_squares);
 		}
 		while (two_step_squares) {
@@ -511,16 +559,28 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 		while (capture_squares_w) {
 			int to = lsb_to_square(capture_squares_w);
 			int from = to + 9;
-			int promotion = to < 8 ? QUEEN : EMPTY;
-			add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, promotion);
+			if (to >= 8) {
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, EMPTY);
+			} else {
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, QUEEN);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, ROOK);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, BISHOP);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, KNIGHT);
+			}
 			capture_squares_w = reset_lsb(capture_squares_w);
 		}
 		uint64_t capture_squares_e = ((board.b[BLACK][PAWN] & ~SE_BORDER) >> 7) & (white_squares | (meta_info & ROW_3));
 		while (capture_squares_e) {
 			int to = lsb_to_square(capture_squares_e);
 			int from = to + 7;
-			int promotion = to < 8 ? QUEEN : EMPTY;
-			add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, promotion);
+			if (to >= 8) {
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, EMPTY);
+			} else {
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, QUEEN);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, ROOK);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, BISHOP);
+				add_capture_move(from, to, BLACK, PAWN, piece_at_square(board, to, WHITE), moves, KNIGHT);
+			}
 			capture_squares_e = reset_lsb(capture_squares_e);
 		}
 		// black king moves

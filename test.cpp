@@ -287,11 +287,28 @@ void forced_move() {
 }
 
 void perft_test()  {
-	FenInfo fen_info = parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+	FenInfo fen_info = parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); // startpos
 	Board board = fen_info.board;
+	assert_equals("depth 1", perft(board, 1, fen_info.white_turn), 20);
+	assert_equals("depth 2", perft(board, 2, fen_info.white_turn), 400);
+	assert_equals("depth 3", perft(board, 3, fen_info.white_turn), 8902);
+	assert_equals("depth 4", perft(board, 4, fen_info.white_turn), 197281);
+	assert_equals("depth 5", perft(board, 5, fen_info.white_turn), 4865609);
+
+	fen_info = parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"); // "kiwipete" by Peter McKenzie
+	board = fen_info.board;
 	assert_equals("depth 1", perft(board, 1, fen_info.white_turn), 48);
 	assert_equals("depth 2", perft(board, 2, fen_info.white_turn), 2039);
 	assert_equals("depth 3", perft(board, 3, fen_info.white_turn), 97862);
+	assert_equals("depth 4", perft(board, 4, fen_info.white_turn), 4085603);
+
+	fen_info = parse_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+	board = fen_info.board;
+	assert_equals("depth 1", perft(board, 1, fen_info.white_turn), 6);
+	assert_equals("depth 2", perft(board, 2, fen_info.white_turn), 264);
+	assert_equals("depth 3", perft(board, 3, fen_info.white_turn), 9467);
+	assert_equals("depth 4", perft(board, 4, fen_info.white_turn), 422333);
+
 }
 
 void run_tests() {

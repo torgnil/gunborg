@@ -160,8 +160,23 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 	int piece = piece_at_square(board, from, white_turn ? WHITE : BLACK);
 	int color = white_turn ? WHITE : BLACK;
 	if (piece == PAWN && ((to_square & ROW_8) || (to_square & ROW_1))) {
-		// TODO under promotion
-		promotion = QUEEN;
+		if (move_str.size() == 5) {
+			if (move_str[4] == 'n') {
+				promotion = KNIGHT;
+			} else if (move_str[4] == 'b') {
+				promotion = BISHOP;
+			} else if (move_str[4] == 'r') {
+				promotion = ROOK;
+			} else if (move_str[4] == 'q') {
+				promotion = QUEEN;
+			} else {
+				// unexpected promotion piece type, assume queen
+				promotion = QUEEN;
+			}
+		} else {
+			// promotion piece type is for some reason is missing, assume queen
+			promotion = QUEEN;
+		}
 	}
 	bool en_passant_capture = false;
 	if (piece == PAWN && (to_square & meta_info & (ROW_6 | ROW_3))) {
