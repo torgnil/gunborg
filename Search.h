@@ -40,7 +40,7 @@ private:
 	std::string best_move;
 	int node_count;
 
-	int alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt, bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, bool is_extended);
+	int alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt, bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension);
 	int capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Board& board);
 
 	bool time_to_stop();

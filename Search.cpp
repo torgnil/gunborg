@@ -38,6 +38,8 @@
 
 namespace gunborg {
 
+const int MAX_CHECK_EXTENSION = 2;
+
 Search::Search() {
 	max_think_time_ms = 10000;
 	node_count = 0;
@@ -182,7 +184,7 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 }
 
 int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
-		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, bool is_extended) {
+		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
 
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
@@ -198,7 +200,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		// 1. That the disadvantage of forfeiting one's turn is greater than the disadvantage of performing a shallower search.
 		// 2. That the beta cut-offs prunes enough branches to be worth the time searching at reduced depth
 		int R = 2; // depth reduction
-		int res = -alpha_beta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1, is_extended);
+		int res = -alpha_beta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1, extension);
 		if (res >= beta) {
 			return beta;
 		}
@@ -253,22 +255,22 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		if (depth > 2 && i > 5 && !is_capture(move.m)) {
 			depth_reduction = 1;
 		}
-		if (!is_extended) {
+		if (extension < MAX_CHECK_EXTENSION) {
 			// if this is a checking move, extend the search one ply
 			if (get_attacked_squares(board, white_turn) & board.b[white_turn ? BLACK : WHITE][KING]) {
-				is_extended = true;
+				extension++;
 				depth_reduction = -1;
 			}
 		}
 
 		int res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
-				killers, history, ply + 1, is_extended);
+				killers, history, ply + 1, extension);
 
 		if (depth_reduction > 0 && res > alpha && res < beta) {
 			// score improved "unexpected" at reduced depth
 			// re-search at normal depth
 			res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
-					ply + 1, is_extended);
+					ply + 1, extension);
 		}
 
 		unmake_move(board, move);
@@ -381,16 +383,16 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
 					if (i > 0 && depth > 1) {
 						int high = a + 1;
-						res = -alpha_beta(!white_turn, depth - 1, -high, -a, b2, tt, in_check, killers2, quites_history, 1, false);
+						res = -alpha_beta(!white_turn, depth - 1, -high, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
 						if (res >= high) {
 							// full window is necessary
 							res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2,
-									quites_history, 1, false);
+									quites_history, 1, 0);
 						} else {
 							res = a - i; // keep sort order
 						}
 					} else {
-						res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1, false);
+						res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
 					}
 				}
 				unmake_move(b2, root_move);
