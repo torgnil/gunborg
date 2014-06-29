@@ -40,7 +40,6 @@ FenInfo start_pos() {
 }
 
 FenInfo parse_fen(string fen) {
-
 	Board board;
 	uint64_t meta_info = 0;
 	int row = 8;
@@ -95,14 +94,15 @@ FenInfo parse_fen(string fen) {
 			file = 1;
 		}
 	}
+
 	// 1. position
 	// 2. turn
 	// 3. castle rights
 	// 4. en passant squares
 	// 5. moves since capture and/or pawn move
 	// 6. move number.
-
 	vector<string> fen_strs = split(fen);
+
 	string castling_rights_str = fen_strs[2];
 	if (castling_rights_str.find('K') != string::npos) {
 		meta_info |= G1;
@@ -116,7 +116,11 @@ FenInfo parse_fen(string fen) {
 	if (castling_rights_str.find('q') != string::npos) {
 		meta_info |= C8;
 	}
-
+	string en_passant = fen_strs[3];
+	if (en_passant.size() == 2) {
+		uint64_t en_passant_square = 1ULL << (8 * (atoi(&en_passant.at(1))-1) + en_passant[0] - 'a');
+		meta_info |= en_passant_square;
+	}
 	board.meta_info_stack.push_back(meta_info);
 
 	FenInfo fen_info;

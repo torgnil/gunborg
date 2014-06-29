@@ -308,7 +308,13 @@ void perft_test()  {
 	assert_equals("depth 2", perft(board, 2, fen_info.white_turn), 264);
 	assert_equals("depth 3", perft(board, 3, fen_info.white_turn), 9467);
 	assert_equals("depth 4", perft(board, 4, fen_info.white_turn), 422333);
+}
 
+void fen_en_passant() {
+	FenInfo fen_info = parse_fen("rnbqkbnr/ppppp1pp/8/8/4Pp2/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+	Board board = fen_info.board;
+	MoveList moves = get_captures(board, fen_info.white_turn);
+	assert_equals("one en passant capture", moves.size(), 1);
 }
 
 void run_tests() {
@@ -330,6 +336,7 @@ void run_tests() {
 
 	white_en_passant_capture();
 	black_en_passant_capture();
+	fen_en_passant();
 
 	perft_test();
 
