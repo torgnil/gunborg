@@ -118,7 +118,7 @@ FenInfo parse_fen(string fen) {
 	}
 	string en_passant = fen_strs[3];
 	if (en_passant.size() == 2) {
-		uint64_t en_passant_square = 1ULL << (8 * (atoi(&en_passant.at(1))-1) + en_passant[0] - 'a');
+		uint64_t en_passant_square = 1ULL << (8 * (en_passant[1] - '0' -1) + en_passant[0] - 'a');
 		meta_info |= en_passant_square;
 	}
 	board.meta_info_stack.push_back(meta_info);
