@@ -216,7 +216,7 @@ void uci() {
 		string line;
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
-			cout << "id name gunborg 0.7x\n";
+			cout << "id name gunborg 1.0\n";
 			cout << "id author Torbjorn Nilsson\n";
 			cout << "option name Hash type spin default 4 min 1 max 32\n";
 			cout << "uciok\n" << flush;
