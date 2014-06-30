@@ -38,7 +38,7 @@
 
 namespace gunborg {
 
-const int MAX_CHECK_EXTENSION = 1;
+const int MAX_CHECK_EXTENSION = 2;
 
 Search::Search() {
 	max_think_time_ms = 10000;
