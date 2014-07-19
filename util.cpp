@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <stdlib.h>
 
 std::string pvstring_from_stack(int * pv, int size) {
 	std::string pv_string;
