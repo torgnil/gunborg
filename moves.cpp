@@ -23,6 +23,7 @@
 
 #include "moves.h"
 #include "magic.h"
+#include <stdlib.h>
 
 int rook_castle_to_squares[64];
 int rook_castle_from_squares[64];
