@@ -83,4 +83,15 @@ inline int piece_at_square(const Board& board, int square, int color) {
 	return piece_at_board(board, (1ULL << square), color);
 }
 
+
+const uint64_t randoms[8] = {0x4f6b51e21c5b81dc, 0xf9ebb81edf60c6df, 0x902a7518765f9cd0, 0x790aa2bfb958bef7, 0x37b260633706d7b3, 0xd8bdb9e89ab98616, 0x0dd67a10e981dac1, 0xaadf786e8113f5bd};
+
+/**
+ * To avoid hash collisions of similiar positions we xor move info with pre-generated 64-bit random numbers
+ */
+inline uint64_t move_hash(uint32_t move) {
+	uint64_t move_64 = (((uint64_t) move) << 32) | move;
+	return randoms[from_square(move) % 8] ^ move_64;
+}
+
 #endif /* MOVES_H_ */

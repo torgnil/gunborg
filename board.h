@@ -31,7 +31,7 @@
 struct Board {
 	uint64_t b[2][6] = {}; //[WHITE|BLACK][PAWN ... KING]
 	std::vector<uint64_t> meta_info_stack;
-	uint32_t hash_key = 0;
+	uint64_t hash_key = 0;
 };
 
 // meta_info:

@@ -120,7 +120,7 @@ void make_unmake() {
 
 	make_move(board, move);
 	assert_equals("Pawn at A5", board.b[WHITE][PAWN], A5);
-	assert_equals("make hash", board.hash_key, move.m);
+	assert_equals("make hash", board.hash_key, 0 ^ move_hash(move.m));
 	unmake_move(board, move);
 	assert_equals("Pawn unmaked to A4", board.b[WHITE][PAWN], A4);
 	assert_equals("unmake hash", board.hash_key, 0);

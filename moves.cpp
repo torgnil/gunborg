@@ -52,7 +52,6 @@ uint64_t north_fill(uint64_t l) {
 	return l;
 }
 
-
 bool make_move(Board& board, Move move) {
 	board.b[color(move.m)][piece(move.m)] &= ~(1ULL << from_square(move.m));
 	board.b[color(move.m)][piece(move.m)] |= (1ULL << to_square(move.m));
@@ -106,7 +105,7 @@ bool make_move(Board& board, Move move) {
 		}
 	}
 	board.meta_info_stack.push_back(meta_info);
-	board.hash_key = board.hash_key ^ move.m;
+	board.hash_key = board.hash_key ^ move_hash(move.m);
 
 	if (illegal_castling || (get_attacked_squares(board, color(move.m)) & board.b[color(move.m)][KING])) {
 		return false;
@@ -136,7 +135,7 @@ void unmake_move(Board& board, Move& move) {
 	}
 	// reverse meta-info by poping the last element from the stack
 	board.meta_info_stack.pop_back();
-	board.hash_key = board.hash_key ^ move.m;
+	board.hash_key = board.hash_key ^ move_hash(move.m);
 }
 
 inline void add_quite_move(const int& from, const int& to, const int& color, const int& piece, MoveList& moves,

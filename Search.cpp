@@ -212,10 +212,10 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	if (moves.empty()) {
 		return 0;
 	}
-	Transposition tt_pv = tt[board.hash_key % hash_size];
+	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
-		if (tt_pv.next_move != 0 && tt_pv.hash == board.hash_key && tt_pv.next_move == it->m) {
+		if (tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key) && tt_pv.next_move == it->m) {
 			it->sort_score += 1100000;
 		}
 		// ...then captures in MVVLVA order
@@ -234,7 +234,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	}
 
 	Transposition t;
-	t.hash = board.hash_key;
+	t.hash = hash_verification(board.hash_key);
 	int next_move = 0;
 	bool has_legal_move = false;
 	for (unsigned int i = 0; i < moves.size(); ++i) {
@@ -284,7 +284,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			}
 			next_move = move.m;
 			t.next_move = next_move;
-			tt[board.hash_key % hash_size] = t;
+			tt[hash_index(board.hash_key) % hash_size] = t;
 			return beta;
 		}
 
@@ -306,7 +306,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 	}
 	t.next_move = next_move;
-	tt[board.hash_key % hash_size] = t;
+	tt[hash_index(board.hash_key) % hash_size] = t;
 
 	return alpha;
 }
@@ -404,12 +404,12 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 						pv[p] = 0;
 					}
 					pv[0] = root_move.m;
-					int next_pv_move = root_move.m;
-					uint32_t hash = b2.hash_key;
+					uint32_t next_pv_move = root_move.m;
+					uint64_t hash = b2.hash_key;
 					for (int p = 1; p < depth - 1; p++) {
-						hash ^= next_pv_move;
-						Transposition next = tt[hash % hash_size];
-						if (next.hash == hash && next.next_move != 0) {
+						hash ^= move_hash(next_pv_move);
+						Transposition next = tt[hash_index(hash) % hash_size];
+						if (next.hash == hash_verification(hash) && next.next_move != 0) {
 							pv[p] = next.next_move;
 							next_pv_move = next.next_move;
 						} else {
