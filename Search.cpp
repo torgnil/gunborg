@@ -212,10 +212,18 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	if (moves.empty()) {
 		return 0;
 	}
+	// check for cached score in transposition table
 	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
+	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
+	if (cache_hit && tt_pv.score != 789 && tt_pv.depth == depth) {
+		if (tt_pv.score >= beta) {
+			return beta;
+		}
+		return tt_pv.score;
+	}
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
-		if (tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key) && tt_pv.next_move == it->m) {
+		if (cache_hit && tt_pv.next_move == it->m) {
 			it->sort_score += 1100000;
 		}
 		// ...then captures in MVVLVA order
@@ -285,6 +293,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			next_move = move.m;
 			t.next_move = next_move;
 			tt[hash_index(board.hash_key) % hash_size] = t;
+			t.score = 789; // hack to signal non exact score
 			return beta;
 		}
 
@@ -306,6 +315,8 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 	}
 	t.next_move = next_move;
+	t.score = alpha;
+	t.depth = depth;
 	tt[hash_index(board.hash_key) % hash_size] = t;
 
 	return alpha;

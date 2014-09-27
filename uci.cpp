@@ -212,14 +212,14 @@ void uci() {
 
 	gunborg::Search* search = NULL;
 	list history;
-	int hash_size = 4 * HASH_MB_FACTOR;
+	int hash_size = 8 * HASH_MB_FACTOR;
 	while (true) {
 		string line;
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
 			cout << "id name gunborg 1.0\n";
 			cout << "id author Torbjorn Nilsson\n";
-			cout << "option name Hash type spin default 4 min 1 max 32\n";
+			cout << "option name Hash type spin default 8 min 1 max 32\n";
 			cout << "uciok\n" << flush;
 		}
 		if (line.find("isready") != string::npos) {

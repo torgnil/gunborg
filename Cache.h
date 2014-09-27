@@ -27,17 +27,17 @@
 #define CACHE_H_
 
 
-const int HASH_MB_FACTOR = 131072; // 65536 for 16 bytes, 87381 for 12 bytes, 131072 for 8 bytes
+const int HASH_MB_FACTOR = 65536; // 65536 for 16 bytes, 87381 for 12 bytes, 131072 for 8 bytes
 
-
-//TODO score, depth
 
 /*
- * size of Transposition is 12 bytes
+ * size of Transposition is 16 bytes
  */
 struct Transposition {
 	uint32_t hash = 0;
 	uint32_t next_move = 0;
+	int score = 0;
+	int depth = 0;
 };
 
 
