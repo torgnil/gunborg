@@ -204,9 +204,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		if (res >= beta) {
 			return beta;
 		}
-		if (res > alpha) {
-			alpha = res;
-		}
 	}
 	MoveList moves = get_moves(board, white_turn);
 	if (moves.empty()) {
