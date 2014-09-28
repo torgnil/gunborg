@@ -205,10 +205,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			return beta;
 		}
 	}
-	MoveList moves = get_moves(board, white_turn);
-	if (moves.empty()) {
-		return 0;
-	}
+
 	// check for cached score in transposition table
 	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
 	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
@@ -218,6 +215,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 		return tt_pv.score;
 	}
+	MoveList moves = get_moves(board, white_turn);
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
 		if (cache_hit && tt_pv.next_move == it->m) {
