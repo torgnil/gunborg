@@ -206,9 +206,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 	}
 	MoveList moves = get_moves(board, white_turn);
-	if (moves.empty()) {
-		return 0;
-	}
 	Transposition tt_pv = tt[board.hash_key % hash_size];
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
