@@ -185,12 +185,21 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 
 int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
 		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
-
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 	}
 	if (should_prune(depth, white_turn, board, alpha, beta)) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
+	}
+	// check for cached score in transposition table
+	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
+	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
+	if (cache_hit && tt_pv.depth == depth) {
+		if (tt_pv.score >= beta) {
+			alpha = beta;
+		} else {
+			alpha = tt_pv.score;
+		}
 	}
 
 	// null move heuristic
@@ -206,15 +215,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 	}
 
-	// check for cached score in transposition table
-	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
-	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
-	if (cache_hit && tt_pv.score != 789 && tt_pv.depth == depth) {
-		if (tt_pv.score >= beta) {
-			return beta;
-		}
-		return tt_pv.score;
-	}
 	MoveList moves = get_moves(board, white_turn);
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
@@ -288,7 +288,8 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			next_move = move.m;
 			t.next_move = next_move;
 			tt[hash_index(board.hash_key) % hash_size] = t;
-			t.score = 789; // hack to signal non exact score
+			t.score = beta;
+			t.depth = 0; // depth zero is not used to pre-set alpha from cache
 			return beta;
 		}
 
