@@ -49,7 +49,7 @@ public:
 	Search();
 	std::atomic_bool should_run;
 	int max_think_time_ms;
-	int hash_size = HASH_MB_FACTOR * 4;
+	int hash_size = HASH_MB_FACTOR * 8;
 
 	void search_best_move(const Board& board, const bool white_turn, list history);
 

@@ -195,11 +195,9 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
 	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
 	if (cache_hit && tt_pv.depth == depth) {
-		if (tt_pv.score >= beta) {
-			alpha = beta;
-		} else {
-			alpha = tt_pv.score;
-		}
+		int cached_score = tt_pv.score;
+		cached_score = cached_score < beta ? cached_score : beta;
+		alpha = cached_score;
 	}
 
 	// null move heuristic
@@ -287,9 +285,9 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			}
 			next_move = move.m;
 			t.next_move = next_move;
-			tt[hash_index(board.hash_key) % hash_size] = t;
 			t.score = beta;
-			t.depth = 0; // depth zero is not used to pre-set alpha from cache
+			t.depth = 0;
+			tt[hash_index(board.hash_key) % hash_size] = t;
 			return beta;
 		}
 
