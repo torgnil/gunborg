@@ -34,9 +34,16 @@ uint64_t knight_moves[64];
 uint64_t king_moves[64];
 
 // [V][A] Most valuable victim gives the highest scores
-const int MVVLVA[7][6] = // 7th captured piece type is EN_PASSANT
-		{ { 6, 5, 4, 3, 2, 1 }, { 16, 15, 14, 13, 12, 11 }, { 26, 25, 24, 23, 22, 21 }, { 36, 35, 34, 33, 32, 31 }, {
-				46, 45, 44, 43, 42, 41 }, { 56, 55, 54, 53, 52, 51 }, { 6, 6, 6, 6, 6, 6 }, };
+const int MVVLVA[7][6] =
+		{ 		{ 6, 5, 4, 3, 2, 1 },
+				{ 16, 15, 14, 13, 12, 11 },
+				{ 26, 25, 24, 23, 22, 21 },
+				{ 36, 35, 34, 33, 32, 31 },
+                { 46, 45, 44, 43, 42, 41 },
+                { 56, 55, 54, 53, 52, 51 },
+                { 6, 6, 6, 6, 6, 6 }, }; // 7th captured piece type is EN_PASSANT(a pawn..)
+
+
 
 uint64_t south_fill(uint64_t l) {
 	l |= l >> 8; // OR 1 row
