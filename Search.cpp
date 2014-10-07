@@ -202,8 +202,9 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
 	if (cache_hit && tt_pv.depth == depth) {
 		int cached_score = tt_pv.score;
-		cached_score = cached_score < beta ? cached_score : beta;
-		alpha = cached_score;
+		if (cached_score >= alpha && cached_score <= beta) {
+			return cached_score;
+		}
 	}
 
 	// null move heuristic
@@ -271,7 +272,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 		int res;
 		if (next_move != 0) {
-			// we have previously found a move, as we assume will be the best
+			// we do not expect to find a better move
 			// use a fast null window search to verify it!
 			res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, board, tt, null_move_not_allowed,
 										killers, history, ply + 1, extension);
@@ -326,11 +327,12 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			return 0; // stalemate
 		}
 	}
-	t.next_move = next_move;
-	t.score = alpha;
-	t.depth = depth;
-	tt[hash_index(board.hash_key) % hash_size] = t;
-
+	if (next_move != 0) {
+		t.next_move = next_move;
+		t.score = alpha;
+		t.depth = depth;
+		tt[hash_index(board.hash_key) % hash_size] = t;
+	}
 	return alpha;
 }
 
