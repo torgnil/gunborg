@@ -203,7 +203,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	if (cache_hit && tt_pv.depth == depth) {
 		int cached_score = tt_pv.score;
 		if (cached_score > beta) {
-			cached_score = beta;
+			return beta;
 		}
 		if (cached_score > alpha) {
 			alpha = cached_score;
