@@ -205,6 +205,10 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		if (cached_score >= alpha && cached_score <= beta) {
 			return cached_score;
 		}
+		if (cached_score > beta) {
+			cached_score = beta;
+		}
+		alpha = cached_score;
 	}
 
 	// null move heuristic
@@ -328,8 +332,8 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 	}
 	if (next_move != 0) {
-		t.next_move = next_move;
 		t.score = alpha;
+		t.next_move = next_move;
 		t.depth = depth;
 		tt[hash_index(board.hash_key) % hash_size] = t;
 	}
