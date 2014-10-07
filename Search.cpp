@@ -155,6 +155,12 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 	return alpha;
 }
 
+int Search::null_window_search(bool white_turn, int depth, int beta, Board& board, Transposition *tt,
+		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
+	int alpha = beta - 1;
+	return alpha_beta(white_turn, depth, alpha, beta, board, tt, null_move_not_allowed, killers, history, ply, extension);
+}
+
 inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, int beta) {
 	if (depth > 3) {
 		return false;
@@ -263,16 +269,28 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 				depth_reduction = -1;
 			}
 		}
-
-		int res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
+		int res;
+		if (next_move != 0) {
+			// we have previously found a move, as we assume will be the best
+			// use a fast null window search to verify it!
+			res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, board, tt, null_move_not_allowed,
+										killers, history, ply + 1, extension);
+			if (res > alpha) {
+				// score improved unexpected, we have to do a full window search
+				res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
+							killers, history, ply + 1, extension);
+			}
+		} else {
+			res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
 				killers, history, ply + 1, extension);
-
+		}
 		if (depth_reduction > 0 && res > alpha && res < beta) {
 			// score improved "unexpected" at reduced depth
 			// re-search at normal depth
 			res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
 					ply + 1, extension);
 		}
+
 
 		unmake_move(board, move);
 
@@ -387,12 +405,10 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 				if (res == -1) {
 					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
 					if (i > 0 && depth > 1) {
-						int high = a + 1;
-						res = -alpha_beta(!white_turn, depth - 1, -high, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
-						if (res >= high) {
+						res = -null_window_search(!white_turn, depth - 1, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
+						if (res > a) {
 							// full window is necessary
-							res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2,
-									quites_history, 1, 0);
+							res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
 						} else {
 							res = a - i; // keep sort order
 						}
@@ -404,7 +420,6 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 				if (res > a && (!time_to_stop() || i == 0)) {
 					score = res;
 					a = res;
-					// TODO extract method get_pv
 					for (int p = 1; p < depth; p++) {
 						pv[p] = 0;
 					}
