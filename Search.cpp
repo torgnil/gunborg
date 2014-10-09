@@ -339,6 +339,17 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	return alpha;
 }
 
+void Search::print_uci_info(int pv[], int depth, int score) {
+	std::string pvstring = pvstring_from_stack(pv, depth);
+
+	int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
+			> (clock.now() - start).count();
+
+	// uci info with score from engine's perspective
+	std::cout << "info score cp " << score << " depth " << depth << " time " << time_elapsed_last_depth_ms << " nodes "
+			<< node_count << " pv " << pvstring << "\n" << std::flush;
+}
+
 void Search::search_best_move(const Board& board, const bool white_turn, const list history) {
 	start = clock.now();
 
@@ -362,6 +373,8 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(b2, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
 
+	int root_move_changes = 0;
+
 	for (int depth = 1; depth < 30;) {
 
 		int score = alpha;
@@ -372,7 +385,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 		for (unsigned int i = 0; i < root_moves.size(); i++) {
 			pick_next_move(root_moves, i);
 			Move root_move = root_moves[i];
-			if (b > a) { //strict?
+			if (a < b) {
 				node_count++;
 				bool legal_move = make_move(b2, root_move);
 				if (!legal_move) {
@@ -415,7 +428,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 							// full window is necessary
 							res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
 						} else {
-							res = a - i; // keep sort order
+							res = a - i*500; // keep sort order
 						}
 					} else {
 						res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
@@ -441,25 +454,24 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 							break;
 						}
 					}
+					if (i > 0 && depth > 1 && score > alpha && score < beta) {
+						root_move_changes++;
+						print_uci_info(pv, depth, score);
+					}
 				}
 				root_move.sort_score = res;
 			} else {
 				// beta fail
 				// we just know that the rest of the moves are worse than the best move, or is this un-reachable code?
-				root_move.sort_score = a - i; // keep sort order
+				root_move.sort_score = a - i*500; // keep sort order
 			}
 			next_iteration_root_moves.push_back(root_move);
 		}
 		int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
 				> (clock.now() - start).count();
 		if (score > alpha && score < beta) {
+			print_uci_info(pv, depth, score);
 			std::string pvstring = pvstring_from_stack(pv, depth);
-
-			// uci info with score from engine's perspective
-			std::cout << "info score cp " << score << " depth " << depth << " time "
-					<< time_elapsed_last_depth_ms << " nodes " << node_count << " pv " << pvstring << "\n"
-					<< std::flush;
-
 			std::stringstream ss(pvstring);
 			getline(ss, best_move, ' ');
 		}
@@ -492,8 +504,10 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 			break;
 		}
 
-		// save some time for next move
-		if ((4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
+		// use more of available time if best move found changes a lot
+		int time_factor = root_move_changes > 5 ? 2 : 4;
+
+		if ((time_factor * time_elapsed_last_depth_ms) > max_think_time_ms) {
 			break;
 		}
 		depth++;

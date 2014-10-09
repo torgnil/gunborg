@@ -45,6 +45,7 @@ private:
 	int capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Board& board);
 
 	bool time_to_stop();
+	void print_uci_info(int pv[], int depth, int score);
 
 public:
 	Search();
