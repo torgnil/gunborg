@@ -504,10 +504,8 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 			break;
 		}
 
-		// use more of available time if best move found changes a lot
-		int time_factor = root_move_changes > 5 ? 2 : 4;
-
-		if ((time_factor * time_elapsed_last_depth_ms) > max_think_time_ms) {
+		// save some time
+		if ((4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
 			break;
 		}
 		depth++;
