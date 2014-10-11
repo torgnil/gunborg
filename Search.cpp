@@ -260,21 +260,25 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 		has_legal_move = true;
 
-		// late move reduction.
-		// we assume sort order is good enough to not search later moves as deep as the first
-		int depth_reduction = 0;
-		if (depth > 2 && i > 5 && !is_capture(move.m)) {
-			depth_reduction = 1;
-		}
-		if (extension < MAX_CHECK_EXTENSION) {
-			// if this is a checking move, extend the search one ply
-			if (get_attacked_squares(board, white_turn) & board.b[white_turn ? BLACK : WHITE][KING]) {
-				extension++;
-				depth_reduction = -1;
-			}
-		}
 		int res;
-		if (next_move != 0) {
+		if (i < 5 && next_move == 0) {
+			int depth_extention = 0;
+			if (extension < MAX_CHECK_EXTENSION) {
+				// if this is a checking move, extend the search one ply
+				if (get_attacked_squares(board, white_turn) & board.b[white_turn ? BLACK : WHITE][KING]) {
+					extension++;
+					depth_extention = 1;
+				}
+			}
+			res = -alpha_beta(!white_turn, depth - 1 + depth_extention, -beta, -alpha, board, tt, null_move_not_allowed,
+				killers, history, ply + 1, extension);
+		} else {
+			int depth_reduction = 0;
+			// late move reduction.
+			// we assume sort order is good enough to not search later moves as deep as the first
+			if (depth > 2 && i > 5 && !is_capture(move.m)) {
+				depth_reduction = 1;
+			}
 			// we do not expect to find a better move
 			// use a fast null window search to verify it!
 			res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, board, tt, null_move_not_allowed,
@@ -284,15 +288,12 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 				res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
 							killers, history, ply + 1, extension);
 			}
-		} else {
-			res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
-				killers, history, ply + 1, extension);
-		}
-		if (depth_reduction > 0 && res > alpha && res < beta) {
-			// score improved "unexpected" at reduced depth
-			// re-search at normal depth
-			res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
-					ply + 1, extension);
+			if (depth_reduction > 0 && res > alpha && res < beta) {
+				// score improved "unexpected" at reduced depth
+				// re-search at normal depth
+				res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
+						ply + 1, extension);
+			}
 		}
 
 
