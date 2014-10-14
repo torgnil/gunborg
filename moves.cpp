@@ -415,13 +415,13 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 	uint64_t bishops = board.b[side][BISHOP];
 	while (bishops) {
 		int from = lsb_to_square(bishops);
-		uint64_t to_squares = bishop_attacks(occupied_squares, from);
+		uint64_t to_squares = bishop_attacks(occupied_squares, from) & ~side_squares;
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
 			if (lsb & opponent_squares) {
 				add_capture_move(from, to, side, BISHOP, piece_at_board(board, lsb, opponent), moves, EMPTY);
-			} else if (lsb & ~occupied_squares) {
+			} else {
 				add_quite_move(from, to, side, BISHOP, moves, EMPTY);
 			}
 			to_squares -= lsb;
@@ -432,13 +432,13 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 	uint64_t rooks = board.b[side][ROOK];
 	while (rooks) {
 		int from = lsb_to_square(rooks);
-		uint64_t to_squares = rook_attacks(occupied_squares, from);
+		uint64_t to_squares = rook_attacks(occupied_squares, from) & ~side_squares;
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
 			if (lsb & opponent_squares) {
 				add_capture_move(from, to, side, ROOK, piece_at_board(board, lsb, opponent), moves, EMPTY);
-			} else if (lsb & ~occupied_squares) {
+			} else {
 				add_quite_move(from, to, side, ROOK, moves, EMPTY);
 			}
 			to_squares -= lsb;
@@ -449,13 +449,13 @@ MoveList get_moves(const Board& board, const bool white_turn) {
 	uint64_t queens = board.b[side][QUEEN];
 	while (queens) {
 		int from = lsb_to_square(queens);
-		uint64_t to_squares = queen_attacks(occupied_squares, from);
+		uint64_t to_squares = queen_attacks(occupied_squares, from) & ~side_squares;
 		while (to_squares) {
 			int to = lsb_to_square(to_squares);
 			uint64_t lsb = lsb(to_squares);
 			if (lsb & opponent_squares) {
 				add_capture_move(from, to, side, QUEEN, piece_at_board(board, lsb, opponent), moves, EMPTY);
-			} else if (lsb & ~occupied_squares) {
+			} else {
 				add_quite_move(from, to, side, QUEEN, moves, EMPTY);
 			}
 			to_squares -= lsb;
