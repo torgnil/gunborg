@@ -459,9 +459,12 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 							break;
 						}
 					}
-					if (i > 0 && depth > 1 && score > alpha && score < beta) {
+					if (score > alpha && score < beta) {
 						root_move_changes++;
 						print_uci_info(pv, depth, score);
+						std::string pvstring = pvstring_from_stack(pv, depth);
+						std::stringstream ss(pvstring);
+						getline(ss, best_move, ' ');
 					}
 				}
 				root_move.sort_score = res;
@@ -508,9 +511,9 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 			// deliver mate or be mated
 			break;
 		}
-
-		// save some time
-		if ((4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
+		// if "easy" move, then save more time
+		int time_saving_factor = root_move_changes < 4 ? 6 : 4;
+		if ((time_saving_factor * time_elapsed_last_depth_ms) > max_think_time_ms) {
 			break;
 		}
 		depth++;
