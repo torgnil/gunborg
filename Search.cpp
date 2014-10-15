@@ -277,7 +277,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			// late move reduction.
 			// we assume sort order is good enough to not search later moves as deep as the first
 			if (depth > 2 && i > 5 && !is_capture(move.m)) {
-				depth_reduction = 1;
+				depth_reduction = depth > 5 && i > 20 ? 2 : 1;
 			}
 			// we do not expect to find a better move
 			// use a fast null window search to verify it!
@@ -466,8 +466,10 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 						std::stringstream ss(pvstring);
 						getline(ss, best_move, ' ');
 					}
+					root_move.sort_score = res;
+				} else {
+					root_move.sort_score = a - i*500;
 				}
-				root_move.sort_score = res;
 			} else {
 				// beta fail
 				// we just know that the rest of the moves are worse than the best move, or is this un-reachable code?
