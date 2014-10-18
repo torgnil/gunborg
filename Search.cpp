@@ -248,6 +248,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	t.hash = hash_verification(board.hash_key);
 	int next_move = 0;
 	bool has_legal_move = false;
+	int static_eval = 0;
 	for (unsigned int i = 0; i < moves.size(); ++i) {
 
 		pick_next_move(moves, i);
@@ -273,6 +274,14 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			res = -alpha_beta(!white_turn, depth - 1 + depth_extention, -beta, -alpha, board, tt, null_move_not_allowed,
 				killers, history, ply + 1, extension);
 		} else {
+			// prune late moves that we do not expect to improve alpha
+			if (i == 12 && depth <= 2) {
+				static_eval = nega_evaluate(board, white_turn);
+			}
+			if (i >= 12 && depth <= 2 && static_eval + 100 < alpha) {
+				unmake_move(board, move);
+				break;
+			}
 			int depth_reduction = 0;
 			// late move reduction.
 			// we assume sort order is good enough to not search later moves as deep as the first
