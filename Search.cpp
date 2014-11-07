@@ -119,10 +119,12 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 	} else if (board.b[BLACK][KING] == 0) {
 		return white_turn ? 10000 : -10000;
 	}
-
 	int static_eval = nega_evaluate(board, white_turn);
 	if (static_eval > alpha) {
-		return static_eval;
+		alpha = static_eval;
+	}
+	if (static_eval >= beta) {
+		return beta;
 	}
 
 	MoveList capture_moves = get_captures(board, white_turn);
@@ -142,11 +144,14 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 		has_legal_capture = true;
 		int res = -capture_quiescence_eval_search(!white_turn, -beta, -alpha, board);
 		unmake_move(board, move);
-		if (res >= beta || time_to_stop()) {
+		if (res >= beta) {
 			return beta;
 		}
 		if (res > alpha) {
 			alpha = res;
+		}
+		if (time_to_stop()) {
+			return alpha;
 		}
 	}
 	if (!has_legal_capture) {
@@ -193,6 +198,9 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
+	}
+	if (time_to_stop()) {
+		return alpha;
 	}
 	if (should_prune(depth, white_turn, board, alpha, beta)) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
@@ -305,13 +313,10 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			}
 		}
 
-
 		unmake_move(board, move);
-
 		if (time_to_stop()) {
 			return alpha;
 		}
-
 		if (res >= beta) {
 			if (!is_capture(move.m)) {
 				if (killers[ply - 1][0].m != move.m) {
