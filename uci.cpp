@@ -219,7 +219,7 @@ void uci() {
 		if (line.find("uci") != string::npos) {
 			cout << "id name gunborg 1.0\n";
 			cout << "id author Torbjorn Nilsson\n";
-			cout << "option name Hash type spin default 8 min 1 max 32\n";
+			cout << "option name Hash type spin default 8 min 1 max 16\n";
 			cout << "uciok\n" << flush;
 		}
 		if (line.find("isready") != string::npos) {
@@ -234,7 +234,7 @@ void uci() {
 		}
 		if (line.find("setoption name Hash") != string::npos) {
 			int hash_size_in_mb = parse_int_parameter(line, "value");
-			if (hash_size_in_mb >= 1 && hash_size_in_mb <= 32) {
+			if (hash_size_in_mb >= 1 && hash_size_in_mb <= 16) {
 				hash_size = hash_size_in_mb * HASH_MB_FACTOR;
 			}
 
