@@ -392,8 +392,6 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(b2, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
 
-	int root_move_changes = 0;
-
 	for (int depth = 1; depth < 30;) {
 
 		int score = alpha;
@@ -474,7 +472,6 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 						}
 					}
 					if (score > alpha && score < beta) {
-						root_move_changes++;
 						print_uci_info(pv, depth, score);
 						std::string pvstring = pvstring_from_stack(pv, depth);
 						std::stringstream ss(pvstring);
@@ -527,9 +524,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 			// deliver mate or be mated
 			break;
 		}
-		// if "easy" move, then save more time
-		int time_saving_factor = root_move_changes < 4 ? 6 : 4;
-		if ((time_saving_factor * time_elapsed_last_depth_ms) > max_think_time_ms) {
+		if ((4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
 			break;
 		}
 		depth++;
