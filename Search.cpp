@@ -410,11 +410,13 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 					continue;
 				}
 				int res = -1;
+				bool history_white_turn = true;
 				for (auto hit = history.begin(); hit != history.end(); ++hit) {
-					if (is_equal(b2, *hit)) {
+					if (is_equal(b2, *hit) && white_turn != history_white_turn) {
 						// draw by repetition
 						res = 0;
 					}
+					history_white_turn = !history_white_turn;
 				}
 				if (res == -1) {
 					// check if stale mate
