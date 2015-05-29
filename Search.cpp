@@ -532,7 +532,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 		depth++;
 	}
 	std::cout << "bestmove " << best_move << std::endl << std::flush;
-	delete tt;
+	delete[] tt;
 	return;
 }
 
