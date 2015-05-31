@@ -94,4 +94,12 @@ inline uint64_t move_hash(uint32_t move) {
 	return randoms[from_square(move) % 11] ^ move_64;
 }
 
+inline void make_null_move(Board& board) {
+	board.hash_key = board.hash_key ^ randoms[0];
+}
+
+inline void unmake_null_move(Board& board) {
+	board.hash_key = board.hash_key ^ randoms[0];
+}
+
 #endif /* MOVES_H_ */

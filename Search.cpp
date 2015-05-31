@@ -205,18 +205,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	if (should_prune(depth, white_turn, board, alpha, beta)) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
 	}
-	// check for cached score in transposition table
-	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
-	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
-	if (cache_hit && tt_pv.depth == depth) {
-		int cached_score = tt_pv.score;
-		if (cached_score >= beta) {
-			return beta;
-		}
-		if (cached_score > alpha) {
-			return cached_score;
-		}
-	}
 
 	// null move heuristic
 	if (!null_move_not_allowed && depth > 3) {
@@ -225,11 +213,17 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		// 1. That the disadvantage of forfeiting one's turn is greater than the disadvantage of performing a shallower search.
 		// 2. That the beta cut-offs prunes enough branches to be worth the time searching at reduced depth
 		int R = 2; // depth reduction
+		make_null_move(board);
 		int res = -alpha_beta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1, extension);
+		unmake_null_move(board);
 		if (res >= beta) {
 			return beta;
 		}
 	}
+
+	// check for hit in transposition table
+	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
+	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
 
 	MoveList moves = get_moves(board, white_turn);
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
@@ -326,8 +320,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			}
 			next_move = move.m;
 			t.next_move = next_move;
-			t.score = beta;
-			t.depth = 0;
 			tt[hash_index(board.hash_key) % hash_size] = t;
 			return beta;
 		}
@@ -350,9 +342,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 	}
 	if (next_move != 0) {
-		t.score = alpha;
 		t.next_move = next_move;
-		t.depth = depth;
 		tt[hash_index(board.hash_key) % hash_size] = t;
 	}
 	return alpha;
