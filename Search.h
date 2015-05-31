@@ -51,9 +51,9 @@ public:
 	Search();
 	std::atomic_bool should_run;
 	int max_think_time_ms;
-	int hash_size = HASH_MB_FACTOR * 8;
+	int hash_size = HASH_MB_FACTOR * 16;
 
-	void search_best_move(const Board& board, const bool white_turn, list history);
+	void search_best_move(const Board& board, const bool white_turn, list history, Transposition * tt);
 
 	virtual ~Search();
 };

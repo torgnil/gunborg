@@ -359,7 +359,7 @@ void Search::print_uci_info(int pv[], int depth, int score) {
 			<< node_count << " pv " << pvstring << "\n" << std::flush;
 }
 
-void Search::search_best_move(const Board& board, const bool white_turn, const list history) {
+void Search::search_best_move(const Board& board, const bool white_turn, const list history, Transposition * tt) {
 	start = clock.now();
 
 	Board b2 = board;
@@ -376,8 +376,6 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 	int START_WINDOW_SIZE = 25;
 	Move killers2[32][2];
 	int quites_history[64][64] = { };
-	Transposition * tt = new Transposition[hash_size];
-	b2.hash_key = 0;
 
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(b2, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
@@ -522,7 +520,6 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 		depth++;
 	}
 	std::cout << "bestmove " << best_move << std::endl << std::flush;
-	delete[] tt;
 	return;
 }
 

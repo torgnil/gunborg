@@ -212,14 +212,16 @@ void uci() {
 
 	gunborg::Search* search = NULL;
 	list history;
-	int hash_size = 8 * HASH_MB_FACTOR;
+	int hash_size = 16 * HASH_MB_FACTOR;
+	Transposition * tt = new Transposition[hash_size];
+
 	while (true) {
 		string line;
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
-			cout << "id name gunborg 1.0\n";
+			cout << "id name gunborg 1.1-dev\n";
 			cout << "id author Torbjorn Nilsson\n";
-			cout << "option name Hash type spin default 8 min 1 max 16\n";
+			cout << "option name Hash type spin default 16 min 1 max 1024\n";
 			cout << "uciok\n" << flush;
 		}
 		if (line.find("isready") != string::npos) {
@@ -231,13 +233,16 @@ void uci() {
 			start_board = fen_info.board;
 			white_turn = fen_info.white_turn;
 			move = fen_info.move;
+			delete[] tt;
+			tt = new Transposition[hash_size];
 		}
 		if (line.find("setoption name Hash") != string::npos) {
 			int hash_size_in_mb = parse_int_parameter(line, "value");
-			if (hash_size_in_mb >= 1 && hash_size_in_mb <= 16) {
+			if (hash_size_in_mb >= 1 && hash_size_in_mb <= 1024) {
 				hash_size = hash_size_in_mb * HASH_MB_FACTOR;
 			}
-
+			delete[] tt;
+			tt = new Transposition[hash_size];
 		}
 		if (line.find("position") != string::npos) {
 			history.clear();
@@ -308,7 +313,7 @@ void uci() {
 					search->max_think_time_ms = factor * ((b_time + (moves_togo - 1) * b_inc) / moves_togo) - 3;
 				}
 			}
-			search_thread = new thread(&gunborg::Search::search_best_move, search, start_board, white_turn, history);
+			search_thread = new thread(&gunborg::Search::search_best_move, search, start_board, white_turn, history, tt);
 		}
 		if (line.find("stop") != string::npos) {
 			if (search_thread != NULL) {
@@ -319,6 +324,7 @@ void uci() {
 			}
 		}
 		if (line.find("quit") != string::npos) {
+			delete[] tt;
 			return;
 		}
 		// non uci commands
