@@ -293,6 +293,9 @@ void uci() {
 			search->hash_size = hash_size;
 			if (line.find("infinite") != string::npos) {
 				search->max_think_time_ms = INT_MAX;
+			} else if (line.find("movetime") != string::npos) {
+				int fixed_move_time_ms = parse_int_parameter(line, "movetime");
+				search->max_think_time_ms = fixed_move_time_ms - 3;
 			} else {
 				int w_time = parse_int_parameter(line, "wtime");
 				int b_time = parse_int_parameter(line, "btime");
