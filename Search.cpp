@@ -43,6 +43,7 @@ const int MAX_CHECK_EXTENSION = 2;
 Search::Search() {
 	max_think_time_ms = 10000;
 	node_count = 0;
+	save_time = true;
 }
 
 inline bool Search::time_to_stop() {
@@ -514,7 +515,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 			// deliver mate or be mated
 			break;
 		}
-		if ((4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
+		if (save_time && (4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
 			break;
 		}
 		depth++;
