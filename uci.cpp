@@ -337,7 +337,7 @@ void uci() {
 			std::chrono::high_resolution_clock::time_point start;
 
 			int depth = parse_int_parameter(line, "depth");
-			depth = depth  == 0 ? 5 : depth;
+			depth = depth == 0 ? 5 : depth;
 
 			for (int i = 1; i <= depth; i++) {
 				start = clock.now();
