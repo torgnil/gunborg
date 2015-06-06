@@ -1,6 +1,6 @@
 /*
  * Gunborg - UCI chess engine
- * Copyright (C) 2013-2014 Torbjörn Nilsson
+ * Copyright (C) 2013-2015 Torbjörn Nilsson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 /*
  * Gunborg - UCI chess engine
- * Copyright (C) 2013-2014 Torbjörn Nilsson
+ * Copyright (C) 2013-2015 Torbjörn Nilsson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -219,7 +219,7 @@ void uci() {
 		string line;
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
-			cout << "id name gunborg 1.1-dev\n";
+			cout << "id name gunborg 1.1\n";
 			cout << "id author Torbjorn Nilsson\n";
 			cout << "option name Hash type spin default 16 min 1 max 1024\n";
 			cout << "uciok\n" << flush;
