@@ -291,6 +291,10 @@ void uci() {
 			search = new gunborg::Search();
 			search->should_run = true;
 			search->hash_size = hash_size;
+			int depth = parse_int_parameter(line, "depth");
+			if (depth != 0) {
+				search->max_depth = depth;
+			}
 			if (line.find("infinite") != string::npos) {
 				search->max_think_time_ms = INT_MAX;
 			} else if (line.find("movetime") != string::npos) {
@@ -347,6 +351,27 @@ void uci() {
 						< std::chrono::milliseconds > (clock.now() - start).count();
 				std::cout << " in " << time_elapsed << " ms\n";
 			}
+		}
+		if (line.find("bench") != string::npos) {
+			delete[] tt;
+			tt = new Transposition[16 * HASH_MB_FACTOR];
+			history.clear();
+			if (search != NULL) {
+				delete search;
+				search = NULL;
+			}
+			search = new gunborg::Search();
+			search->should_run = true;
+			search->hash_size = hash_size;
+			search->max_depth = 10;
+			search->max_think_time_ms = 60000;
+			fen_info = parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+			std::chrono::high_resolution_clock clock;
+			std::chrono::high_resolution_clock::time_point start = clock.now();
+			search->search_best_move(fen_info.board, fen_info.white_turn, history, tt);
+			int time_elapsed = std::chrono::duration_cast
+									< std::chrono::milliseconds > (clock.now() - start).count();
+			std::cout << "bench " << search->node_count << " nodes in " << time_elapsed << " ms\n";
 		}
 		// license info
 		if (line.find("show w") != string::npos) {

@@ -38,7 +38,6 @@ private:
 	std::chrono::high_resolution_clock clock;
 	std::chrono::high_resolution_clock::time_point start;
 	std::string best_move;
-	int node_count;
 
 	int alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt, bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension);
 	int null_window_search(bool white_turn, int depth, int beta, Board& board, Transposition *tt, bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension);
@@ -52,6 +51,8 @@ public:
 	std::atomic_bool should_run;
 	int max_think_time_ms;
 	int hash_size = HASH_MB_FACTOR * 16;
+	int max_depth = 30;
+	int node_count;
 	bool save_time;
 
 	void search_best_move(const Board& board, const bool white_turn, list history, Transposition * tt);

@@ -381,7 +381,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(b2, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
 
-	for (int depth = 1; depth < 30;) {
+	for (int depth = 1; depth <= max_depth;) {
 
 		int score = alpha;
 		int a = alpha;
