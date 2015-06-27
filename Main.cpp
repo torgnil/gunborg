@@ -30,7 +30,6 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
-#include <thread>
 
 using namespace std;
 namespace {
@@ -50,8 +49,7 @@ int main(int argc, char* argv[]) {
 	if (argc == 2 && strcmp(argv[1], "test") == 0) {
 		run_tests();
 	} else {
-		thread uci_thread(uci);
-		uci_thread.join();
+		uci();
 	}
 	return 0;
 }
