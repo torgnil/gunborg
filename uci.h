@@ -25,7 +25,7 @@
 #define UCI_H_
 
 struct FenInfo {
-	Board board;
+	Position position;
 	bool white_turn;
 	int move;
 };

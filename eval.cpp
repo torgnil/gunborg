@@ -33,58 +33,58 @@ const int MAX_MATERIAL = 3100;
 }
 
 // returns the score from the playing side's perspective
-int nega_evaluate(const Board& board, bool white_turn) {
-	return white_turn ? evaluate(board) : -evaluate(board);
+int nega_evaluate(const Position& position, bool white_turn) {
+	return white_turn ? evaluate(position) : -evaluate(position);
 }
 
 // score in centipawns
-int evaluate(const Board& board) {
-	uint64_t black_squares = board.b[BLACK][KING] | board.b[BLACK][PAWN] | board.b[BLACK][KNIGHT]
-			| board.b[BLACK][BISHOP] | board.b[BLACK][ROOK] | board.b[BLACK][QUEEN];
+int evaluate(const Position& position) {
+	uint64_t black_squares = position.p[BLACK][KING] | position.p[BLACK][PAWN] | position.p[BLACK][KNIGHT]
+			| position.p[BLACK][BISHOP] | position.p[BLACK][ROOK] | position.p[BLACK][QUEEN];
 
-	uint64_t white_squares = board.b[WHITE][KING] | board.b[WHITE][PAWN] | board.b[WHITE][KNIGHT]
-			| board.b[WHITE][BISHOP] | board.b[WHITE][ROOK] | board.b[WHITE][QUEEN];
+	uint64_t white_squares = position.p[WHITE][KING] | position.p[WHITE][PAWN] | position.p[WHITE][KNIGHT]
+			| position.p[WHITE][BISHOP] | position.p[WHITE][ROOK] | position.p[WHITE][QUEEN];
 
 	uint64_t occupied_squares = black_squares | white_squares;
 
-	int white_piece_material = pop_count(board.b[WHITE][QUEEN]) * 900
-			+ pop_count(board.b[WHITE][ROOK]) * 500
-			+ pop_count(board.b[WHITE][BISHOP]) * 300
-			+ pop_count(board.b[WHITE][KNIGHT]) * 300;
+	int white_piece_material = pop_count(position.p[WHITE][QUEEN]) * 900
+			+ pop_count(position.p[WHITE][ROOK]) * 500
+			+ pop_count(position.p[WHITE][BISHOP]) * 300
+			+ pop_count(position.p[WHITE][KNIGHT]) * 300;
 
-	int black_piece_material = pop_count(board.b[BLACK][QUEEN]) * 900
-			+ pop_count(board.b[BLACK][ROOK]) * 500
-			+ pop_count(board.b[BLACK][BISHOP]) * 300
-			+ pop_count(board.b[BLACK][KNIGHT]) * 300;
+	int black_piece_material = pop_count(position.p[BLACK][QUEEN]) * 900
+			+ pop_count(position.p[BLACK][ROOK]) * 500
+			+ pop_count(position.p[BLACK][BISHOP]) * 300
+			+ pop_count(position.p[BLACK][KNIGHT]) * 300;
 
 	int total_material = white_piece_material + black_piece_material;
-	if (total_material <= 300 && (board.b[WHITE][PAWN] | board.b[BLACK][PAWN]) == 0) {
+	if (total_material <= 300 && (position.p[WHITE][PAWN] | position.p[BLACK][PAWN]) == 0) {
 		return 0; // draw by insufficient mating material
 	}
 	int score = 0;
 
-	uint64_t white_pawn_protection_squares = ((board.b[WHITE][PAWN] & ~A_FILE) << 7)
-			| ((board.b[WHITE][PAWN] & ~H_FILE) << 9);
-	uint64_t black_pawn_protection_squares = ((board.b[BLACK][PAWN] & ~A_FILE) >> 9)
-			| ((board.b[BLACK][PAWN] & ~H_FILE) >> 7);
+	uint64_t white_pawn_protection_squares = ((position.p[WHITE][PAWN] & ~A_FILE) << 7)
+			| ((position.p[WHITE][PAWN] & ~H_FILE) << 9);
+	uint64_t black_pawn_protection_squares = ((position.p[BLACK][PAWN] & ~A_FILE) >> 9)
+			| ((position.p[BLACK][PAWN] & ~H_FILE) >> 7);
 
 	// The idea is if a white pawn is on any of these squares then it is not a passed pawn
-	uint64_t black_pawn_blocking_squares = south_fill((board.b[BLACK][PAWN] >> 8) | black_pawn_protection_squares);
-	uint64_t white_pawn_blocking_squares = north_fill((board.b[WHITE][PAWN] << 8) | white_pawn_protection_squares);
+	uint64_t black_pawn_blocking_squares = south_fill((position.p[BLACK][PAWN] >> 8) | black_pawn_protection_squares);
+	uint64_t white_pawn_blocking_squares = north_fill((position.p[WHITE][PAWN] << 8) | white_pawn_protection_squares);
 
-	uint64_t white_pawn_files = file_fill(board.b[WHITE][PAWN]);
-	uint64_t black_pawn_files = file_fill(board.b[BLACK][PAWN]);
+	uint64_t white_pawn_files = file_fill(position.p[WHITE][PAWN]);
+	uint64_t black_pawn_files = file_fill(position.p[BLACK][PAWN]);
 
 	uint64_t open_files = ~(white_pawn_files | black_pawn_files);
 
 	uint64_t white_semi_open_files = ~white_pawn_files & black_pawn_files;
 	uint64_t black_semi_open_files = ~black_pawn_files & white_pawn_files;
 
-	uint64_t white_double_pawn_mask = north_fill(board.b[WHITE][PAWN] << 8);
-	uint64_t black_double_pawn_mask = south_fill(board.b[BLACK][PAWN] >> 8);
+	uint64_t white_double_pawn_mask = north_fill(position.p[WHITE][PAWN] << 8);
+	uint64_t black_double_pawn_mask = south_fill(position.p[BLACK][PAWN] >> 8);
 
 
-	uint64_t white_pawns = board.b[WHITE][PAWN];
+	uint64_t white_pawns = position.p[WHITE][PAWN];
 
 	uint64_t white_passed_pawns = ~black_pawn_blocking_squares & white_pawns;
 	score += pop_count(white_passed_pawns) * PASSED_PAWN_BONUS * (MAX_MATERIAL - total_material) / MAX_MATERIAL;
@@ -107,7 +107,7 @@ int evaluate(const Board& board) {
 		white_pawns = reset_lsb(white_pawns);
 	}
 
-	uint64_t white_king = board.b[WHITE][KING];
+	uint64_t white_king = position.p[WHITE][KING];
 	while (white_king) {
 		int i = lsb_to_square(white_king);
 
@@ -123,11 +123,11 @@ int evaluate(const Board& board) {
 		king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
 
 		// pawns in front of the king
-		uint64_t pawn_missing_front_of_king = ~board.b[WHITE][PAWN] & pawn_mask;
+		uint64_t pawn_missing_front_of_king = ~position.p[WHITE][PAWN] & pawn_mask;
 		king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
 
 		// no pawns on the two squares in front of the king
-		uint64_t pawn_missing_two_squares_front_of_king = ~board.b[WHITE][PAWN] & (pawn_missing_front_of_king << 8);
+		uint64_t pawn_missing_two_squares_front_of_king = ~position.p[WHITE][PAWN] & (pawn_missing_front_of_king << 8);
 		king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
 
 		// scale the penalty by opponent material
@@ -139,7 +139,7 @@ int evaluate(const Board& board) {
 		white_king = reset_lsb(white_king);
 	}
 
-	uint64_t white_bishops = board.b[WHITE][BISHOP];
+	uint64_t white_bishops = position.p[WHITE][BISHOP];
 	if (pop_count(white_bishops) == 2) {
 		score += BISHOP_PAIR_BONUS;
 	}
@@ -150,14 +150,14 @@ int evaluate(const Board& board) {
 		white_bishops = reset_lsb(white_bishops);
 	}
 
-	uint64_t white_knights = board.b[WHITE][KNIGHT];
+	uint64_t white_knights = position.p[WHITE][KNIGHT];
 	while (white_knights) {
 		int i = lsb_to_square(white_knights);
 		score += KNIGHT_SQUARE_TABLE[i];
 		white_knights = reset_lsb(white_knights);
 	}
-	uint64_t white_rooks = board.b[WHITE][ROOK];
-	uint64_t white_queens = board.b[WHITE][QUEEN];
+	uint64_t white_rooks = position.p[WHITE][ROOK];
+	uint64_t white_queens = position.p[WHITE][QUEEN];
 
 	uint64_t white_open_file_pieces = open_files & (white_rooks | white_queens);
 	score += pop_count(white_open_file_pieces)*OPEN_FILE_BONUS;
@@ -176,7 +176,7 @@ int evaluate(const Board& board) {
 		white_queens = reset_lsb(white_queens);
 	}
 
-	uint64_t black_pawns = board.b[BLACK][PAWN];
+	uint64_t black_pawns = position.p[BLACK][PAWN];
 
 	uint64_t black_passed_pawns = ~white_pawn_blocking_squares & black_pawns;
 	score -= pop_count(black_passed_pawns) * PASSED_PAWN_BONUS * (MAX_MATERIAL - total_material) / MAX_MATERIAL;
@@ -197,7 +197,7 @@ int evaluate(const Board& board) {
 		score -= PAWN_SQUARE_TABLE[63 - i] * total_material/MAX_MATERIAL;
 		black_pawns = reset_lsb(black_pawns);
 	}
-	uint64_t black_king = board.b[BLACK][KING];
+	uint64_t black_king = position.p[BLACK][KING];
 
 	while (black_king) {
 		int i = lsb_to_square(black_king);
@@ -213,11 +213,11 @@ int evaluate(const Board& board) {
 		king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
 
 		// pawns in front of the king
-		uint64_t pawn_missing_front_of_king = ~board.b[BLACK][PAWN] & pawn_mask;
+		uint64_t pawn_missing_front_of_king = ~position.p[BLACK][PAWN] & pawn_mask;
 		king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
 
 		// no pawns on the to squares in front of the king
-		uint64_t pawn_missing_two_squares_front_of_king = ~board.b[BLACK][PAWN] & (pawn_missing_front_of_king >> 8);
+		uint64_t pawn_missing_two_squares_front_of_king = ~position.p[BLACK][PAWN] & (pawn_missing_front_of_king >> 8);
 		king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
 
 		// scale the penalty by opponent material
@@ -229,7 +229,7 @@ int evaluate(const Board& board) {
 		black_king = reset_lsb(black_king);
 	}
 
-	uint64_t black_bishops = board.b[BLACK][BISHOP];
+	uint64_t black_bishops = position.p[BLACK][BISHOP];
 	if (pop_count(black_bishops) == 2) {
 		score -= BISHOP_PAIR_BONUS;
 	}
@@ -240,14 +240,14 @@ int evaluate(const Board& board) {
 		black_bishops = reset_lsb(black_bishops);
 	}
 
-	uint64_t black_knights = board.b[BLACK][KNIGHT];
+	uint64_t black_knights = position.p[BLACK][KNIGHT];
 	while (black_knights) {
 		int i = lsb_to_square(black_knights);
 		score -= KNIGHT_SQUARE_TABLE[63 - i];
 		black_knights = reset_lsb(black_knights);
 	}
-	uint64_t black_rooks = board.b[BLACK][ROOK];
-	uint64_t black_queens = board.b[BLACK][QUEEN];
+	uint64_t black_rooks = position.p[BLACK][ROOK];
+	uint64_t black_queens = position.p[BLACK][QUEEN];
 
 	uint64_t black_open_file_pieces = open_files & (black_rooks | black_queens);
 	score -= pop_count(black_open_file_pieces)*OPEN_FILE_BONUS;

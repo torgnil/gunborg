@@ -39,48 +39,48 @@ inline uint64_t file_fill(uint64_t l) {
 	return south_fill(l) | north_fill(l);
 }
 
-MoveList get_captures(const Board& board, const bool white_turn);
+MoveList get_captures(const Position& position, const bool white_turn);
 
-MoveList get_moves(const Board& board, const bool white_turn);
+MoveList get_moves(const Position& position, const bool white_turn);
 
-uint64_t get_attacked_squares(const Board& board, const bool white_turn);
+uint64_t get_attacked_squares(const Position& position, const bool white_turn);
 
 bool is_illegal_castling_move(const Move& root_move, uint64_t attacked_squares_by_opponent);
 
 /**
  * Returns true if legal move.
  */
-bool make_move(Board& board, Move move);
+bool make_move(Position& position, Move move);
 
-void unmake_move(Board& board, Move& move);
+void unmake_move(Position& position, Move& move);
 
 void init();
 
-inline int piece_at_board(const Board& board, const uint64_t b, int color) {
-	if (board.b[color][PAWN] & b) {
+inline int piece_at_board(const Position& position, const uint64_t b, int color) {
+	if (position.p[color][PAWN] & b) {
 		return PAWN;
 	}
-	if (board.b[color][KNIGHT] & b) {
+	if (position.p[color][KNIGHT] & b) {
 		return KNIGHT;
 	}
-	if (board.b[color][BISHOP] & b) {
+	if (position.p[color][BISHOP] & b) {
 		return BISHOP;
 	}
-	if (board.b[color][ROOK] & b) {
+	if (position.p[color][ROOK] & b) {
 		return ROOK;
 	}
-	if (board.b[color][QUEEN] & b) {
+	if (position.p[color][QUEEN] & b) {
 		return QUEEN;
 	}
-	if (board.b[color][KING] & b) {
+	if (position.p[color][KING] & b) {
 		return KING;
 	}
 	// if there is no piece at target square, then it must be an en passant capture
 	return EN_PASSANT;
 }
 
-inline int piece_at_square(const Board& board, int square, int color) {
-	return piece_at_board(board, (1ULL << square), color);
+inline int piece_at_square(const Position& position, int square, int color) {
+	return piece_at_board(position, (1ULL << square), color);
 }
 
 
@@ -94,12 +94,12 @@ inline uint64_t move_hash(uint32_t move) {
 	return randoms[from_square(move) % 11] ^ move_64;
 }
 
-inline void make_null_move(Board& board) {
-	board.hash_key = board.hash_key ^ randoms[0];
+inline void make_null_move(Position& position) {
+	position.hash_key = position.hash_key ^ randoms[0];
 }
 
-inline void unmake_null_move(Board& board) {
-	board.hash_key = board.hash_key ^ randoms[0];
+inline void unmake_null_move(Position& position) {
+	position.hash_key = position.hash_key ^ randoms[0];
 }
 
 #endif /* MOVES_H_ */

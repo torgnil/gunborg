@@ -51,41 +51,41 @@ inline bool Search::time_to_stop() {
 	return time_elapsed > max_think_time_ms || !should_run;
 }
 
-bool is_equal(const Board& b1, const Board& b2) {
-	if (b1.b[BLACK][PAWN] != b2.b[BLACK][PAWN]) {
+bool is_equal(const Position& p1, const Position& p2) {
+	if (p1.p[BLACK][PAWN] != p2.p[BLACK][PAWN]) {
 		return false;
 	}
-	if (b1.b[BLACK][BISHOP] != b2.b[BLACK][BISHOP]) {
+	if (p1.p[BLACK][BISHOP] != p2.p[BLACK][BISHOP]) {
 		return false;
 	}
-	if (b1.b[BLACK][KNIGHT] != b2.b[BLACK][KNIGHT]) {
+	if (p1.p[BLACK][KNIGHT] != p2.p[BLACK][KNIGHT]) {
 		return false;
 	}
-	if (b1.b[BLACK][ROOK] != b2.b[BLACK][ROOK]) {
+	if (p1.p[BLACK][ROOK] != p2.p[BLACK][ROOK]) {
 		return false;
 	}
-	if (b1.b[BLACK][QUEEN] != b2.b[BLACK][QUEEN]) {
+	if (p1.p[BLACK][QUEEN] != p2.p[BLACK][QUEEN]) {
 		return false;
 	}
-	if (b1.b[BLACK][KING] != b2.b[BLACK][KING]) {
+	if (p1.p[BLACK][KING] != p2.p[BLACK][KING]) {
 		return false;
 	}
-	if (b1.b[WHITE][PAWN] != b2.b[WHITE][PAWN]) {
+	if (p1.p[WHITE][PAWN] != p2.p[WHITE][PAWN]) {
 		return false;
 	}
-	if (b1.b[WHITE][BISHOP] != b2.b[WHITE][BISHOP]) {
+	if (p1.p[WHITE][BISHOP] != p2.p[WHITE][BISHOP]) {
 		return false;
 	}
-	if (b1.b[WHITE][KNIGHT] != b2.b[WHITE][KNIGHT]) {
+	if (p1.p[WHITE][KNIGHT] != p2.p[WHITE][KNIGHT]) {
 		return false;
 	}
-	if (b1.b[WHITE][ROOK] != b2.b[WHITE][ROOK]) {
+	if (p1.p[WHITE][ROOK] != p2.p[WHITE][ROOK]) {
 		return false;
 	}
-	if (b1.b[WHITE][QUEEN] != b2.b[WHITE][QUEEN]) {
+	if (p1.p[WHITE][QUEEN] != p2.p[WHITE][QUEEN]) {
 		return false;
 	}
-	if (b1.b[WHITE][KING] != b2.b[WHITE][KING]) {
+	if (p1.p[WHITE][KING] != p2.p[WHITE][KING]) {
 		return false;
 	}
 	return true;
@@ -114,13 +114,13 @@ void pick_next_move(MoveList& moves, const int no_sorted_moves) {
 	std::swap(moves[no_sorted_moves], moves[max_index]);
 }
 
-int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Board& board) {
-	if (board.b[WHITE][KING] == 0) {
+int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Position& position) {
+	if (position.p[WHITE][KING] == 0) {
 		return white_turn ? -10000 : 10000;
-	} else if (board.b[BLACK][KING] == 0) {
+	} else if (position.p[BLACK][KING] == 0) {
 		return white_turn ? 10000 : -10000;
 	}
-	int static_eval = nega_evaluate(board, white_turn);
+	int static_eval = nega_evaluate(position, white_turn);
 	if (static_eval > alpha) {
 		alpha = static_eval;
 	}
@@ -128,7 +128,7 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 		return beta;
 	}
 
-	MoveList capture_moves = get_captures(board, white_turn);
+	MoveList capture_moves = get_captures(position, white_turn);
 	if (capture_moves.empty()) {
 		// the end point of the quiescence search
 		return static_eval;
@@ -137,14 +137,14 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 	for (unsigned int i = 0; i < capture_moves.size(); ++i) {
 		pick_next_move(capture_moves, i);
 		Move move = capture_moves[i];
-		bool legal_move = make_move(board, move);
+		bool legal_move = make_move(position, move);
 		if (!legal_move) {
-			unmake_move(board, move);
+			unmake_move(position, move);
 			continue;
 		}
 		has_legal_capture = true;
-		int res = -capture_quiescence_eval_search(!white_turn, -beta, -alpha, board);
-		unmake_move(board, move);
+		int res = -capture_quiescence_eval_search(!white_turn, -beta, -alpha, position);
+		unmake_move(position, move);
 		if (res >= beta) {
 			return beta;
 		}
@@ -161,18 +161,18 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 	return alpha;
 }
 
-int Search::null_window_search(bool white_turn, int depth, int beta, Board& board, Transposition *tt,
+int Search::null_window_search(bool white_turn, int depth, int beta, Position& position, Transposition *tt,
 		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
 	int alpha = beta - 1;
-	return alpha_beta(white_turn, depth, alpha, beta, board, tt, null_move_not_allowed, killers, history, ply, extension);
+	return alpha_beta(white_turn, depth, alpha, beta, position, tt, null_move_not_allowed, killers, history, ply, extension);
 }
 
-inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, int beta) {
+inline bool should_prune(int depth, bool white_turn, Position& position, int alpha, int beta) {
 	if (depth > 3) {
 		return false;
 	}
 	if (depth == 1) {
-		int static_eval = nega_evaluate(board, white_turn);
+		int static_eval = nega_evaluate(position, white_turn);
 		// futility pruning. we do not hope to improve a position more than 300 in one move
 		if (static_eval + 300 < alpha) {
 			return true;
@@ -180,14 +180,14 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 	}
 	if (depth == 2) {
 		// extended futility pruning. we do not hope to improve a position more than 520 in two plies
-		int static_eval = nega_evaluate(board, white_turn);
+		int static_eval = nega_evaluate(position, white_turn);
 		if (static_eval + 520 < alpha) {
 			return true;
 		}
 	}
 	if (depth == 3) {
 		// extended futility pruning. we do not hope to improve a position more than 900 in three plies
-		int static_eval = nega_evaluate(board, white_turn);
+		int static_eval = nega_evaluate(position, white_turn);
 		if (static_eval + 900 < alpha) {
 			return true;
 		}
@@ -195,16 +195,16 @@ inline bool should_prune(int depth, bool white_turn, Board& board, int alpha, in
 	return false;
 }
 
-int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& board, Transposition *tt,
+int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position& position, Transposition *tt,
 		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
 	if (depth == 0) {
-		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
+		return capture_quiescence_eval_search(white_turn, alpha, beta, position);
 	}
 	if (time_to_stop()) {
 		return alpha;
 	}
-	if (should_prune(depth, white_turn, board, alpha, beta)) {
-		return capture_quiescence_eval_search(white_turn, alpha, beta, board);
+	if (should_prune(depth, white_turn, position, alpha, beta)) {
+		return capture_quiescence_eval_search(white_turn, alpha, beta, position);
 	}
 
 	// null move heuristic
@@ -214,19 +214,19 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		// 1. That the disadvantage of forfeiting one's turn is greater than the disadvantage of performing a shallower search.
 		// 2. That the beta cut-offs prunes enough branches to be worth the time searching at reduced depth
 		int R = 2; // depth reduction
-		make_null_move(board);
-		int res = -alpha_beta(!white_turn, depth - 1 - R, -beta, -alpha, board, tt, true, killers, history, ply + 1, extension);
-		unmake_null_move(board);
+		make_null_move(position);
+		int res = -alpha_beta(!white_turn, depth - 1 - R, -beta, -alpha, position, tt, true, killers, history, ply + 1, extension);
+		unmake_null_move(position);
 		if (res >= beta) {
 			return beta;
 		}
 	}
 
 	// check for hit in transposition table
-	Transposition tt_pv = tt[hash_index(board.hash_key) % hash_size];
-	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(board.hash_key);
+	Transposition tt_pv = tt[hash_index(position.hash_key) % hash_size];
+	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(position.hash_key);
 
-	MoveList moves = get_moves(board, white_turn);
+	MoveList moves = get_moves(position, white_turn);
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
 		if (cache_hit && tt_pv.next_move == it->m) {
@@ -248,7 +248,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	}
 
 	Transposition t;
-	t.hash = hash_verification(board.hash_key);
+	t.hash = hash_verification(position.hash_key);
 	int next_move = 0;
 	bool has_legal_move = false;
 	int static_eval = 0;
@@ -257,9 +257,9 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		pick_next_move(moves, i);
 		Move move = moves[i];
 		node_count++;
-		bool legal_move = make_move(board, move);
+		bool legal_move = make_move(position, move);
 		if (!legal_move) {
-			unmake_move(board, move);
+			unmake_move(position, move);
 			continue;
 		}
 		has_legal_move = true;
@@ -269,20 +269,20 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			int depth_extention = 0;
 			if (extension < MAX_CHECK_EXTENSION) {
 				// if this is a checking move, extend the search one ply
-				if (get_attacked_squares(board, white_turn) & board.b[white_turn ? BLACK : WHITE][KING]) {
+				if (get_attacked_squares(position, white_turn) & position.p[white_turn ? BLACK : WHITE][KING]) {
 					extension++;
 					depth_extention = 1;
 				}
 			}
-			res = -alpha_beta(!white_turn, depth - 1 + depth_extention, -beta, -alpha, board, tt, null_move_not_allowed,
+			res = -alpha_beta(!white_turn, depth - 1 + depth_extention, -beta, -alpha, position, tt, null_move_not_allowed,
 				killers, history, ply + 1, extension);
 		} else {
 			// prune late moves that we do not expect to improve alpha
 			if (i == 12 && depth <= 2) {
-				static_eval = nega_evaluate(board, white_turn);
+				static_eval = nega_evaluate(position, white_turn);
 			}
 			if (i >= 12 && depth <= 2 && static_eval + 100 < alpha) {
-				unmake_move(board, move);
+				unmake_move(position, move);
 				break;
 			}
 			int depth_reduction = 0;
@@ -293,22 +293,22 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			}
 			// we do not expect to find a better move
 			// use a fast null window search to verify it!
-			res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, board, tt, null_move_not_allowed,
+			res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, position, tt, null_move_not_allowed,
 										killers, history, ply + 1, extension);
 			if (res > alpha) {
 				// score improved unexpected, we have to do a full window search
-				res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, board, tt, null_move_not_allowed,
+				res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, position, tt, null_move_not_allowed,
 							killers, history, ply + 1, extension);
 			}
 			if (depth_reduction > 0 && res > alpha && res < beta) {
 				// score improved "unexpected" at reduced depth
 				// re-search at normal depth
-				res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, board, tt, null_move_not_allowed, killers, history,
+				res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, position, tt, null_move_not_allowed, killers, history,
 						ply + 1, extension);
 			}
 		}
 
-		unmake_move(board, move);
+		unmake_move(position, move);
 		if (time_to_stop()) {
 			return alpha;
 		}
@@ -321,7 +321,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 			}
 			next_move = move.m;
 			t.next_move = next_move;
-			tt[hash_index(board.hash_key) % hash_size] = t;
+			tt[hash_index(position.hash_key) % hash_size] = t;
 			return beta;
 		}
 
@@ -335,7 +335,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 		}
 	}
 	if (!has_legal_move) {
-		bool in_check = get_attacked_squares(board, !white_turn) & board.b[white_turn ? WHITE : BLACK][KING];
+		bool in_check = get_attacked_squares(position, !white_turn) & position.p[white_turn ? WHITE : BLACK][KING];
 		if (in_check) {
 			return -10000;
 		} else {
@@ -344,7 +344,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Board& b
 	}
 	if (next_move != 0) {
 		t.next_move = next_move;
-		tt[hash_index(board.hash_key) % hash_size] = t;
+		tt[hash_index(position.hash_key) % hash_size] = t;
 	}
 	return alpha;
 }
@@ -360,16 +360,16 @@ void Search::print_uci_info(int pv[], int depth, int score) {
 			<< node_count << " pv " << pvstring << "\n" << std::flush;
 }
 
-void Search::search_best_move(const Board& board, const bool white_turn, const list history, Transposition * tt) {
+void Search::search_best_move(const Position& position, const bool white_turn, const list history, Transposition * tt) {
 	start = clock.now();
 
-	Board b2 = board;
-	MoveList root_moves = get_moves(b2, white_turn);
+	Position p = position;
+	MoveList root_moves = get_moves(p, white_turn);
 
 	for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
-		make_move(b2, *it);
-		it->sort_score = nega_evaluate(b2, white_turn);
-		unmake_move(b2, *it);
+		make_move(p, *it);
+		it->sort_score = nega_evaluate(p, white_turn);
+		unmake_move(p, *it);
 	}
 
 	int alpha = INT_MIN;
@@ -378,8 +378,8 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 	Move killers2[32][2];
 	int quites_history[64][64] = { };
 
-	uint64_t attacked_squares_by_opponent = get_attacked_squares(b2, !white_turn);
-	bool in_check = attacked_squares_by_opponent & (white_turn ? b2.b[WHITE][KING] : b2.b[BLACK][KING]);
+	uint64_t attacked_squares_by_opponent = get_attacked_squares(p, !white_turn);
+	bool in_check = attacked_squares_by_opponent & (white_turn ? p.p[WHITE][KING] : p.p[BLACK][KING]);
 
 	for (int depth = 1; depth <= max_depth;) {
 
@@ -393,15 +393,15 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 			Move root_move = root_moves[i];
 			if (a < b) {
 				node_count++;
-				bool legal_move = make_move(b2, root_move);
+				bool legal_move = make_move(p, root_move);
 				if (!legal_move) {
-					unmake_move(b2, root_move);
+					unmake_move(p, root_move);
 					continue;
 				}
 				int res = -1;
 				bool history_white_turn = true;
 				for (auto hit = history.begin(); hit != history.end(); ++hit) {
-					if (is_equal(b2, *hit) && white_turn != history_white_turn) {
+					if (is_equal(p, *hit) && white_turn != history_white_turn) {
 						// draw by repetition
 						res = 0;
 					}
@@ -409,19 +409,19 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 				}
 				if (res == -1) {
 					// check if stale mate
-					bool opponent_in_check = get_attacked_squares(b2, white_turn)
-												& (white_turn ? b2.b[BLACK][KING] : b2.b[WHITE][KING]);
+					bool opponent_in_check = get_attacked_squares(p, white_turn)
+												& (white_turn ? p.p[BLACK][KING] : p.p[WHITE][KING]);
 					if (!opponent_in_check) {
 						bool opponent_has_legal_move = false;
-						MoveList oppenent_moves = get_moves(b2, !white_turn);
+						MoveList oppenent_moves = get_moves(p, !white_turn);
 						for (auto it = oppenent_moves.begin(); it != oppenent_moves.end(); ++it) {
-							bool legal_move = make_move(b2, *it);
+							bool legal_move = make_move(p, *it);
 							if (legal_move) {
 								opponent_has_legal_move = true;
-								unmake_move(b2,*it);
+								unmake_move(p,*it);
 								break;
 							}
-							unmake_move(b2,*it);
+							unmake_move(p,*it);
 						}
 						if (!opponent_has_legal_move) {
 							res = 0;
@@ -431,18 +431,18 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 				if (res == -1) {
 					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
 					if (i > 0 && depth > 1) {
-						res = -null_window_search(!white_turn, depth - 1, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
+						res = -null_window_search(!white_turn, depth - 1, -a, p, tt, in_check, killers2, quites_history, 1, 0);
 						if (res > a) {
 							// full window is necessary
-							res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
+							res = -alpha_beta(!white_turn, depth - 1, -b, -a, p, tt, in_check, killers2, quites_history, 1, 0);
 						} else {
 							res = a - i*500; // keep sort order
 						}
 					} else {
-						res = -alpha_beta(!white_turn, depth - 1, -b, -a, b2, tt, in_check, killers2, quites_history, 1, 0);
+						res = -alpha_beta(!white_turn, depth - 1, -b, -a, p, tt, in_check, killers2, quites_history, 1, 0);
 					}
 				}
-				unmake_move(b2, root_move);
+				unmake_move(p, root_move);
 				if (res > a && (!time_to_stop() || i == 0)) {
 					score = res;
 					a = res;
@@ -451,7 +451,7 @@ void Search::search_best_move(const Board& board, const bool white_turn, const l
 					}
 					pv[0] = root_move.m;
 					uint32_t next_pv_move = root_move.m;
-					uint64_t hash = b2.hash_key;
+					uint64_t hash = p.hash_key;
 					for (int p = 1; p < depth - 1; p++) {
 						hash ^= move_hash(next_pv_move);
 						Transposition next = tt[hash_index(hash) % hash_size];

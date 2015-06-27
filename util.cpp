@@ -181,34 +181,34 @@ std::string long_algebraic_notation(uint64_t square) {
 	return "";
 }
 
-void print_board(const Board& board) {
+void print_position(const Position& position) {
 	for (int i = 63; i >= 0; i--) {
 		int file = 7 - i % 8;
 		int row = i / 8;
 		uint64_t square = 1ULL << ((8 * row) + file);
-		if (board.b[WHITE][PAWN] & square) {
+		if (position.p[WHITE][PAWN] & square) {
 			std::cout << "♙";
-		} else if (board.b[BLACK][PAWN] & square) {
+		} else if (position.p[BLACK][PAWN] & square) {
 			std::cout << "♟";
-		} else if (board.b[WHITE][KING] & square) {
+		} else if (position.p[WHITE][KING] & square) {
 			std::cout << "♔";
-		} else if (board.b[BLACK][KING] & square) {
+		} else if (position.p[BLACK][KING] & square) {
 			std::cout << "♚";
-		} else if (board.b[WHITE][BISHOP] & square) {
+		} else if (position.p[WHITE][BISHOP] & square) {
 			std::cout << "♗";
-		} else if (board.b[BLACK][BISHOP] & square) {
+		} else if (position.p[BLACK][BISHOP] & square) {
 			std::cout << "♝";
-		} else if (board.b[WHITE][ROOK] & square) {
+		} else if (position.p[WHITE][ROOK] & square) {
 			std::cout << "♖";
-		} else if (board.b[BLACK][ROOK] & square) {
+		} else if (position.p[BLACK][ROOK] & square) {
 			std::cout << "♜";
-		} else if (board.b[WHITE][QUEEN] & square) {
+		} else if (position.p[WHITE][QUEEN] & square) {
 			std::cout << "♕";
-		} else if (board.b[BLACK][QUEEN] & square) {
+		} else if (position.p[BLACK][QUEEN] & square) {
 			std::cout << "♛";
-		} else if (board.b[WHITE][KNIGHT] & square) {
+		} else if (position.p[WHITE][KNIGHT] & square) {
 			std::cout << "♘";
-		} else if (board.b[BLACK][KNIGHT] & square) {
+		} else if (position.p[BLACK][KNIGHT] & square) {
 			std::cout << "♞";
 		} else {
 			std::cout << ".";
@@ -256,18 +256,18 @@ int parse_int_parameter(std::string line, std::string parameter) {
 	return 0;
 }
 
-int perft(Board& board, const int depth, const bool white_turn) {
+int perft(Position& position, const int depth, const bool white_turn) {
 	if (depth == 0) {
 		return 1;
 	}
 	int nodes = 0;
-	MoveList moves = get_moves(board, white_turn);
+	MoveList moves = get_moves(position, white_turn);
 	for (auto it : moves) {
-		bool legal = make_move(board, it);
+		bool legal = make_move(position, it);
 		if (legal) {
-			nodes += perft(board, depth - 1, !white_turn);
+			nodes += perft(position, depth - 1, !white_turn);
 		}
-		unmake_move(board, it);
+		unmake_move(position, it);
 	}
 	return nodes;
 }

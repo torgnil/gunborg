@@ -28,8 +28,8 @@
 #include <inttypes.h>
 #include <vector>
 
-struct Board {
-	uint64_t b[2][6] = {}; //[WHITE|BLACK][PAWN ... KING]
+struct Position {
+	uint64_t p[2][6] = {}; //[WHITE|BLACK][PAWN ... KING]
 	std::vector<uint64_t> meta_info_stack;
 	uint64_t hash_key = 0;
 };
@@ -272,7 +272,7 @@ inline int pop_count_sw(uint64_t b) {
 
 
 
-typedef std::deque<Board> list;
+typedef std::deque<Position> list;
 typedef std::deque<Move> MoveList;
 
 

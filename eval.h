@@ -121,12 +121,12 @@ const int KING_SQUARE_TABLE_ENDGAME[] = {
  * High score: good for white
  * Low score: good for black
  */
-int evaluate(const Board& board);
+int evaluate(const Position& position);
 
 /**
  * Score from side's perspective
  */
-int nega_evaluate(const Board& board, bool white_turn);
+int nega_evaluate(const Position& position, bool white_turn);
 
 
 #endif /* EVAL_H_ */

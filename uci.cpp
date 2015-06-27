@@ -41,7 +41,7 @@ FenInfo start_pos() {
 }
 
 FenInfo parse_fen(string fen) {
-	Board board;
+	Position position;
 	uint64_t meta_info = 0;
 	int row = 8;
 	int file = 1;
@@ -49,40 +49,40 @@ FenInfo parse_fen(string fen) {
 		char c = fen[i];
 		int j = (row - 1) * 8 + file - 1;
 		if (c == 'r') {
-			board.b[BLACK][ROOK] += (1ULL << j);
+			position.p[BLACK][ROOK] += (1ULL << j);
 		}
 		if (c == 'n') {
-			board.b[BLACK][KNIGHT] += (1ULL << j);
+			position.p[BLACK][KNIGHT] += (1ULL << j);
 		}
 		if (c == 'b') {
-			board.b[BLACK][BISHOP] += (1ULL << j);
+			position.p[BLACK][BISHOP] += (1ULL << j);
 		}
 		if (c == 'q') {
-			board.b[BLACK][QUEEN] += (1ULL << j);
+			position.p[BLACK][QUEEN] += (1ULL << j);
 		}
 		if (c == 'k') {
-			board.b[BLACK][KING] += (1ULL << j);
+			position.p[BLACK][KING] += (1ULL << j);
 		}
 		if (c == 'p') {
-			board.b[BLACK][PAWN] += (1ULL << j);
+			position.p[BLACK][PAWN] += (1ULL << j);
 		}
 		if (c == 'R') {
-			board.b[WHITE][ROOK] += (1ULL << j);
+			position.p[WHITE][ROOK] += (1ULL << j);
 		}
 		if (c == 'N') {
-			board.b[WHITE][KNIGHT] += (1ULL << j);
+			position.p[WHITE][KNIGHT] += (1ULL << j);
 		}
 		if (c == 'B') {
-			board.b[WHITE][BISHOP] += (1ULL << j);
+			position.p[WHITE][BISHOP] += (1ULL << j);
 		}
 		if (c == 'Q') {
-			board.b[WHITE][QUEEN] += (1ULL << j);
+			position.p[WHITE][QUEEN] += (1ULL << j);
 		}
 		if (c == 'K') {
-			board.b[WHITE][KING] += (1ULL << j);
+			position.p[WHITE][KING] += (1ULL << j);
 		}
 		if (c == 'P') {
-			board.b[WHITE][PAWN] += (1ULL << j);
+			position.p[WHITE][PAWN] += (1ULL << j);
 		}
 		if (c >= '0' && c <= '9') {
 			int skips = c - '0';
@@ -122,10 +122,10 @@ FenInfo parse_fen(string fen) {
 		uint64_t en_passant_square = 1ULL << (8 * (en_passant[1] - '0' -1) + en_passant[0] - 'a');
 		meta_info |= en_passant_square;
 	}
-	board.meta_info_stack.push_back(meta_info);
+	position.meta_info_stack.push_back(meta_info);
 
 	FenInfo fen_info;
-	fen_info.board = board;
+	fen_info.position = position;
 	if (fen.find("w") != string::npos) {
 		fen_info.white_turn = true;
 	} else {
@@ -138,7 +138,7 @@ FenInfo parse_fen(string fen) {
 	return fen_info;
 }
 
-void update_with_move(Board& board, string move_str, bool white_turn) {
+void update_with_move(Position& position, string move_str, bool white_turn) {
 	int from_file = move_str[0] - 'a' + 1;
 	int from_row = move_str[1] - '0';
 	int from = (from_row - 1) * 8 + from_file - 1;
@@ -147,22 +147,22 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 	int to_row = move_str[3] - '0';
 	int to = (to_row - 1) * 8 + to_file - 1;
 
-	uint64_t black_squares = board.b[BLACK][KING] | board.b[BLACK][PAWN] | board.b[BLACK][KNIGHT]
-			| board.b[BLACK][BISHOP] | board.b[BLACK][ROOK] | board.b[BLACK][QUEEN];
+	uint64_t black_squares = position.p[BLACK][KING] | position.p[BLACK][PAWN] | position.p[BLACK][KNIGHT]
+			| position.p[BLACK][BISHOP] | position.p[BLACK][ROOK] | position.p[BLACK][QUEEN];
 
-	uint64_t white_squares = board.b[WHITE][KING] | board.b[WHITE][PAWN] | board.b[WHITE][KNIGHT]
-			| board.b[WHITE][BISHOP] | board.b[WHITE][ROOK] | board.b[WHITE][QUEEN];
+	uint64_t white_squares = position.p[WHITE][KING] | position.p[WHITE][PAWN] | position.p[WHITE][KNIGHT]
+			| position.p[WHITE][BISHOP] | position.p[WHITE][ROOK] | position.p[WHITE][QUEEN];
 
 	uint64_t occupied_squares = black_squares | white_squares;
 
 	uint64_t from_square = 1ULL << from;
 	uint64_t to_square = 1ULL << to;
 
-	uint64_t meta_info = board.meta_info_stack.back();
+	uint64_t meta_info = position.meta_info_stack.back();
 
 	Move move;
 	int promotion = EMPTY;
-	int piece = piece_at_square(board, from, white_turn ? WHITE : BLACK);
+	int piece = piece_at_square(position, from, white_turn ? WHITE : BLACK);
 	int color = white_turn ? WHITE : BLACK;
 	if (piece == PAWN && ((to_square & ROW_8) || (to_square & ROW_1))) {
 		if (move_str.size() == 5) {
@@ -193,20 +193,20 @@ void update_with_move(Board& board, string move_str, bool white_turn) {
 		move.m = to_castle_move(from, to, color);
 	} else if ((to_square & occupied_squares) || en_passant_capture) {
 		int captured_color = color ^ 1;
-		int captured_piece = piece_at_square(board, to, captured_color);
+		int captured_piece = piece_at_square(position, to, captured_color);
 		move.m = to_capture_move(from, to, piece, captured_piece, color, promotion);
 	} else {
 		move.m = to_move(from, to, piece, color, promotion);
 	}
 
-	make_move(board, move);
+	make_move(position, move);
 }
 
 void uci() {
 	thread* search_thread = NULL;
 
 	FenInfo fen_info =  start_pos();
-	Board start_board = fen_info.board;
+	Position start_position = fen_info.position;
 	bool white_turn = fen_info.white_turn;
 	int move = fen_info.move;
 
@@ -219,7 +219,7 @@ void uci() {
 		string line;
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
-			cout << "id name gunborg 1.1\n";
+			cout << "id name gunborg " << __DATE__ << "\n";
 			cout << "id author Torbjorn Nilsson\n";
 			cout << "option name Hash type spin default 16 min 1 max 1024\n";
 			cout << "uciok\n" << flush;
@@ -230,7 +230,7 @@ void uci() {
 		if (line.find("ucinewgame") != string::npos) {
 			// new game
 			FenInfo fen_info = start_pos();
-			start_board = fen_info.board;
+			start_position = fen_info.position;
 			white_turn = fen_info.white_turn;
 			move = fen_info.move;
 			delete[] tt;
@@ -250,7 +250,7 @@ void uci() {
 			// position [fen <fenstring> | startpos ]  moves <move1> .... <movei>
 			if (line.find("startpos") != string::npos) {
 				FenInfo fen_info = start_pos();
-				start_board = fen_info.board;
+				start_position = fen_info.position;
 				white_turn = fen_info.white_turn;
 				move = fen_info.move;
 			}
@@ -258,7 +258,7 @@ void uci() {
 			if (pos != string::npos) {
 				string fen = line.substr(pos + 4);
 				FenInfo fen_info = parse_fen(fen);
-				start_board = fen_info.board;
+				start_position = fen_info.position;
 				white_turn = fen_info.white_turn;
 				move = fen_info.move;
 			}
@@ -268,10 +268,10 @@ void uci() {
 				vector<string> splited = split(moves_str);
 				move = splited.size() / 2;
 				for (auto it : splited) {
-					Board copy = start_board;
+					Position copy = start_position;
 					history.push_back(copy);
 
-					update_with_move(start_board, it, white_turn);
+					update_with_move(start_position, it, white_turn);
 
 					white_turn = !white_turn;
 				}
@@ -321,7 +321,7 @@ void uci() {
 					search->max_think_time_ms = factor * ((b_time + (moves_togo - 1) * b_inc) / moves_togo) - 3;
 				}
 			}
-			search_thread = new thread(&gunborg::Search::search_best_move, search, start_board, white_turn, history, tt);
+			search_thread = new thread(&gunborg::Search::search_best_move, search, start_position, white_turn, history, tt);
 		}
 		if (line.find("stop") != string::npos) {
 			if (search_thread != NULL) {
@@ -346,7 +346,7 @@ void uci() {
 			for (int i = 1; i <= depth; i++) {
 				start = clock.now();
 				std::cout << "perft depth(" << i << ") nodes: "
-						<< perft(start_board, i, white_turn);
+						<< perft(start_position, i, white_turn);
 				int time_elapsed = std::chrono::duration_cast
 						< std::chrono::milliseconds > (clock.now() - start).count();
 				std::cout << " in " << time_elapsed << " ms\n";
@@ -368,7 +368,7 @@ void uci() {
 			fen_info = parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
 			std::chrono::high_resolution_clock clock;
 			std::chrono::high_resolution_clock::time_point start = clock.now();
-			search->search_best_move(fen_info.board, fen_info.white_turn, history, tt);
+			search->search_best_move(fen_info.position, fen_info.white_turn, history, tt);
 			int time_elapsed = std::chrono::duration_cast
 									< std::chrono::milliseconds > (clock.now() - start).count();
 			std::cout << "bench " << search->node_count << " nodes in " << time_elapsed << " ms\n";

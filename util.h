@@ -34,12 +34,12 @@ std::string pvstring_from_stack(int * pv, int size);
 
 int parse_int_parameter(std::string line, std::string parameter);
 
-void print_board(const Board& board);
+void print_position(const Position& position);
 
 void print_bit_mask(uint64_t bit_mask);
 
 std::vector<std::string> split(std::string& line);
 
-int perft(Board& board, int depth, bool white_turn);
+int perft(Position& position, int depth, bool white_turn);
 
 #endif /* UTIL_H_ */

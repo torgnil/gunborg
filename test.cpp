@@ -38,12 +38,12 @@ void assert_equals(const char* fail_message, uint64_t value, uint64_t expected) 
 }
 
 void white_pawn_push() {
-	Board board;
-	board.meta_info_stack.push_back(0);
-	board.b[WHITE][PAWN] = ROW_3;
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
-	MoveList quites = get_moves(board, true);
+	Position position;
+	position.meta_info_stack.push_back(0);
+	position.p[WHITE][PAWN] = ROW_3;
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
+	MoveList quites = get_moves(position, true);
 	assert_equals("should be 11 moves", quites.size(), 11);
 	assert_equals("first move from A3", from_square(quites.front().m), lsb_to_square(A3));
 	assert_equals("first move to A4", to_square(quites.front().m), lsb_to_square(A4));
@@ -52,161 +52,161 @@ void white_pawn_push() {
 }
 
 void white_pawn_two_square_push() {
-	Board board;
-	board.meta_info_stack.push_back(0);
-	board.b[WHITE][PAWN] = ROW_2;
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
-	MoveList quites = get_moves(board, true);
+	Position position;
+	position.meta_info_stack.push_back(0);
+	position.p[WHITE][PAWN] = ROW_2;
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
+	MoveList quites = get_moves(position, true);
 	assert_equals("should be 17 moves", quites.size(), 17);
 	assert_equals("first move from A2", from_square(quites.front().m), lsb_to_square(A2));
 	assert_equals("first move to A3", to_square(quites.front().m), lsb_to_square(A3));
 }
 
 void black_pawn_two_square_push() {
-	Board board;
-	board.meta_info_stack.push_back(0);
-	board.b[BLACK][PAWN] = ROW_7;
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
-	MoveList quites = get_moves(board, false);
+	Position position;
+	position.meta_info_stack.push_back(0);
+	position.p[BLACK][PAWN] = ROW_7;
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
+	MoveList quites = get_moves(position, false);
 	assert_equals("should be 17 moves", quites.size(), 17);
 	assert_equals("first move from A7", from_square(quites.front().m), lsb_to_square(A7));
 	assert_equals("first move to A6", to_square(quites.front().m), lsb_to_square(A6));
 }
 
 void black_pawn_push() {
-	Board board;
-	board.meta_info_stack.push_back(0);
-	board.b[BLACK][PAWN] = ROW_6;
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
-	MoveList quites = get_moves(board, false);
+	Position position;
+	position.meta_info_stack.push_back(0);
+	position.p[BLACK][PAWN] = ROW_6;
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
+	MoveList quites = get_moves(position, false);
 	assert_equals("b should be 11 moves", quites.size(), 11);
 	assert_equals("first move from A6", from_square(quites.front().m), lsb_to_square(A6));
 	assert_equals("first move to A5", to_square(quites.front().m), lsb_to_square(A5));
 }
 
 void white_blocked_pawn_push() {
-	Board board;
-	board.meta_info_stack.push_back(0);
-	board.b[WHITE][PAWN] = ROW_3;
-	board.b[BLACK][PAWN] = D4;
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
-	MoveList quites = get_moves(board, true);
+	Position position;
+	position.meta_info_stack.push_back(0);
+	position.p[WHITE][PAWN] = ROW_3;
+	position.p[BLACK][PAWN] = D4;
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
+	MoveList quites = get_moves(position, true);
 	assert_equals("should be 12 moves", quites.size(), 12);
 	assert_equals("first move from A3", from_square(quites.front().m), lsb_to_square(C3));
 	assert_equals("first move to A4", to_square(quites.front().m), lsb_to_square(D4));
 }
 
 void pawn_captures() {
-	Board board;
-	board.meta_info_stack.push_back(0);
-	board.b[WHITE][PAWN] = D5;
-	board.b[BLACK][PAWN] = E6;
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
-	MoveList moves = get_moves(board, true);
+	Position position;
+	position.meta_info_stack.push_back(0);
+	position.p[WHITE][PAWN] = D5;
+	position.p[BLACK][PAWN] = E6;
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
+	MoveList moves = get_moves(position, true);
 	assert_equals("should be 5 moves", moves.size(), 5);
 }
 
 void make_unmake() {
-	Board board;
-	board.b[WHITE][PAWN] = A4;
-	board.meta_info_stack.push_back(0);
+	Position position;
+	position.p[WHITE][PAWN] = A4;
+	position.meta_info_stack.push_back(0);
 	Move move;
 	move.m = to_move(lsb_to_square(A4), lsb_to_square(A5), WHITE, PAWN, EMPTY);
 
-	make_move(board, move);
-	assert_equals("Pawn at A5", board.b[WHITE][PAWN], A5);
-	assert_equals("make hash", board.hash_key, move_hash(move.m));
-	unmake_move(board, move);
-	assert_equals("Pawn unmaked to A4", board.b[WHITE][PAWN], A4);
-	assert_equals("unmake hash", board.hash_key, 0);
+	make_move(position, move);
+	assert_equals("Pawn at A5", position.p[WHITE][PAWN], A5);
+	assert_equals("make hash", position.hash_key, move_hash(move.m));
+	unmake_move(position, move);
+	assert_equals("Pawn unmaked to A4", position.p[WHITE][PAWN], A4);
+	assert_equals("unmake hash", position.hash_key, 0);
 }
 
 void make_unmake_capture() {
-	Board board;
-	board.b[WHITE][PAWN] = A4;
-	board.b[BLACK][PAWN] = B5;
-	board.meta_info_stack.push_back(0);
+	Position position;
+	position.p[WHITE][PAWN] = A4;
+	position.p[BLACK][PAWN] = B5;
+	position.meta_info_stack.push_back(0);
 
 	Move move;
 	move.m = to_capture_move(lsb_to_square(A4), lsb_to_square(B5), PAWN, PAWN, WHITE, EMPTY);
 
-	make_move(board, move);
-	assert_equals("Pawn at B5", board.b[WHITE][PAWN], B5);
-	assert_equals("Pawn is captured", board.b[BLACK][PAWN], 0);
-	unmake_move(board, move);
-	assert_equals("Pawn unmaked to A4", board.b[WHITE][PAWN], A4);
-	assert_equals("Captured pawn unmaked to B5", board.b[BLACK][PAWN], B5);
+	make_move(position, move);
+	assert_equals("Pawn at B5", position.p[WHITE][PAWN], B5);
+	assert_equals("Pawn is captured", position.p[BLACK][PAWN], 0);
+	unmake_move(position, move);
+	assert_equals("Pawn unmaked to A4", position.p[WHITE][PAWN], A4);
+	assert_equals("Captured pawn unmaked to B5", position.p[BLACK][PAWN], B5);
 
 }
 
 void make_unmake_king_capture() {
-	Board board;
-	board.b[WHITE][PAWN] = A4;
-	board.b[BLACK][KING] = B5;
-	board.meta_info_stack.push_back(0);
+	Position position;
+	position.p[WHITE][PAWN] = A4;
+	position.p[BLACK][KING] = B5;
+	position.meta_info_stack.push_back(0);
 
 	Move move;
 	move.m = to_capture_move(lsb_to_square(A4), lsb_to_square(B5), PAWN, KING, WHITE, EMPTY);
 
-	make_move(board, move);
-	assert_equals("Pawn at B5", board.b[WHITE][PAWN], B5);
-	assert_equals("Pawn is captured", board.b[BLACK][KING], 0);
-	unmake_move(board, move);
-	assert_equals("Pawn unmaked to A4", board.b[WHITE][PAWN], A4);
-	assert_equals("Captured king unmaked to B5", board.b[BLACK][KING], B5);
+	make_move(position, move);
+	assert_equals("Pawn at B5", position.p[WHITE][PAWN], B5);
+	assert_equals("Pawn is captured", position.p[BLACK][KING], 0);
+	unmake_move(position, move);
+	assert_equals("Pawn unmaked to A4", position.p[WHITE][PAWN], A4);
+	assert_equals("Captured king unmaked to B5", position.p[BLACK][KING], B5);
 
 }
 
 void white_knight_moves() {
-	Board board;
-	board.meta_info_stack.push_back(0);
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
-	board.b[WHITE][KNIGHT] = D4;
-	MoveList quites = get_moves(board, true);
+	Position position;
+	position.meta_info_stack.push_back(0);
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
+	position.p[WHITE][KNIGHT] = D4;
+	MoveList quites = get_moves(position, true);
 	assert_equals("should be 11 knight moves", quites.size(), 11);
 
-	board.b[WHITE][KNIGHT] = A1;
-	quites = get_moves(board, true);
+	position.p[WHITE][KNIGHT] = A1;
+	quites = get_moves(position, true);
 	assert_equals("should be 5 knight moves", quites.size(), 5);
 
-	board.b[WHITE][KNIGHT] = D4;
-	board.b[WHITE][PAWN] = C6 | B5;
-	quites = get_moves(board, true);
+	position.p[WHITE][KNIGHT] = D4;
+	position.p[WHITE][PAWN] = C6 | B5;
+	quites = get_moves(position, true);
 	assert_equals("should be 6 knight + 2 pawn moves + 3 king", quites.size(), 11);
 
-	board.b[WHITE][KNIGHT] = D4;
-	board.b[WHITE][PAWN] = 0;
-	board.b[BLACK][PAWN] = C6 | B5;
-	quites = get_moves(board, true);
+	position.p[WHITE][KNIGHT] = D4;
+	position.p[WHITE][PAWN] = 0;
+	position.p[BLACK][PAWN] = C6 | B5;
+	quites = get_moves(position, true);
 	assert_equals("should be 11 knight moves", quites.size(), 11);
 
 }
 
 void start_moves() {
-	Board board = start_pos().board;
+	Position position = start_pos().position;
 
-	MoveList moves = get_moves(board, true);
+	MoveList moves = get_moves(position, true);
 	assert_equals("should be 20 white start moves", moves.size(), 20);
-	moves = get_moves(board, false);
+	moves = get_moves(position, false);
 	assert_equals("should be 20 black start moves", moves.size(), 20);
 
 }
 
 void white_castling() {
-	Board board = start_pos().board;
-	board.b[WHITE][QUEEN] = 0;
-	board.b[WHITE][KNIGHT] = 0;
-	board.b[WHITE][BISHOP] = 0;
-	board.b[WHITE][ROOK] = H1;
+	Position position = start_pos().position;
+	position.p[WHITE][QUEEN] = 0;
+	position.p[WHITE][KNIGHT] = 0;
+	position.p[WHITE][BISHOP] = 0;
+	position.p[WHITE][ROOK] = H1;
 
-	board.meta_info_stack.push_back(G1);
-	MoveList moves = get_moves(board, true);
+	position.meta_info_stack.push_back(G1);
+	MoveList moves = get_moves(position, true);
 	assert_equals("should be 21 white start moves", moves.size(), 21);
 	Move castle_move = moves.front();
 	assert_equals("from square", from_square(castle_move.m), 4);
@@ -214,106 +214,106 @@ void white_castling() {
 	assert_equals("piece is king", piece(castle_move.m), KING);
 	assert_equals("is not a capture", is_capture(castle_move.m), 0);
 	assert_equals("is not a promotion", promotion_piece(castle_move.m), EMPTY);
-	make_move(board, castle_move);
-	assert_equals("castle rights removed", board.meta_info_stack.back(), 0);
-	assert_equals("king square", board.b[WHITE][KING], G1);
-	assert_equals("rook square", board.b[WHITE][ROOK], F1);
-	unmake_move(board, castle_move);
-	assert_equals("king is back", board.b[WHITE][KING], E1);
-	assert_equals("rook is back", board.b[WHITE][ROOK], H1);
-	assert_equals("castle rights are given back", board.meta_info_stack.back(), G1);
+	make_move(position, castle_move);
+	assert_equals("castle rights removed", position.meta_info_stack.back(), 0);
+	assert_equals("king square", position.p[WHITE][KING], G1);
+	assert_equals("rook square", position.p[WHITE][ROOK], F1);
+	unmake_move(position, castle_move);
+	assert_equals("king is back", position.p[WHITE][KING], E1);
+	assert_equals("rook is back", position.p[WHITE][ROOK], H1);
+	assert_equals("castle rights are given back", position.meta_info_stack.back(), G1);
 }
 
 void white_en_passant_capture() {
-	Board board;
-	board.b[WHITE][PAWN] = E5;
-	board.b[BLACK][PAWN] = D5;
-	board.meta_info_stack.push_back(D6);
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
+	Position position;
+	position.p[WHITE][PAWN] = E5;
+	position.p[BLACK][PAWN] = D5;
+	position.meta_info_stack.push_back(D6);
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
 
-	MoveList moves = get_moves(board, true);
+	MoveList moves = get_moves(position, true);
 	assert_equals("Expect five moves", moves.size(), 5);
 	for (auto it : moves) {
 		if (is_capture(it.m)) {
 			assert_equals("capture on e.p square", to_square(it.m), 43);
 			assert_equals("pawn mvvlva", it.sort_score, 1000006);
-			make_move(board, it);
-			assert_equals("black pawn is captured", board.b[BLACK][PAWN], 0);
-			unmake_move(board, it);
-			assert_equals("black pawn is back", board.b[BLACK][PAWN], D5);
+			make_move(position, it);
+			assert_equals("black pawn is captured", position.p[BLACK][PAWN], 0);
+			unmake_move(position, it);
+			assert_equals("black pawn is back", position.p[BLACK][PAWN], D5);
 		}
 	}
 }
 
 void black_en_passant_capture() {
-	Board board;
-	board.b[WHITE][PAWN] = E4;
-	board.b[BLACK][PAWN] = D4;
-	board.meta_info_stack.push_back(E3);
-	board.b[WHITE][KING] = A1;
-	board.b[BLACK][KING] = H8;
+	Position position;
+	position.p[WHITE][PAWN] = E4;
+	position.p[BLACK][PAWN] = D4;
+	position.meta_info_stack.push_back(E3);
+	position.p[WHITE][KING] = A1;
+	position.p[BLACK][KING] = H8;
 
-	MoveList moves = get_moves(board, false);
+	MoveList moves = get_moves(position, false);
 	assert_equals("Expect five moves", moves.size(), 5);
 	for (auto it : moves) {
 		if (is_capture(it.m)) {
 			assert_equals("capture on e.p square", to_square(it.m), 20);
 			assert_equals("pawn mvvlva", it.sort_score, 1000006);
-			make_move(board, it);
-			assert_equals("white pawn is captured", board.b[WHITE][PAWN], 0);
-			unmake_move(board, it);
-			assert_equals("white pawn is back", board.b[WHITE][PAWN], E4);
+			make_move(position, it);
+			assert_equals("white pawn is captured", position.p[WHITE][PAWN], 0);
+			unmake_move(position, it);
+			assert_equals("white pawn is back", position.p[WHITE][PAWN], E4);
 		}
 	}
 }
 
 void forced_move() {
 	FenInfo fen_info = parse_fen("6k1/pp3pp1/4p2p/8/3P3P/3R2P1/q1K5/4R3 w - - 2 37");
-	Board board = fen_info.board;
-	MoveList moves = get_moves(board, fen_info.white_turn);
+	Position position = fen_info.position;
+	MoveList moves = get_moves(position, fen_info.white_turn);
 
-	bool in_check = get_attacked_squares(board, !fen_info.white_turn);
+	bool in_check = get_attacked_squares(position, !fen_info.white_turn);
 	assert_equals("in check", in_check, true);
 	int legal_moves = 0;
 	for (auto it  = moves.begin(); it != moves.end(); ++it) {
-		make_move(board, *it);
-		if (!(get_attacked_squares(board, !fen_info.white_turn) & board.b[WHITE][KING])) {
+		make_move(position, *it);
+		if (!(get_attacked_squares(position, !fen_info.white_turn) & position.p[WHITE][KING])) {
 			legal_moves++;
 		}
-		unmake_move(board, *it);
+		unmake_move(position, *it);
 	}
 	assert_equals("three legal moves", legal_moves, 3);
 }
 
 void perft_test()  {
 	FenInfo fen_info = parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); // startpos
-	Board board = fen_info.board;
-	assert_equals("depth 1", perft(board, 1, fen_info.white_turn), 20);
-	assert_equals("depth 2", perft(board, 2, fen_info.white_turn), 400);
-	assert_equals("depth 3", perft(board, 3, fen_info.white_turn), 8902);
-	assert_equals("depth 4", perft(board, 4, fen_info.white_turn), 197281);
-	assert_equals("depth 5", perft(board, 5, fen_info.white_turn), 4865609);
+	Position position = fen_info.position;
+	assert_equals("depth 1", perft(position, 1, fen_info.white_turn), 20);
+	assert_equals("depth 2", perft(position, 2, fen_info.white_turn), 400);
+	assert_equals("depth 3", perft(position, 3, fen_info.white_turn), 8902);
+	assert_equals("depth 4", perft(position, 4, fen_info.white_turn), 197281);
+	assert_equals("depth 5", perft(position, 5, fen_info.white_turn), 4865609);
 
 	fen_info = parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"); // "kiwipete" by Peter McKenzie
-	board = fen_info.board;
-	assert_equals("depth 1", perft(board, 1, fen_info.white_turn), 48);
-	assert_equals("depth 2", perft(board, 2, fen_info.white_turn), 2039);
-	assert_equals("depth 3", perft(board, 3, fen_info.white_turn), 97862);
-	assert_equals("depth 4", perft(board, 4, fen_info.white_turn), 4085603);
+	position = fen_info.position;
+	assert_equals("depth 1", perft(position, 1, fen_info.white_turn), 48);
+	assert_equals("depth 2", perft(position, 2, fen_info.white_turn), 2039);
+	assert_equals("depth 3", perft(position, 3, fen_info.white_turn), 97862);
+	assert_equals("depth 4", perft(position, 4, fen_info.white_turn), 4085603);
 
 	fen_info = parse_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
-	board = fen_info.board;
-	assert_equals("depth 1", perft(board, 1, fen_info.white_turn), 6);
-	assert_equals("depth 2", perft(board, 2, fen_info.white_turn), 264);
-	assert_equals("depth 3", perft(board, 3, fen_info.white_turn), 9467);
-	assert_equals("depth 4", perft(board, 4, fen_info.white_turn), 422333);
+	position = fen_info.position;
+	assert_equals("depth 1", perft(position, 1, fen_info.white_turn), 6);
+	assert_equals("depth 2", perft(position, 2, fen_info.white_turn), 264);
+	assert_equals("depth 3", perft(position, 3, fen_info.white_turn), 9467);
+	assert_equals("depth 4", perft(position, 4, fen_info.white_turn), 422333);
 }
 
 void fen_en_passant() {
 	FenInfo fen_info = parse_fen("rnbqkbnr/ppppp1pp/8/8/4Pp2/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
-	Board board = fen_info.board;
-	MoveList moves = get_captures(board, fen_info.white_turn);
+	Position position = fen_info.position;
+	MoveList moves = get_captures(position, fen_info.white_turn);
 	assert_equals("one en passant capture", moves.size(), 1);
 }
 
