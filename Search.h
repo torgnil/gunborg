@@ -39,12 +39,18 @@ private:
 	std::chrono::high_resolution_clock::time_point start;
 	std::string best_move;
 
-	int alpha_beta(bool white_turn, int depth, int alpha, int beta, Position& position, Transposition *tt, bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension);
-	int null_window_search(bool white_turn, int depth, int beta, Position& position, Transposition *tt, bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension);
+	int alpha_beta(bool white_turn, int depth, int alpha, int beta, Position& position, Transposition *tt,
+	bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension);
+	int null_window_search(bool white_turn, int depth, int beta, Position& position, Transposition *tt,
+	bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension);
 	int capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Position& position);
 
 	bool time_to_stop();
 	void print_uci_info(int pv[], int depth, int score);
+	void init_sort_score(const bool white_turn, MoveList& root_moves, Position& p);
+	bool is_draw_by_repetition(
+			const list& history, const Position& pos, const bool white_turn);
+	bool is_stale_mate(const bool white_turn, Position& pos);
 
 public:
 	Search();
@@ -52,8 +58,7 @@ public:
 	int max_think_time_ms;
 	int hash_size = HASH_MB_FACTOR * 16;
 	int max_depth = 30;
-	int node_count;
-	bool save_time;
+	int node_count;bool save_time;
 
 	void search_best_move(const Position& position, const bool white_turn, list history, Transposition * tt);
 

@@ -360,17 +360,50 @@ void Search::print_uci_info(int pv[], int depth, int score) {
 			<< node_count << " pv " << pvstring << "\n" << std::flush;
 }
 
-void Search::search_best_move(const Position& position, const bool white_turn, const list history, Transposition * tt) {
-	start = clock.now();
-
-	Position p = position;
-	MoveList root_moves = get_moves(p, white_turn);
-
+void Search::init_sort_score(const bool white_turn, MoveList& root_moves, Position& p) {
 	for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
 		make_move(p, *it);
 		it->sort_score = nega_evaluate(p, white_turn);
 		unmake_move(p, *it);
 	}
+}
+
+bool Search::is_draw_by_repetition(const list& history, const Position& pos, const bool white_turn) {
+	bool history_white_turn = true;
+	for (auto hit = history.begin(); hit != history.end(); ++hit) {
+		if (is_equal(pos, *hit) && white_turn != history_white_turn) {
+			return true;
+		}
+		history_white_turn = !history_white_turn;
+	}
+	return false;
+}
+
+bool Search::is_stale_mate(const bool white_turn, Position& pos) {
+	bool opponent_in_check = get_attacked_squares(pos, white_turn)
+			& (white_turn ? pos.p[BLACK][KING] : pos.p[WHITE][KING]);
+	if (opponent_in_check) {
+		return false;
+	}
+	MoveList oppenent_moves = get_moves(pos, !white_turn);
+	for (auto it = oppenent_moves.begin(); it != oppenent_moves.end(); ++it) {
+		bool legal_move = make_move(pos, *it);
+		if (legal_move) {
+			unmake_move(pos, *it);
+			return false;
+		}
+		unmake_move(pos, *it);
+	}
+	return true;
+}
+
+void Search::search_best_move(const Position& position, const bool white_turn, const list history, Transposition * tt) {
+	start = clock.now();
+
+	Position pos = position;
+	MoveList root_moves = get_moves(pos, white_turn);
+
+	init_sort_score(white_turn, root_moves, pos);
 
 	int alpha = INT_MIN;
 	int beta = INT_MAX;
@@ -378,11 +411,10 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 	Move killers2[32][2];
 	int quites_history[64][64] = { };
 
-	uint64_t attacked_squares_by_opponent = get_attacked_squares(p, !white_turn);
-	bool in_check = attacked_squares_by_opponent & (white_turn ? p.p[WHITE][KING] : p.p[BLACK][KING]);
+	uint64_t attacked_squares_by_opponent = get_attacked_squares(pos, !white_turn);
+	bool in_check = attacked_squares_by_opponent & (white_turn ? pos.p[WHITE][KING] : pos.p[BLACK][KING]);
 
 	for (int depth = 1; depth <= max_depth;) {
-
 		int score = alpha;
 		int a = alpha;
 		int b = beta;
@@ -393,56 +425,29 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 			Move root_move = root_moves[i];
 			if (a < b) {
 				node_count++;
-				bool legal_move = make_move(p, root_move);
+				bool legal_move = make_move(pos, root_move);
 				if (!legal_move) {
-					unmake_move(p, root_move);
+					unmake_move(pos, root_move);
 					continue;
 				}
-				int res = -1;
-				bool history_white_turn = true;
-				for (auto hit = history.begin(); hit != history.end(); ++hit) {
-					if (is_equal(p, *hit) && white_turn != history_white_turn) {
-						// draw by repetition
-						res = 0;
-					}
-					history_white_turn = !history_white_turn;
-				}
-				if (res == -1) {
-					// check if stale mate
-					bool opponent_in_check = get_attacked_squares(p, white_turn)
-												& (white_turn ? p.p[BLACK][KING] : p.p[WHITE][KING]);
-					if (!opponent_in_check) {
-						bool opponent_has_legal_move = false;
-						MoveList oppenent_moves = get_moves(p, !white_turn);
-						for (auto it = oppenent_moves.begin(); it != oppenent_moves.end(); ++it) {
-							bool legal_move = make_move(p, *it);
-							if (legal_move) {
-								opponent_has_legal_move = true;
-								unmake_move(p,*it);
-								break;
-							}
-							unmake_move(p,*it);
-						}
-						if (!opponent_has_legal_move) {
-							res = 0;
-						}
-					}
-				}
-				if (res == -1) {
+				int res;
+				if (is_draw_by_repetition(history, pos, white_turn) || is_stale_mate(white_turn, pos)) {
+					res = 0;
+				} else {
 					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
 					if (i > 0 && depth > 1) {
-						res = -null_window_search(!white_turn, depth - 1, -a, p, tt, in_check, killers2, quites_history, 1, 0);
+						res = -null_window_search(!white_turn, depth - 1, -a, pos, tt, in_check, killers2, quites_history, 1, 0);
 						if (res > a) {
 							// full window is necessary
-							res = -alpha_beta(!white_turn, depth - 1, -b, -a, p, tt, in_check, killers2, quites_history, 1, 0);
+							res = -alpha_beta(!white_turn, depth - 1, -b, -a, pos, tt, in_check, killers2, quites_history, 1, 0);
 						} else {
 							res = a - i*500; // keep sort order
 						}
 					} else {
-						res = -alpha_beta(!white_turn, depth - 1, -b, -a, p, tt, in_check, killers2, quites_history, 1, 0);
+						res = -alpha_beta(!white_turn, depth - 1, -b, -a, pos, tt, in_check, killers2, quites_history, 1, 0);
 					}
 				}
-				unmake_move(p, root_move);
+				unmake_move(pos, root_move);
 				if (res > a && (!time_to_stop() || i == 0)) {
 					score = res;
 					a = res;
@@ -451,7 +456,7 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 					}
 					pv[0] = root_move.m;
 					uint32_t next_pv_move = root_move.m;
-					uint64_t hash = p.hash_key;
+					uint64_t hash = pos.hash_key;
 					for (int p = 1; p < depth - 1; p++) {
 						hash ^= move_hash(next_pv_move);
 						Transposition next = tt[hash_index(hash) % hash_size];
