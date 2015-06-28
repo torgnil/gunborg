@@ -479,7 +479,7 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 				}
 			} else {
 				// beta fail
-				// we just know that the rest of the moves are worse than the best move, or is this un-reachable code?
+				// we just know that the rest of the moves are worse than the best move
 				root_move.sort_score = a - i*500; // keep sort order
 			}
 			next_iteration_root_moves.push_back(root_move);
