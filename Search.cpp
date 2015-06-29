@@ -314,9 +314,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 		}
 
 		unmake_move(position, move);
-		if (time_to_stop()) {
-			return alpha;
-		}
 		if (res >= beta) {
 			if (!is_capture(move.m)) {
 				if (killers[ply - 1][0].m != move.m) {
