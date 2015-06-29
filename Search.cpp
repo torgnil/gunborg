@@ -291,16 +291,21 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 			if (depth > 2 && i > 5 && !is_capture(move.m)) {
 				depth_reduction = depth > 5 && i > 20 ? 2 : 1;
 			}
-			// we do not expect to find a better move
-			// use a fast null window search to verify it!
-			res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, position, tt, null_move_not_allowed,
-										killers, history, ply + 1, extension);
-			if (res > alpha) {
-				// score improved unexpected, we have to do a full window search
+			if (beta - alpha > 1 && next_move != 0) {
+				// we do not expect to find a better move
+				// use a fast null window search to verify it!
+				res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, position, tt, null_move_not_allowed,
+							killers, history, ply + 1, extension);
+				if (res > alpha) {
+					// score improved unexpected, we have to do a full window search
+					res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, position, tt, null_move_not_allowed,
+							killers, history, ply + 1, extension);
+				}
+			} else {
 				res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, position, tt, null_move_not_allowed,
 							killers, history, ply + 1, extension);
 			}
-			if (depth_reduction > 0 && res > alpha && res < beta) {
+			if (depth_reduction > 0 && res > alpha) {
 				// score improved "unexpected" at reduced depth
 				// re-search at normal depth
 				res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, position, tt, null_move_not_allowed, killers, history,
@@ -475,11 +480,10 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 					}
 					root_move.sort_score = res;
 				} else {
-					root_move.sort_score = a - i*500;
+					root_move.sort_score = a - i*500; // keep sort order
 				}
 			} else {
 				// beta fail
-				// we just know that the rest of the moves are worse than the best move
 				root_move.sort_score = a - i*500; // keep sort order
 			}
 			next_iteration_root_moves.push_back(root_move);
