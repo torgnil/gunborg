@@ -410,8 +410,8 @@ bool Search::is_stale_mate(const bool white_turn, Position& pos) {
  * search using alpha beta but with increasing aspiration window
  *
  */
-int Search::alpha_beta_with_window(bool white_turn, int depth, int alpha, int beta, Position& pos, Transposition *tt,
-		bool in_check, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
+int Search::aspiration_window_search(bool white_turn, int depth, int alpha, int beta, Position& pos, Transposition *tt,
+		bool in_check, Move (&killers)[32][2], int (&history)[64][64]) {
 	while (!time_to_stop()) {
 		int move_score = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, pos, tt, in_check, killers, history, 1, 0);
 		if (move_score > alpha && move_score < beta) {
@@ -440,7 +440,7 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 	init_sort_score(white_turn, root_moves, pos, tt);
 
 	int alpha = INT_MIN;
-	Move killers2[32][2] = {};
+	Move killers[32][2] = {};
 	int quites_history[64][64] = {};
 
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(pos, !white_turn);
@@ -466,18 +466,20 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 			} else {
 				// for all moves except the first, search with a very narrow window to see if a full window search is necessary
 				if (i > 0 && depth > 1) {
-					move_score = -null_window_search(!white_turn, depth - 1, -alpha, pos, tt, in_check, killers2, quites_history, 1, 0);
+					move_score = -null_window_search(!white_turn, depth - 1, -alpha, pos, tt, in_check, killers, quites_history, 1, 0);
 					if (move_score > alpha) {
 						// full window search is necessary
-						move_score = alpha_beta_with_window(white_turn, depth, alpha, alpha + 25, pos, tt, in_check, killers2, quites_history, 1, 0);
+						move_score = aspiration_window_search(white_turn, depth, alpha, alpha + WINDOW_SIZE, pos, tt,
+								in_check, killers, quites_history);
 					} else {
 						move_score = alpha - i*500; // keep sort order
 					}
 				} else {
 					if (alpha == INT_MIN) {
-						move_score = alpha_beta_with_window(white_turn, depth, -12, 12, pos, tt, in_check, killers2, quites_history, 1, 0);
+						move_score = aspiration_window_search(white_turn, depth, -START_WINDOW_SIZE, START_WINDOW_SIZE, pos, tt, in_check, killers, quites_history);
 					} else {
-						move_score = alpha_beta_with_window(white_turn, depth, alpha - 12, alpha + 12, pos, tt, in_check, killers2, quites_history, 1, 0);
+						move_score = aspiration_window_search(white_turn, depth, alpha - START_WINDOW_SIZE,
+								alpha + START_WINDOW_SIZE, pos, tt, in_check, killers, quites_history);
 					}
 				}
 			}
@@ -511,8 +513,6 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 				std::stringstream ss(pvstring);
 				getline(ss, best_move, ' ');
 			}
-
-
 		}
 		if (time_to_stop()) {
 			break;
