@@ -406,6 +406,31 @@ bool Search::is_stale_mate(const bool white_turn, Position& pos) {
 	return true;
 }
 
+/*
+ * search using alpha beta but with increasing aspiration window
+ *
+ */
+int Search::alpha_beta_with_window(bool white_turn, int depth, int alpha, int beta, Position& pos, Transposition *tt,
+		bool in_check, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
+	while (!time_to_stop()) {
+		int move_score = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, pos, tt, in_check, killers, history, 1, 0);
+		if (move_score > alpha && move_score < beta) {
+			return move_score;
+		} else {
+			int window_size = beta - alpha;
+			if (move_score <= alpha) {
+				// failed low, search again at same depth
+				alpha = alpha - window_size;
+			}
+			if (move_score >= beta) {
+				// failed high, search again at same depth
+				beta = beta + window_size;
+			}
+		}
+	}
+	return alpha;
+}
+
 void Search::search_best_move(const Position& position, const bool white_turn, const list history, Transposition * tt) {
 	start = clock.now();
 
@@ -415,123 +440,93 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 	init_sort_score(white_turn, root_moves, pos, tt);
 
 	int alpha = INT_MIN;
-	int beta = INT_MAX;
-	int START_WINDOW_SIZE = 25;
 	Move killers2[32][2] = {};
 	int quites_history[64][64] = {};
 
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(pos, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? pos.p[WHITE][KING] : pos.p[BLACK][KING]);
 
-	for (int depth = 1; depth <= max_depth;) {
-		int score = alpha;
-		int a = alpha;
-		int b = beta;
+	for (int depth = 1; depth <= max_depth; depth++) {
+		// moves sorted for the next depth
 		MoveList next_iteration_root_moves;
 		int pv[depth];
+
 		for (unsigned int i = 0; i < root_moves.size(); i++) {
 			pick_next_move(root_moves, i);
 			Move root_move = root_moves[i];
-			if (a < b) {
-				node_count++;
-				bool legal_move = make_move(pos, root_move);
-				if (!legal_move) {
-					unmake_move(pos, root_move);
-					continue;
-				}
-				int res;
-				if (is_draw_by_repetition(history, pos, white_turn) || is_stale_mate(white_turn, pos)) {
-					res = 0;
-				} else {
-					// for all moves except the first, search with a very narrow window to see if a full window search is necessary
-					if (i > 0 && depth > 1) {
-						res = -null_window_search(!white_turn, depth - 1, -a, pos, tt, in_check, killers2, quites_history, 1, 0);
-						if (res > a) {
-							// full window is necessary
-							res = -alpha_beta(!white_turn, depth - 1, -b, -a, pos, tt, in_check, killers2, quites_history, 1, 0);
-						} else {
-							res = a - i*500; // keep sort order
-						}
-					} else {
-						res = -alpha_beta(!white_turn, depth - 1, -b, -a, pos, tt, in_check, killers2, quites_history, 1, 0);
-					}
-				}
+			node_count++;
+			bool legal_move = make_move(pos, root_move);
+			if (!legal_move) {
 				unmake_move(pos, root_move);
-				if (res > a && (!time_to_stop() || i == 0)) {
-					score = res;
-					a = res;
-					for (int p = 1; p < depth; p++) {
-						pv[p] = 0;
-					}
-					pv[0] = root_move.m;
-					uint32_t next_pv_move = root_move.m;
-					uint64_t hash = pos.hash_key;
-					for (int p = 1; p < depth - 1; p++) {
-						hash ^= move_hash(next_pv_move);
-						Transposition next = tt[hash_index(hash) % hash_size];
-						if (next.hash == hash_verification(hash) && next.next_move != 0) {
-							pv[p] = next.next_move;
-							next_pv_move = next.next_move;
-						} else {
-							break;
-						}
-					}
-					if (score > alpha && score < beta) {
-						print_uci_info(pv, depth, score);
-						std::string pvstring = pvstring_from_stack(pv, depth);
-						std::stringstream ss(pvstring);
-						getline(ss, best_move, ' ');
-					}
-					root_move.sort_score = res;
-				} else {
-					root_move.sort_score = a - i*500; // keep sort order
-				}
-			} else {
-				// beta fail
-				root_move.sort_score = a - i*500; // keep sort order
+				continue;
 			}
+			int move_score;
+			if (is_draw_by_repetition(history, pos, white_turn) || is_stale_mate(white_turn, pos)) {
+				move_score = 0;
+			} else {
+				// for all moves except the first, search with a very narrow window to see if a full window search is necessary
+				if (i > 0 && depth > 1) {
+					move_score = -null_window_search(!white_turn, depth - 1, -alpha, pos, tt, in_check, killers2, quites_history, 1, 0);
+					if (move_score > alpha) {
+						// full window search is necessary
+						move_score = alpha_beta_with_window(white_turn, depth, alpha, alpha + 25, pos, tt, in_check, killers2, quites_history, 1, 0);
+					} else {
+						move_score = alpha - i*500; // keep sort order
+					}
+				} else {
+					if (alpha == INT_MIN) {
+						move_score = alpha_beta_with_window(white_turn, depth, -12, 12, pos, tt, in_check, killers2, quites_history, 1, 0);
+					} else {
+						move_score = alpha_beta_with_window(white_turn, depth, alpha - 12, alpha + 12, pos, tt, in_check, killers2, quites_history, 1, 0);
+					}
+				}
+			}
+			unmake_move(pos, root_move);
+			if (time_to_stop()) {
+				break;
+			}
+			root_move.sort_score = move_score;
 			next_iteration_root_moves.push_back(root_move);
+
+			if (move_score > alpha || i == 0) {
+				alpha = move_score;
+				for (int p = 1; p < depth; p++) {
+					pv[p] = 0;
+				}
+				pv[0] = root_move.m;
+				uint32_t next_pv_move = root_move.m;
+				uint64_t hash = pos.hash_key;
+				for (int p = 1; p < depth - 1; p++) {
+					hash ^= move_hash(next_pv_move);
+					Transposition next = tt[hash_index(hash) % hash_size];
+					if (next.hash == hash_verification(hash) && next.next_move != 0) {
+						pv[p] = next.next_move;
+						next_pv_move = next.next_move;
+					} else {
+						break;
+					}
+				}
+				print_uci_info(pv, depth, move_score);
+				std::string pvstring = pvstring_from_stack(pv, depth);
+				std::stringstream ss(pvstring);
+				getline(ss, best_move, ' ');
+			}
+
+
 		}
+		print_uci_info(pv, depth, alpha);
 		int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
-				> (clock.now() - start).count();
-		if (score > alpha && score < beta) {
-			print_uci_info(pv, depth, score);
-			std::string pvstring = pvstring_from_stack(pv, depth);
-			std::stringstream ss(pvstring);
-			getline(ss, best_move, ' ');
-		}
-		if (time_to_stop()) {
-			break;
-		}
-		// aspiration window based on previous score - use delta to increase if no moves are found...
-		int window_size = beta - alpha;
-		if (score <= alpha) {
-			// failed low, search again at same depth
-			alpha = alpha - window_size;
-			continue;
-		}
-		if (score >= beta) {
-			// failed high, search again at same depth
-			beta = beta + window_size;
-			continue;
-		}
-
-		root_moves = next_iteration_root_moves;
-
-		// aspiration window size
-		alpha = score - START_WINDOW_SIZE / 2;
-		beta = score + START_WINDOW_SIZE / 2;
-
-		// if mate is found at this depth, just stop searching for better moves.
-		// Cause there are none.. The best move at the last depth will prolong the inevitably as long as possible or deliver mate.
-		if (abs(score) > 5000) {
-			// deliver mate or be mated
-			break;
-		}
+						> (clock.now() - start).count();
 		if (save_time && (4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
 			break;
 		}
-		depth++;
+		// if mate is found at this depth, just stop searching for better moves.
+		// Cause there are none.. The best move at the last depth will prolong the inevitably as long as possible or deliver mate.
+		if (abs(alpha) > 5000) {
+			// deliver mate or be mated
+			break;
+		}
+		root_moves = next_iteration_root_moves;
 	}
 	std::cout << "bestmove " << best_move << std::endl << std::flush;
 	return;
