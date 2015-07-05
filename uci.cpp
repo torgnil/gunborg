@@ -222,6 +222,7 @@ void uci() {
 			cout << "id name gunborg " << "1.27" << "\n";
 			cout << "id author Torbjorn Nilsson\n";
 			cout << "option name Hash type spin default 16 min 1 max 1024\n";
+			cout << "option name Ponder type check default false\n";
 			cout << "uciok\n" << flush;
 		}
 		if (line.find("isready") != string::npos) {
@@ -321,7 +322,13 @@ void uci() {
 					search->max_think_time_ms = factor * ((b_time + (moves_togo - 1) * b_inc) / moves_togo) - 3;
 				}
 			}
+			if (line.find("ponder") != string::npos) {
+				search->ponder();
+			}
 			search_thread = new thread(&gunborg::Search::search_best_move, search, start_position, white_turn, history, tt);
+		}
+		if (line.find("ponderhit") != string::npos) {
+			search->ponder_hit();
 		}
 		if (line.find("stop") != string::npos) {
 			if (search_thread != NULL) {

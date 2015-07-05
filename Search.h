@@ -37,7 +37,7 @@ class Search {
 private:
 	std::chrono::high_resolution_clock clock;
 	std::chrono::high_resolution_clock::time_point start;
-	std::string best_move;
+	bool pondering = false;
 	static const int WINDOW_SIZE = 56;
 	static const int START_WINDOW_SIZE = 20;
 
@@ -66,6 +66,9 @@ public:
 	bool save_time;
 
 	void search_best_move(const Position& position, const bool white_turn, list history, Transposition * tt);
+
+	void ponder();
+	void ponder_hit();
 
 	virtual ~Search();
 };

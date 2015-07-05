@@ -31,10 +31,11 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <deque>
 #include <iostream>
 #include <limits.h>
-#include <deque>
 #include <sstream>
+#include <thread>
 
 namespace gunborg {
 
@@ -48,7 +49,7 @@ Search::Search() {
 
 inline bool Search::time_to_stop() {
 	int time_elapsed = std::chrono::duration_cast < std::chrono::milliseconds > (clock.now() - start).count();
-	return time_elapsed > max_think_time_ms || !should_run;
+	return (time_elapsed > max_think_time_ms  && !pondering) || !should_run;
 }
 
 bool is_equal(const Position& p1, const Position& p2) {
@@ -431,8 +432,20 @@ int Search::aspiration_window_search(bool white_turn, int depth, int alpha, int 
 	return alpha;
 }
 
+void Search::ponder() {
+	pondering = true;
+}
+
+void Search::ponder_hit() {
+	int time_elapsed = std::chrono::duration_cast < std::chrono::milliseconds > (clock.now() - start).count();
+	max_think_time_ms += time_elapsed;
+	pondering = false;
+}
+
 void Search::search_best_move(const Position& position, const bool white_turn, const list history, Transposition * tt) {
 	start = clock.now();
+	std::string best_move;
+	std::string ponder_move = "";
 
 	Position pos = position;
 	MoveList root_moves = get_moves(pos, white_turn);
@@ -512,6 +525,13 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 				std::string pvstring = pvstring_from_stack(pv, depth);
 				std::stringstream ss(pvstring);
 				getline(ss, best_move, ' ');
+				if (depth > 1 && pv[1] != 0) {
+					int pv_ponder = pv[1];
+					ponder_move = long_algebraic_notation(1ULL << from_square(pv_ponder)) + long_algebraic_notation(1ULL << to_square(pv_ponder));
+					if (is_promotion(pv_ponder)) {
+						ponder_move += "q";
+					}
+				}
 			}
 		}
 		if (time_to_stop()) {
@@ -520,7 +540,7 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 		print_uci_info(pv, depth, alpha);
 		int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
 						> (clock.now() - start).count();
-		if (save_time && (4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
+		if (!pondering && save_time && (4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
 			break;
 		}
 		// if mate is found at this depth, just stop searching for better moves.
@@ -531,7 +551,15 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 		}
 		root_moves = next_iteration_root_moves;
 	}
-	std::cout << "bestmove " << best_move << std::endl << std::flush;
+	while(pondering && should_run) {
+		// wait for ponderhit (or stop)
+		std::this_thread::sleep_for(std::chrono::milliseconds(3));
+	}
+	std::cout << "bestmove " << best_move;
+	if (!ponder_move.empty()) {
+		std::cout << " ponder " << ponder_move;
+	}
+	std::cout << std::endl << std::flush;
 	return;
 }
 
