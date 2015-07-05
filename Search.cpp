@@ -514,6 +514,9 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 
 
 		}
+		if (time_to_stop()) {
+			break;
+		}
 		print_uci_info(pv, depth, alpha);
 		int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
 						> (clock.now() - start).count();
