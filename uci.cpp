@@ -292,8 +292,8 @@ void uci() {
 			search->should_run = true;
 			search->hash_size = hash_size;
 			int depth = parse_int_parameter(line, "depth");
-			if (depth != 0) {
-				search->max_depth = depth;
+			if (depth != 0 ) {
+				search->max_depth = depth < 32 ? depth : 32;
 			}
 			if (line.find("infinite") != string::npos) {
 				search->max_think_time_ms = INT_MAX;

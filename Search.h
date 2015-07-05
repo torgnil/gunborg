@@ -47,7 +47,7 @@ private:
 
 	bool time_to_stop();
 	void print_uci_info(int pv[], int depth, int score);
-	void init_sort_score(const bool white_turn, MoveList& root_moves, Position& p);
+	void init_sort_score(const bool white_turn, MoveList& root_moves, Position& p, Transposition *tt);
 	bool is_draw_by_repetition(
 			const list& history, const Position& pos, const bool white_turn);
 	bool is_stale_mate(const bool white_turn, Position& pos);
@@ -58,7 +58,8 @@ public:
 	int max_think_time_ms;
 	int hash_size = HASH_MB_FACTOR * 16;
 	int max_depth = 30;
-	int node_count;bool save_time;
+	int node_count;
+	bool save_time;
 
 	void search_best_move(const Position& position, const bool white_turn, list history, Transposition * tt);
 

@@ -362,10 +362,17 @@ void Search::print_uci_info(int pv[], int depth, int score) {
 			<< node_count << " pv " << pvstring << "\n" << std::flush;
 }
 
-void Search::init_sort_score(const bool white_turn, MoveList& root_moves, Position& p) {
+void Search::init_sort_score(const bool white_turn, MoveList& root_moves, Position& p, Transposition *tt) {
+	// check for hit in transposition table
+	Transposition tt_pv = tt[hash_index(p.hash_key) % hash_size];
+	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(p.hash_key);
+
 	for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
 		make_move(p, *it);
 		it->sort_score = nega_evaluate(p, white_turn);
+		if (cache_hit && it->m == tt_pv.next_move) {
+			it->sort_score += 1000;
+		}
 		unmake_move(p, *it);
 	}
 }
@@ -405,13 +412,13 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 	Position pos = position;
 	MoveList root_moves = get_moves(pos, white_turn);
 
-	init_sort_score(white_turn, root_moves, pos);
+	init_sort_score(white_turn, root_moves, pos, tt);
 
 	int alpha = INT_MIN;
 	int beta = INT_MAX;
 	int START_WINDOW_SIZE = 25;
-	Move killers2[32][2];
-	int quites_history[64][64] = { };
+	Move killers2[32][2] = {};
+	int quites_history[64][64] = {};
 
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(pos, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? pos.p[WHITE][KING] : pos.p[BLACK][KING]);
