@@ -159,6 +159,7 @@ int evaluate(const Position& position) {
 	while (white_knights) {
 		int i = lsb_to_square(white_knights);
 		score += KNIGHT_SQUARE_TABLE[i];
+		score += (7 - square_distances[black_king_square][i]) * KNIGHT_KING_PROXIMITY_BONUS;
 		white_knights = reset_lsb(white_knights);
 	}
 	uint64_t white_rooks = position.p[WHITE][ROOK];
@@ -246,6 +247,7 @@ int evaluate(const Position& position) {
 	while (black_knights) {
 		int i = lsb_to_square(black_knights);
 		score -= KNIGHT_SQUARE_TABLE[63 - i];
+		score -= (7 - square_distances[white_king_square][i]) * KNIGHT_KING_PROXIMITY_BONUS;
 		black_knights = reset_lsb(black_knights);
 	}
 	uint64_t black_rooks = position.p[BLACK][ROOK];

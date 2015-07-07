@@ -37,6 +37,7 @@ const int UNSAFE_KING_PENALTY = 9;
 const int BISHOP_PAIR_BONUS = 47;
 const int BISHOP_MOBILITY_BONUS = 3;
 const int ROOK_MOBILITY_BONUS = 3;
+const int KNIGHT_KING_PROXIMITY_BONUS = 2;
 const int QUEEN_KING_PROXIMITY_BONUS = 10;
 
 // the value of a white pawn at all squares from white's perspective
@@ -69,10 +70,10 @@ const int KNIGHT_SQUARE_TABLE[] = {
 		295, 300, 300, 300, 300, 300, 300, 295,
 		295, 300, 305, 307, 307, 305, 300, 295,
 		295, 300, 309, 310, 310, 309, 300, 295,
-		295, 300, 310, 312, 312, 310, 300, 295,
-		295, 305, 313, 314, 314, 313, 305, 295,
-		300, 313, 314, 315, 315, 314, 313, 300,
-		295, 305, 305, 309, 309, 305, 305, 295, };
+		295, 300, 309, 310, 310, 309, 300, 295,
+		295, 300, 305, 307, 307, 305, 300, 295,
+		295, 300, 300, 300, 300, 300, 300, 295,
+		290, 295, 295, 295, 295, 295, 295, 290, };
 
 const int BISHOP_SQUARE_TABLE[] = {
 		275, 295, 295, 295, 295, 295, 295, 275,
