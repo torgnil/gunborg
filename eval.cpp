@@ -1,6 +1,6 @@
 /*
  * Gunborg - UCI chess engine
- * Copyright (C) 2013-2014 Torbjörn Nilsson
+ * Copyright (C) 2013-2015 Torbjörn Nilsson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,8 @@ const int MAX_MATERIAL = 3100;
 
 }
 
+int square_distances[64][64];
+
 // returns the score from the playing side's perspective
 int nega_evaluate(const Position& position, bool white_turn) {
 	return white_turn ? evaluate(position) : -evaluate(position);
@@ -39,6 +41,16 @@ int nega_evaluate(const Position& position, bool white_turn) {
 
 // score in centipawns
 int evaluate(const Position& position) {
+	uint64_t black_king = position.p[BLACK][KING];
+	uint64_t white_king = position.p[WHITE][KING];
+	if (black_king == 0) {
+		return 10000;
+	} else if (white_king == 0) {
+		return -10000;
+	}
+	int black_king_square = lsb_to_square(black_king);
+	int white_king_square = lsb_to_square(white_king);
+
 	uint64_t black_squares = position.p[BLACK][KING] | position.p[BLACK][PAWN] | position.p[BLACK][KNIGHT]
 			| position.p[BLACK][BISHOP] | position.p[BLACK][ROOK] | position.p[BLACK][QUEEN];
 
@@ -83,7 +95,6 @@ int evaluate(const Position& position) {
 	uint64_t white_double_pawn_mask = north_fill(position.p[WHITE][PAWN] << 8);
 	uint64_t black_double_pawn_mask = south_fill(position.p[BLACK][PAWN] >> 8);
 
-
 	uint64_t white_pawns = position.p[WHITE][PAWN];
 
 	uint64_t white_passed_pawns = ~black_pawn_blocking_squares & white_pawns;
@@ -107,37 +118,31 @@ int evaluate(const Position& position) {
 		white_pawns = reset_lsb(white_pawns);
 	}
 
-	uint64_t white_king = position.p[WHITE][KING];
-	while (white_king) {
-		int i = lsb_to_square(white_king);
+	score += KING_SQUARE_TABLE_ENDGAME[white_king_square] - KING_SQUARE_TABLE_ENDGAME[white_king_square] * total_material/MAX_MATERIAL;
+	score += KING_SQUARE_TABLE[white_king_square] * total_material/MAX_MATERIAL;
 
-		score += KING_SQUARE_TABLE_ENDGAME[i] - KING_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
-		score += KING_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
+	// king safety
+	uint64_t pawn_mask = (7ULL << (white_king_square + 7)) & ROW_2;
 
-		// king safety
-		uint64_t pawn_mask = (7ULL << (i + 7)) & ROW_2;
+	int king_safety_penalty = 0;
 
-		int king_safety_penalty = 0;
+	uint64_t open_files_around_king = open_files & pawn_mask;
+	king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
 
-		uint64_t open_files_around_king = open_files & pawn_mask;
-		king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
+	// pawns in front of the king
+	uint64_t pawn_missing_front_of_king = ~position.p[WHITE][PAWN] & pawn_mask;
+	king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
 
-		// pawns in front of the king
-		uint64_t pawn_missing_front_of_king = ~position.p[WHITE][PAWN] & pawn_mask;
-		king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
+	// no pawns on the two squares in front of the king
+	uint64_t pawn_missing_two_squares_front_of_king = ~position.p[WHITE][PAWN] & (pawn_missing_front_of_king << 8);
+	king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
 
-		// no pawns on the two squares in front of the king
-		uint64_t pawn_missing_two_squares_front_of_king = ~position.p[WHITE][PAWN] & (pawn_missing_front_of_king << 8);
-		king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
+	// scale the penalty by opponent material
+	// we want to exchange pieces when king is unsafe
+	king_safety_penalty *= black_piece_material;
+	king_safety_penalty /= MAX_MATERIAL;
 
-		// scale the penalty by opponent material
-		// we want to exchange pieces when king is unsafe
-		king_safety_penalty *= black_piece_material;
-		king_safety_penalty /= MAX_MATERIAL;
-
-		score -= king_safety_penalty;
-		white_king = reset_lsb(white_king);
-	}
+	score -= king_safety_penalty;
 
 	uint64_t white_bishops = position.p[WHITE][BISHOP];
 	if (pop_count(white_bishops) == 2) {
@@ -173,6 +178,8 @@ int evaluate(const Position& position) {
 	}
 	while (white_queens) {
 		score += 900;
+		int queen_square = lsb_to_square(white_queens);
+		score += (7 - square_distances[black_king_square][queen_square]) * QUEEN_KING_PROXIMITY_BONUS;
 		white_queens = reset_lsb(white_queens);
 	}
 
@@ -197,37 +204,32 @@ int evaluate(const Position& position) {
 		score -= PAWN_SQUARE_TABLE[63 - i] * total_material/MAX_MATERIAL;
 		black_pawns = reset_lsb(black_pawns);
 	}
-	uint64_t black_king = position.p[BLACK][KING];
 
-	while (black_king) {
-		int i = lsb_to_square(black_king);
-		score -= KING_SQUARE_TABLE_ENDGAME[i] - KING_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
-		score -= KING_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
+	score -= KING_SQUARE_TABLE_ENDGAME[black_king_square] - KING_SQUARE_TABLE_ENDGAME[black_king_square] * total_material/MAX_MATERIAL;
+	score -= KING_SQUARE_TABLE[black_king_square] * total_material/MAX_MATERIAL;
 
-		int king_safety_penalty = 0;
+	int black_king_safety_penalty = 0;
 
-		// king safety
-		uint64_t pawn_mask = (7ULL << (i - 9)) & ROW_7;
+	// king safety
+	uint64_t black_pawn_mask = (7ULL << (black_king_square - 9)) & ROW_7;
 
-		uint64_t open_files_around_king = open_files & pawn_mask;
-		king_safety_penalty += pop_count(open_files_around_king) * UNSAFE_KING_PENALTY;
+	uint64_t black_open_files_around_king = open_files & black_pawn_mask;
+	black_king_safety_penalty += pop_count(black_open_files_around_king) * UNSAFE_KING_PENALTY;
 
-		// pawns in front of the king
-		uint64_t pawn_missing_front_of_king = ~position.p[BLACK][PAWN] & pawn_mask;
-		king_safety_penalty += pop_count(pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
+	// pawns in front of the king
+	uint64_t black_pawn_missing_front_of_king = ~position.p[BLACK][PAWN] & black_pawn_mask;
+	black_king_safety_penalty += pop_count(black_pawn_missing_front_of_king) * UNSAFE_KING_PENALTY;
 
-		// no pawns on the to squares in front of the king
-		uint64_t pawn_missing_two_squares_front_of_king = ~position.p[BLACK][PAWN] & (pawn_missing_front_of_king >> 8);
-		king_safety_penalty += pop_count(pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
+	// no pawns on the to squares in front of the king
+	uint64_t black_pawn_missing_two_squares_front_of_king = ~position.p[BLACK][PAWN] & (black_pawn_missing_front_of_king >> 8);
+	black_king_safety_penalty += pop_count(black_pawn_missing_two_squares_front_of_king) * UNSAFE_KING_PENALTY;
 
-		// scale the penalty by opponent material
-		// we want to exchange pieces when king is unsafe
-		king_safety_penalty *= white_piece_material;
-		king_safety_penalty /= MAX_MATERIAL;
+	// scale the penalty by opponent material
+	// we want to exchange pieces when king is unsafe
+	black_king_safety_penalty *= white_piece_material;
+	black_king_safety_penalty /= MAX_MATERIAL;
 
-		score += king_safety_penalty;
-		black_king = reset_lsb(black_king);
-	}
+	score += black_king_safety_penalty;
 
 	uint64_t black_bishops = position.p[BLACK][BISHOP];
 	if (pop_count(black_bishops) == 2) {
@@ -263,8 +265,22 @@ int evaluate(const Position& position) {
 	}
 	while (black_queens) {
 		score -= 900;
+		int queen_square = lsb_to_square(black_queens);
+		score -= (7 - square_distances[white_king_square][queen_square]) * QUEEN_KING_PROXIMITY_BONUS;
 		black_queens = reset_lsb(black_queens);
 	}
 
 	return score;
+}
+
+void init_eval() {
+	for (int i = 0; i < 64; ++i) {
+		for (int j = 0; j < 64; ++j) {
+			int row_i = i / 8;
+			int file_i = i % 8;
+			int row_j = j / 8;
+			int file_j = j % 8;
+			square_distances[i][j] = std::max(std::abs(file_i - file_j), std::abs(row_i - row_j));
+		}
+	}
 }

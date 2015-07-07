@@ -22,6 +22,7 @@
  */
 
 #include "board.h"
+#include "eval.h"
 #include "Main.h"
 #include "moves.h"
 #include "uci.h"
@@ -40,6 +41,7 @@ int main(int argc, char* argv[]) {
 	std::cout << fixed;
 	std::cout << setprecision(2);
 	init();
+	init_eval();
 
 	std::cout << "Gunborg Copyright (C) 2013-2015 Torbjörn Nilsson\n"
 			<< "This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.\n"

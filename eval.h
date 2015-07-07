@@ -1,6 +1,6 @@
 /*
  * Gunborg - UCI chess engine
- * Copyright (C) 2013-2014 Torbjörn Nilsson
+ * Copyright (C) 2013-2015 Torbjörn Nilsson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ const int UNSAFE_KING_PENALTY = 9;
 const int BISHOP_PAIR_BONUS = 47;
 const int BISHOP_MOBILITY_BONUS = 3;
 const int ROOK_MOBILITY_BONUS = 3;
+const int QUEEN_KING_PROXIMITY_BONUS = 10;
 
 // the value of a white pawn at all squares from white's perspective
 const int PAWN_SQUARE_TABLE[] = {
@@ -127,6 +128,8 @@ int evaluate(const Position& position);
  * Score from side's perspective
  */
 int nega_evaluate(const Position& position, bool white_turn);
+
+void init_eval();
 
 
 #endif /* EVAL_H_ */

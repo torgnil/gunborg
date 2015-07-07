@@ -163,7 +163,7 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 }
 
 int Search::null_window_search(bool white_turn, int depth, int beta, Position& position, Transposition *tt,
-		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
+		bool null_move_not_allowed, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension) {
 	int alpha = beta - 1;
 	return alpha_beta(white_turn, depth, alpha, beta, position, tt, null_move_not_allowed, killers, history, ply, extension);
 }
@@ -197,7 +197,7 @@ inline bool should_prune(int depth, bool white_turn, Position& position, int alp
 }
 
 int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position& position, Transposition *tt,
-		bool null_move_not_allowed, Move (&killers)[32][2], int (&history)[64][64], int ply, int extension) {
+		bool null_move_not_allowed, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension) {
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, position);
 	}
@@ -412,7 +412,7 @@ bool Search::is_stale_mate(const bool white_turn, Position& pos) {
  *
  */
 int Search::aspiration_window_search(bool white_turn, int depth, int alpha, int beta, Position& pos, Transposition *tt,
-		bool in_check, Move (&killers)[32][2], int (&history)[64][64]) {
+		bool in_check, Move (&killers)[32][2], uint64_t (&history)[64][64]) {
 	while (!time_to_stop()) {
 		int move_score = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, pos, tt, in_check, killers, history, 1, 0);
 		if (move_score > alpha && move_score < beta) {
@@ -454,7 +454,7 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 
 	int alpha = INT_MIN;
 	Move killers[32][2] = {};
-	int quites_history[64][64] = {};
+	uint64_t quites_history[64][64] = {};
 
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(pos, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? pos.p[WHITE][KING] : pos.p[BLACK][KING]);
