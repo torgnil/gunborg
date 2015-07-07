@@ -175,6 +175,7 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(white_rooks);
 		score += ROOK_SQUARE_TABLE[i];
 		score += ROOK_MOBILITY_BONUS * (pop_count(rook_attacks(occupied_squares, i) & ~white_squares) - 5);
+		score += (7 - square_distances[black_king_square][i]) * ROOK_KING_PROXIMITY_BONUS;
 		white_rooks = reset_lsb(white_rooks);
 	}
 	while (white_queens) {
@@ -263,6 +264,7 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(black_rooks);
 		score -= ROOK_SQUARE_TABLE[63 - i];
 		score -= ROOK_MOBILITY_BONUS * (pop_count(rook_attacks(occupied_squares, i) & ~black_squares) - 5);
+		score -= (7 - square_distances[white_king_square][i]) * ROOK_KING_PROXIMITY_BONUS;
 		black_rooks = reset_lsb(black_rooks);
 	}
 	while (black_queens) {
