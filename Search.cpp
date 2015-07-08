@@ -116,6 +116,11 @@ void pick_next_move(MoveList& moves, const int no_sorted_moves) {
 }
 
 int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Position& position) {
+	if (position.p[WHITE][KING] == 0) {
+		return white_turn ? -10000 : 10000;
+	} else if (position.p[BLACK][KING] == 0) {
+		return white_turn ? 10000 : -10000;
+	}
 	int static_eval = nega_evaluate(position, white_turn);
 	if (static_eval > alpha) {
 		alpha = static_eval;
