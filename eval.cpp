@@ -32,7 +32,7 @@ const int MAX_MATERIAL = 3100;
 
 }
 
-int square_distances[64][64];
+int square_proximity[64][64];
 
 // returns the score from the playing side's perspective
 int nega_evaluate(const Position& position, bool white_turn) {
@@ -159,7 +159,7 @@ int evaluate(const Position& position) {
 	while (white_knights) {
 		int i = lsb_to_square(white_knights);
 		score += KNIGHT_SQUARE_TABLE[i];
-		score += (7 - square_distances[black_king_square][i]) * KNIGHT_KING_PROXIMITY_BONUS;
+		score += square_proximity[black_king_square][i] * KNIGHT_KING_PROXIMITY_BONUS;
 		white_knights = reset_lsb(white_knights);
 	}
 	uint64_t white_rooks = position.p[WHITE][ROOK];
@@ -175,13 +175,13 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(white_rooks);
 		score += ROOK_SQUARE_TABLE[i];
 		score += ROOK_MOBILITY_BONUS * (pop_count(rook_attacks(occupied_squares, i) & ~white_squares) - 5);
-		score += (7 - square_distances[black_king_square][i]) * ROOK_KING_PROXIMITY_BONUS;
+		score += square_proximity[black_king_square][i] * ROOK_KING_PROXIMITY_BONUS;
 		white_rooks = reset_lsb(white_rooks);
 	}
 	while (white_queens) {
 		score += 900;
 		int queen_square = lsb_to_square(white_queens);
-		score += (7 - square_distances[black_king_square][queen_square]) * QUEEN_KING_PROXIMITY_BONUS;
+		score += square_proximity[black_king_square][queen_square] * QUEEN_KING_PROXIMITY_BONUS;
 		white_queens = reset_lsb(white_queens);
 	}
 
@@ -247,8 +247,8 @@ int evaluate(const Position& position) {
 	uint64_t black_knights = position.p[BLACK][KNIGHT];
 	while (black_knights) {
 		int i = lsb_to_square(black_knights);
-		score -= KNIGHT_SQUARE_TABLE[63 - i];
-		score -= (7 - square_distances[white_king_square][i]) * KNIGHT_KING_PROXIMITY_BONUS;
+		score -= KNIGHT_SQUARE_TABLE[i];
+		score -= square_proximity[white_king_square][i] * KNIGHT_KING_PROXIMITY_BONUS;
 		black_knights = reset_lsb(black_knights);
 	}
 	uint64_t black_rooks = position.p[BLACK][ROOK];
@@ -264,13 +264,13 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(black_rooks);
 		score -= ROOK_SQUARE_TABLE[63 - i];
 		score -= ROOK_MOBILITY_BONUS * (pop_count(rook_attacks(occupied_squares, i) & ~black_squares) - 5);
-		score -= (7 - square_distances[white_king_square][i]) * ROOK_KING_PROXIMITY_BONUS;
+		score -= square_proximity[white_king_square][i] * ROOK_KING_PROXIMITY_BONUS;
 		black_rooks = reset_lsb(black_rooks);
 	}
 	while (black_queens) {
 		score -= 900;
 		int queen_square = lsb_to_square(black_queens);
-		score -= (7 - square_distances[white_king_square][queen_square]) * QUEEN_KING_PROXIMITY_BONUS;
+		score -= square_proximity[white_king_square][queen_square] * QUEEN_KING_PROXIMITY_BONUS;
 		black_queens = reset_lsb(black_queens);
 	}
 
@@ -284,7 +284,7 @@ void init_eval() {
 			int file_i = i % 8;
 			int row_j = j / 8;
 			int file_j = j % 8;
-			square_distances[i][j] = std::max(std::abs(file_i - file_j), std::abs(row_i - row_j));
+			square_proximity[i][j] = 7 - std::max(std::abs(file_i - file_j), std::abs(row_i - row_j));
 		}
 	}
 }
