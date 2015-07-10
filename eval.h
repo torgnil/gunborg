@@ -30,15 +30,15 @@
 const int DOUBLED_PAWN_PENALTY = 12;
 const int ISOLATED_PAWN_PENALTY = 14;
 const int BACKWARD_PAWN_PENALTY = 8;
-const int PASSED_PAWN_BONUS = 58;
+const int PASSED_PAWN_BONUS = 50;
 const int OPEN_FILE_BONUS = 12;
-const int SEMI_OPEN_FILE_BONUS = 16;
-const int UNSAFE_KING_PENALTY = 11;
-const int BISHOP_PAIR_BONUS = 47;
+const int SEMI_OPEN_FILE_BONUS = 10;
+const int UNSAFE_KING_PENALTY = 8;
+const int BISHOP_PAIR_BONUS = 40;
 const int BISHOP_MOBILITY_BONUS = 5;
 const int ROOK_MOBILITY_BONUS = 4;
-const int KNIGHT_KING_PROXIMITY_BONUS = 2;
-const int ROOK_KING_PROXIMITY_BONUS = 3;
+const int KNIGHT_KING_PROXIMITY_BONUS = 3;
+const int ROOK_KING_PROXIMITY_BONUS = 2;
 const int QUEEN_KING_PROXIMITY_BONUS = 12;
 
 // the value of a white pawn at all squares from white's perspective
