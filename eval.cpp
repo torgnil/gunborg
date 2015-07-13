@@ -152,6 +152,7 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(white_bishops);
 		score += BISHOP_SQUARE_TABLE[i];
 		score += BISHOP_MOBILITY_BONUS * (pop_count(bishop_attacks(occupied_squares, i) & ~white_squares) - 5);
+		score += square_proximity[black_king_square][i] * BISHOP_KING_PROXIMITY_BONUS;
 		white_bishops = reset_lsb(white_bishops);
 	}
 
@@ -241,6 +242,7 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(black_bishops);
 		score -= BISHOP_SQUARE_TABLE[63 - i];
 		score -= BISHOP_MOBILITY_BONUS * (pop_count(bishop_attacks(occupied_squares, i) & ~black_squares) - 5);
+		score -= square_proximity[white_king_square][i] * BISHOP_KING_PROXIMITY_BONUS;
 		black_bishops = reset_lsb(black_bishops);
 	}
 
