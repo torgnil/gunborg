@@ -144,6 +144,7 @@ int evaluate(const Position& position) {
 
 	score -= king_safety_penalty;
 
+	int white_proximity_bonus = 0;
 	uint64_t white_bishops = position.p[WHITE][BISHOP];
 	if (pop_count(white_bishops) == 2) {
 		score += BISHOP_PAIR_BONUS;
@@ -152,7 +153,7 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(white_bishops);
 		score += BISHOP_SQUARE_TABLE[i];
 		score += BISHOP_MOBILITY_BONUS * (pop_count(bishop_attacks(occupied_squares, i) & ~white_squares) - 5);
-		score += square_proximity[black_king_square][i] * BISHOP_KING_PROXIMITY_BONUS;
+		white_proximity_bonus += square_proximity[black_king_square][i] * BISHOP_KING_PROXIMITY_BONUS;
 		white_bishops = reset_lsb(white_bishops);
 	}
 
@@ -160,7 +161,7 @@ int evaluate(const Position& position) {
 	while (white_knights) {
 		int i = lsb_to_square(white_knights);
 		score += KNIGHT_SQUARE_TABLE[i];
-		score += square_proximity[black_king_square][i] * KNIGHT_KING_PROXIMITY_BONUS;
+		white_proximity_bonus += square_proximity[black_king_square][i] * KNIGHT_KING_PROXIMITY_BONUS;
 		white_knights = reset_lsb(white_knights);
 	}
 	uint64_t white_rooks = position.p[WHITE][ROOK];
@@ -176,15 +177,20 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(white_rooks);
 		score += ROOK_SQUARE_TABLE[i];
 		score += ROOK_MOBILITY_BONUS * (pop_count(rook_attacks(occupied_squares, i) & ~white_squares) - 5);
-		score += square_proximity[black_king_square][i] * ROOK_KING_PROXIMITY_BONUS;
+		white_proximity_bonus += square_proximity[black_king_square][i] * ROOK_KING_PROXIMITY_BONUS;
 		white_rooks = reset_lsb(white_rooks);
 	}
 	while (white_queens) {
 		score += 900;
 		int queen_square = lsb_to_square(white_queens);
-		score += square_proximity[black_king_square][queen_square] * QUEEN_KING_PROXIMITY_BONUS;
+		white_proximity_bonus += square_proximity[black_king_square][queen_square] * QUEEN_KING_PROXIMITY_BONUS;
 		white_queens = reset_lsb(white_queens);
 	}
+
+	white_proximity_bonus *= white_piece_material;
+	white_proximity_bonus /= MAX_MATERIAL;
+
+	score += white_proximity_bonus;
 
 	uint64_t black_pawns = position.p[BLACK][PAWN];
 
@@ -234,6 +240,7 @@ int evaluate(const Position& position) {
 
 	score += black_king_safety_penalty;
 
+	int black_proximity_bonus = 0;
 	uint64_t black_bishops = position.p[BLACK][BISHOP];
 	if (pop_count(black_bishops) == 2) {
 		score -= BISHOP_PAIR_BONUS;
@@ -242,7 +249,7 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(black_bishops);
 		score -= BISHOP_SQUARE_TABLE[63 - i];
 		score -= BISHOP_MOBILITY_BONUS * (pop_count(bishop_attacks(occupied_squares, i) & ~black_squares) - 5);
-		score -= square_proximity[white_king_square][i] * BISHOP_KING_PROXIMITY_BONUS;
+		black_proximity_bonus += square_proximity[white_king_square][i] * BISHOP_KING_PROXIMITY_BONUS;
 		black_bishops = reset_lsb(black_bishops);
 	}
 
@@ -250,7 +257,7 @@ int evaluate(const Position& position) {
 	while (black_knights) {
 		int i = lsb_to_square(black_knights);
 		score -= KNIGHT_SQUARE_TABLE[i];
-		score -= square_proximity[white_king_square][i] * KNIGHT_KING_PROXIMITY_BONUS;
+		black_proximity_bonus += square_proximity[white_king_square][i] * KNIGHT_KING_PROXIMITY_BONUS;
 		black_knights = reset_lsb(black_knights);
 	}
 	uint64_t black_rooks = position.p[BLACK][ROOK];
@@ -266,15 +273,20 @@ int evaluate(const Position& position) {
 		int i = lsb_to_square(black_rooks);
 		score -= ROOK_SQUARE_TABLE[63 - i];
 		score -= ROOK_MOBILITY_BONUS * (pop_count(rook_attacks(occupied_squares, i) & ~black_squares) - 5);
-		score -= square_proximity[white_king_square][i] * ROOK_KING_PROXIMITY_BONUS;
+		black_proximity_bonus += square_proximity[white_king_square][i] * ROOK_KING_PROXIMITY_BONUS;
 		black_rooks = reset_lsb(black_rooks);
 	}
 	while (black_queens) {
 		score -= 900;
 		int queen_square = lsb_to_square(black_queens);
-		score -= square_proximity[white_king_square][queen_square] * QUEEN_KING_PROXIMITY_BONUS;
+		black_proximity_bonus += square_proximity[white_king_square][queen_square] * QUEEN_KING_PROXIMITY_BONUS;
 		black_queens = reset_lsb(black_queens);
 	}
+
+	black_proximity_bonus *= black_piece_material;
+	black_proximity_bonus /= MAX_MATERIAL;
+
+	score -= black_proximity_bonus;
 
 	return score;
 }
