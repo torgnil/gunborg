@@ -38,9 +38,9 @@ const int BISHOP_PAIR_BONUS = 47;
 const int BISHOP_MOBILITY_BONUS = 3;
 const int ROOK_MOBILITY_BONUS = 3;
 const int KNIGHT_KING_PROXIMITY_BONUS = 4;
-const int BISHOP_KING_PROXIMITY_BONUS = 1;
 const int ROOK_KING_PROXIMITY_BONUS = 1;
 const int QUEEN_KING_PROXIMITY_BONUS = 10;
+const int BISHOP_KING_PROXIMITY_BONUS = 1;
 
 // piece square table parameters
 
