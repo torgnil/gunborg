@@ -25,6 +25,7 @@
 #include "eval.h"
 #include "magic.h"
 #include "moves.h"
+#include <math.h>
 
 namespace {
 
@@ -33,6 +34,16 @@ const int MAX_MATERIAL = 3100;
 }
 
 int square_proximity[64][64];
+
+// piece square tables [WHITE|BLACK][64]
+// values are set by init_eval()
+int pawn_square_table[2][64];
+int pawn_square_table_endgame[2][64];
+int knight_square_table[2][64];
+int bishop_square_table[2][64];
+int rook_square_table[2][64];
+int queen_square_table[2][64];
+int king_square_table_endgame[2][64];
 
 // returns the score from the playing side's perspective
 int nega_evaluate(const Position& position, bool white_turn) {
@@ -113,12 +124,12 @@ int evaluate(const Position& position) {
 
 	while (white_pawns) {
 		int i = lsb_to_square(white_pawns);
-		score += PAWN_SQUARE_TABLE_ENDGAME[i] - PAWN_SQUARE_TABLE_ENDGAME[i] * total_material/MAX_MATERIAL;
-		score += PAWN_SQUARE_TABLE[i] * total_material/MAX_MATERIAL;
+		score += pawn_square_table_endgame[WHITE][i] - pawn_square_table_endgame[WHITE][i] * total_material/MAX_MATERIAL;
+		score += pawn_square_table[WHITE][i] * total_material/MAX_MATERIAL;
 		white_pawns = reset_lsb(white_pawns);
 	}
 
-	score += KING_SQUARE_TABLE_ENDGAME[white_king_square] - KING_SQUARE_TABLE_ENDGAME[white_king_square] * total_material/MAX_MATERIAL;
+	score += king_square_table_endgame[WHITE][white_king_square] - king_square_table_endgame[WHITE][white_king_square] * total_material/MAX_MATERIAL;
 	score += KING_SQUARE_TABLE[white_king_square] * total_material/MAX_MATERIAL;
 
 	// king safety
@@ -151,7 +162,7 @@ int evaluate(const Position& position) {
 	}
 	while (white_bishops) {
 		int i = lsb_to_square(white_bishops);
-		score += BISHOP_SQUARE_TABLE[i];
+		score += bishop_square_table[WHITE][i];
 		score += BISHOP_MOBILITY_BONUS * (pop_count(bishop_attacks(occupied_squares, i) & ~white_squares) - 5);
 		white_proximity_bonus += square_proximity[black_king_square][i] * BISHOP_KING_PROXIMITY_BONUS;
 		white_bishops = reset_lsb(white_bishops);
@@ -160,7 +171,7 @@ int evaluate(const Position& position) {
 	uint64_t white_knights = position.p[WHITE][KNIGHT];
 	while (white_knights) {
 		int i = lsb_to_square(white_knights);
-		score += KNIGHT_SQUARE_TABLE[i];
+		score += knight_square_table[WHITE][i];
 		white_proximity_bonus += square_proximity[black_king_square][i] * KNIGHT_KING_PROXIMITY_BONUS;
 		white_knights = reset_lsb(white_knights);
 	}
@@ -175,14 +186,14 @@ int evaluate(const Position& position) {
 
 	while (white_rooks) {
 		int i = lsb_to_square(white_rooks);
-		score += ROOK_SQUARE_TABLE[i];
+		score += rook_square_table[WHITE][i];
 		score += ROOK_MOBILITY_BONUS * (pop_count(rook_attacks(occupied_squares, i) & ~white_squares) - 5);
 		white_proximity_bonus += square_proximity[black_king_square][i] * ROOK_KING_PROXIMITY_BONUS;
 		white_rooks = reset_lsb(white_rooks);
 	}
 	while (white_queens) {
-		score += 900;
 		int queen_square = lsb_to_square(white_queens);
+		score += queen_square_table[WHITE][queen_square];
 		white_proximity_bonus += square_proximity[black_king_square][queen_square] * QUEEN_KING_PROXIMITY_BONUS;
 		white_queens = reset_lsb(white_queens);
 	}
@@ -209,12 +220,12 @@ int evaluate(const Position& position) {
 
 	while (black_pawns) {
 		int i = lsb_to_square(black_pawns);
-		score -= PAWN_SQUARE_TABLE_ENDGAME[63 - i]  - PAWN_SQUARE_TABLE_ENDGAME[63 -i] * total_material/MAX_MATERIAL;
-		score -= PAWN_SQUARE_TABLE[63 - i] * total_material/MAX_MATERIAL;
+		score -= pawn_square_table_endgame[BLACK][i]  - pawn_square_table_endgame[BLACK][i] * total_material/MAX_MATERIAL;
+		score -= pawn_square_table[BLACK][i] * total_material/MAX_MATERIAL;
 		black_pawns = reset_lsb(black_pawns);
 	}
 
-	score -= KING_SQUARE_TABLE_ENDGAME[black_king_square] - KING_SQUARE_TABLE_ENDGAME[black_king_square] * total_material/MAX_MATERIAL;
+	score -= king_square_table_endgame[BLACK][black_king_square] - king_square_table_endgame[BLACK][black_king_square] * total_material/MAX_MATERIAL;
 	score -= KING_SQUARE_TABLE[black_king_square] * total_material/MAX_MATERIAL;
 
 	int black_king_safety_penalty = 0;
@@ -247,7 +258,7 @@ int evaluate(const Position& position) {
 	}
 	while (black_bishops) {
 		int i = lsb_to_square(black_bishops);
-		score -= BISHOP_SQUARE_TABLE[63 - i];
+		score -= bishop_square_table[BLACK][i];
 		score -= BISHOP_MOBILITY_BONUS * (pop_count(bishop_attacks(occupied_squares, i) & ~black_squares) - 5);
 		black_proximity_bonus += square_proximity[white_king_square][i] * BISHOP_KING_PROXIMITY_BONUS;
 		black_bishops = reset_lsb(black_bishops);
@@ -256,7 +267,7 @@ int evaluate(const Position& position) {
 	uint64_t black_knights = position.p[BLACK][KNIGHT];
 	while (black_knights) {
 		int i = lsb_to_square(black_knights);
-		score -= KNIGHT_SQUARE_TABLE[i];
+		score -= knight_square_table[BLACK][i];
 		black_proximity_bonus += square_proximity[white_king_square][i] * KNIGHT_KING_PROXIMITY_BONUS;
 		black_knights = reset_lsb(black_knights);
 	}
@@ -271,14 +282,14 @@ int evaluate(const Position& position) {
 
 	while (black_rooks) {
 		int i = lsb_to_square(black_rooks);
-		score -= ROOK_SQUARE_TABLE[63 - i];
+		score -= rook_square_table[BLACK][i];
 		score -= ROOK_MOBILITY_BONUS * (pop_count(rook_attacks(occupied_squares, i) & ~black_squares) - 5);
 		black_proximity_bonus += square_proximity[white_king_square][i] * ROOK_KING_PROXIMITY_BONUS;
 		black_rooks = reset_lsb(black_rooks);
 	}
 	while (black_queens) {
-		score -= 900;
 		int queen_square = lsb_to_square(black_queens);
+		score -= queen_square_table[BLACK][queen_square];
 		black_proximity_bonus += square_proximity[white_king_square][queen_square] * QUEEN_KING_PROXIMITY_BONUS;
 		black_queens = reset_lsb(black_queens);
 	}
@@ -291,6 +302,59 @@ int evaluate(const Position& position) {
 	return score;
 }
 
+/**
+ * S(x) is a s-shaped curve from 0 - 1 where
+ *
+ * S(0) = 0.5
+ * S(high) ~ 0.9
+ * S(1-high) ~ 0.1
+ *
+ */
+double sigmoid(double x, double high) {
+	return 1 / (1 + pow(10, -x / high));
+}
+
+/*
+ * The value on a square is the sum of the base value and a bonus for being near the center and opponent's back row.
+ *
+ * The bonuses are calculated using the S-shaped sigmoid function.
+ *
+ */
+int calculate_square_value(int base_piece_value, int center_bonus, int opponent_back_row_bonus, int side, int square) {
+	int square_value = base_piece_value;
+
+	int row = side == WHITE ? square / 8 : 7 - (square / 8);
+	int col = side == WHITE ? square % 8 : square % 8;
+
+	double AVG_CENTER_DISTANCE = 3.5;
+
+	// center_proximity is a value between -1.5 to 1.5
+	double center_proximity = 2 - std::max(fabs(row - AVG_CENTER_DISTANCE), fabs(col - AVG_CENTER_DISTANCE));
+
+	double MAX_CENTER_PROXIMITY = 1.5;
+
+	square_value += center_bonus * sigmoid(center_proximity, MAX_CENTER_PROXIMITY);
+
+	double AVG_OPPONENT_BACK_ROW_DISTANCE = 3.5;
+
+	// row8_poximity is a value between -3.5 to 3.5
+	double opponent_back_row_proximity = row - AVG_OPPONENT_BACK_ROW_DISTANCE;
+
+	double MAX_OPPONENT_BACK_ROW_DISTANCE = 3.5;
+
+	square_value += opponent_back_row_bonus * sigmoid(opponent_back_row_proximity, MAX_OPPONENT_BACK_ROW_DISTANCE);
+
+	return square_value;
+}
+
+
+void generate_piece_square_table(int (&psqt)[2][64], int piece_value, int center_bonus, int opponent_back_row_bonus) {
+	for (int i = 0; i < 64; i++) {
+		psqt[WHITE][i] = calculate_square_value(piece_value, center_bonus, opponent_back_row_bonus, WHITE, i);
+		psqt[BLACK][i] = calculate_square_value(piece_value, center_bonus, opponent_back_row_bonus, BLACK, i);
+	}
+}
+
 void init_eval() {
 	for (int i = 0; i < 64; ++i) {
 		for (int j = 0; j < 64; ++j) {
@@ -300,5 +364,15 @@ void init_eval() {
 			int file_j = j % 8;
 			square_proximity[i][j] = 7 - std::max(std::abs(file_i - file_j), std::abs(row_i - row_j));
 		}
+		rook_square_table[WHITE][i] = ROOK_SQUARE_TABLE[i];
+		rook_square_table[BLACK][i] = ROOK_SQUARE_TABLE[63 - i];
 	}
+
+	generate_piece_square_table(knight_square_table, KNIGHT_PSQT_BASE_VALUE, KNIGHT_CENTER_BONUS, KNIGHT_OPPONENT_BACK_ROW_BONUS);
+	generate_piece_square_table(bishop_square_table, BISHOP_PSQT_BASE_VALUE, BISHOP_CENTER_BONUS, BISHOP_OPPONENT_BACK_ROW_BONUS);
+	generate_piece_square_table(king_square_table_endgame, KING_PSQT_BASE_VALUE_EG, KING_CENTER_BONUS_EG, KING_OPPONENT_BACK_ROW_BONUS_EG);
+	generate_piece_square_table(pawn_square_table, PAWN_PSQT_BASE_VALUE_MG, PAWN_CENTER_BONUS_MG, PAWN_OPPONENT_BACK_ROW_BONUS_MG);
+	generate_piece_square_table(pawn_square_table_endgame, PAWN_PSQT_BASE_VALUE_EG, PAWN_CENTER_BONUS_EG, PAWN_OPPONENT_BACK_ROW_BONUS_EG);
+	generate_piece_square_table(queen_square_table, QUEEN_PSQT_BASE_VALUE, QUEEN_CENTER_BONUS, QUEEN_OPPONENT_BACK_ROW_BONUS);
+
 }
