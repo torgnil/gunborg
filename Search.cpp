@@ -115,6 +115,18 @@ void pick_next_move(MoveList& moves, const int no_sorted_moves) {
 	std::swap(moves[no_sorted_moves], moves[max_index]);
 }
 
+bool is_losing_capture(bool white_turn, Move& capturing_move, Position& captured_position) {
+	int captured_piece_value = captured_piece(capturing_move.m);
+	if (captured_piece_value == EMPTY) {
+		return false;
+	}
+	int capturing_piece_value = piece(capturing_move.m);
+	if ((capturing_piece_value > captured_piece_value) && (get_attacked_squares(captured_position, !white_turn) & (1ULL << to_square(capturing_move.m))) ) {
+		return true;
+	}
+	return false;
+}
+
 int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Position& position) {
 	if (position.p[WHITE][KING] == 0) {
 		return white_turn ? -10000 : 10000;
@@ -245,6 +257,8 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 				// the rest of the quite moves are sorted based on how often they increase score in the search tree
 				it->sort_score += history[from_square(it->m)][to_square(it->m)];
 			}
+		} else if (is_losing_capture(white_turn, *it, position)) {
+			it->sort_score -= 1000000;
 		}
 	}
 
@@ -289,7 +303,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 			int depth_reduction = 0;
 			// late move reduction.
 			// we assume sort order is good enough to not search later moves as deep as the first
-			if (depth > 2 && i > 5 && !is_capture(move.m)) {
+			if (depth > 2 && i > 5 && move.sort_score < 500000) {
 				depth_reduction = depth > 5 && i > 20 ? 2 : 1;
 			}
 			if (beta - alpha > 1 && next_move != 0) {
