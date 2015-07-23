@@ -214,6 +214,13 @@ int see(const Position& position, const bool& white_turn, const Move& capturing_
 	see_info.attacking_pieces[WHITE][KING] |= position.p[WHITE][KING] & king_moves[square];
 	see_info.attacking_pieces[BLACK][KING] |= position.p[BLACK][KING] & king_moves[square];
 
+	see_info.attacking_pieces[WHITE][BISHOP] = position.p[WHITE][BISHOP];
+	see_info.attacking_pieces[BLACK][BISHOP] = position.p[BLACK][BISHOP];
+	see_info.attacking_pieces[WHITE][ROOK] = position.p[WHITE][ROOK];
+	see_info.attacking_pieces[BLACK][ROOK] = position.p[BLACK][ROOK];
+	see_info.attacking_pieces[WHITE][QUEEN] = position.p[WHITE][QUEEN];
+	see_info.attacking_pieces[BLACK][QUEEN] = position.p[BLACK][QUEEN];
+
 	int side = white_turn ? WHITE : BLACK;
 
 	int gain_swap_list[32] = {};
