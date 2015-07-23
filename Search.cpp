@@ -284,7 +284,7 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 			unmake_move(position, move);
 			continue;
 		}
-		if (see(position, !white_turn, move) < 0) {
+		if (alpha + see(position, !white_turn, move) + 60 < static_eval) {
 			unmake_move(position, move);
 			continue;
 		}
@@ -386,7 +386,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 				// the rest of the quite moves are sorted based on how often they increase score in the search tree
 				it->sort_score += history[from_square(it->m)][to_square(it->m)];
 			}
-		} else if (make_capture_and_see(position, white_turn, *it ) < 0 ) {
+		} else if (make_capture_and_see(position, white_turn, *it ) < 0) {
 			it->sort_score -= 1000000;
 		}
 	}
