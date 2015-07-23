@@ -28,6 +28,9 @@
 #include <deque>
 #include <string>
 
+extern uint64_t knight_moves[64];
+extern uint64_t king_moves[64];
+
 uint64_t south_fill(uint64_t l);
 
 uint64_t north_fill(uint64_t l);
