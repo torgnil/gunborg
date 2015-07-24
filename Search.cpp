@@ -177,6 +177,9 @@ int see(const Position& position, const bool& white_turn, const Move& capturing_
 	if (captured_piece(capturing_move.m) > KING) {
 		return 0; // special move - ignore
 	}
+	if (captured_piece(capturing_move.m) > piece(capturing_move.m)) {
+		return 1;
+	}
 	int captured_piece_value = piece_values[captured_piece(capturing_move.m)];
 	int capturing_piece_value = piece_values[piece(capturing_move.m)];
 	int square = to_square(capturing_move.m);
@@ -284,10 +287,6 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 			unmake_move(position, move);
 			continue;
 		}
-		if (alpha + see(position, !white_turn, move) + 60 < static_eval) {
-			unmake_move(position, move);
-			continue;
-		}
 		int res = -capture_quiescence_eval_search(!white_turn, -beta, -alpha, position);
 		unmake_move(position, move);
 		if (res >= beta) {
@@ -387,7 +386,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 				it->sort_score += history[from_square(it->m)][to_square(it->m)];
 			}
 		} else if (make_capture_and_see(position, white_turn, *it ) < 0) {
-			it->sort_score -= 1000000;
+			it->sort_score -= 1000;
 		}
 	}
 
@@ -432,7 +431,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 			int depth_reduction = 0;
 			// late move reduction.
 			// we assume sort order is good enough to not search later moves as deep as the first
-			if (depth > 2 && i > 5 && move.sort_score < 500000) {
+			if (depth > 2 && i > 5 && !is_capture(move.m)) {
 				depth_reduction = depth > 5 && i > 20 ? 2 : 1;
 			}
 			if (beta - alpha > 1 && next_move != 0) {
