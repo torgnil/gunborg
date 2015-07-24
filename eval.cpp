@@ -302,55 +302,6 @@ int evaluate(const Position& position) {
 	return score;
 }
 
-/**
- * S(x) is a s-shaped curve from 0 - 1 where
- *
- * S(0) = 0.5
- * S(high) ~ 0.9
- * S(1-high) ~ 0.1
- *
- */
-double sigmoid(double x, double high) {
-	return 1 / (1 + pow(10, -x / (high/2)));
-}
-
-/*
- * The value on a square is the sum of the base value and a bonus for being near the center and opponent's back row.
- *
- * The bonuses are calculated using the S-shaped sigmoid function.
- *
- */
-int calculate_square_value(int base_piece_value, int center_bonus, int center_s_max, int opponent_back_row_bonus, int back_row_s_max, int side, int square) {
-	double square_value = base_piece_value;
-
-	int row = side == WHITE ? square / 8 : 7 - (square / 8);
-	int col = side == WHITE ? square % 8 : square % 8;
-
-	double AVG_CENTER_DISTANCE = 3.5;
-
-	// center_proximity is a value between -1.5 to 1.5
-	double center_proximity = 2 - std::max(fabs(row - AVG_CENTER_DISTANCE), fabs(col - AVG_CENTER_DISTANCE));
-
-	square_value += center_bonus * sigmoid(center_proximity, center_s_max);
-
-	double AVG_OPPONENT_BACK_ROW_DISTANCE = 3.5;
-
-	// row8_poximity is a value between -3.5 to 3.5
-	double opponent_back_row_proximity = row - AVG_OPPONENT_BACK_ROW_DISTANCE;
-
-	square_value += opponent_back_row_bonus * sigmoid(opponent_back_row_proximity, back_row_s_max);
-
-	return (int)(square_value + 0.5);
-}
-
-
-void generate_piece_square_table(int (&psqt)[2][64], int piece_value, int center_bonus, int center_s_max, int opponent_back_row_bonus, int backrow_s_max) {
-	for (int i = 0; i < 64; i++) {
-		psqt[WHITE][i] = calculate_square_value(piece_value, center_bonus, center_s_max, opponent_back_row_bonus, backrow_s_max, WHITE, i);
-		psqt[BLACK][i] = calculate_square_value(piece_value, center_bonus, center_s_max, opponent_back_row_bonus, backrow_s_max, BLACK, i);
-	}
-}
-
 void init_eval() {
 	for (int i = 0; i < 64; ++i) {
 		for (int j = 0; j < 64; ++j) {
@@ -361,14 +312,19 @@ void init_eval() {
 			square_proximity[i][j] = 7 - std::max(std::abs(file_i - file_j), std::abs(row_i - row_j));
 		}
 		rook_square_table[WHITE][i] = ROOK_SQUARE_TABLE[i];
-		rook_square_table[BLACK][i] = ROOK_SQUARE_TABLE[63 - i];
+		rook_square_table[BLACK][i] = ROOK_SQUARE_TABLE[63-i];
+		knight_square_table[WHITE][i] = KNIGHT_SQUARE_TABLE[i];
+		knight_square_table[BLACK][i] = KNIGHT_SQUARE_TABLE[63-i];
+		bishop_square_table[WHITE][i] = BISHOP_SQUARE_TABLE[i];
+		bishop_square_table[BLACK][i] = BISHOP_SQUARE_TABLE[63-i];
+		king_square_table_endgame[WHITE][i] = KING_SQUARE_TABLE_ENDGAME[i];
+		king_square_table_endgame[BLACK][i] = KING_SQUARE_TABLE_ENDGAME[63-i];
+		pawn_square_table[WHITE][i] = PAWN_SQUARE_TABLE[i];
+		pawn_square_table[BLACK][i] = PAWN_SQUARE_TABLE[63-i];
+		pawn_square_table_endgame[WHITE][i] = PAWN_SQUARE_TABLE_ENDGAME[i];
+		pawn_square_table_endgame[BLACK][i] = PAWN_SQUARE_TABLE_ENDGAME[63-i];
+		queen_square_table[WHITE][i] = QUEEN_SQUARE_TABLE[i];
+		queen_square_table[BLACK][i] = QUEEN_SQUARE_TABLE[63-i];
 	}
-
-	generate_piece_square_table(knight_square_table, KNIGHT_PSQT_BASE_VALUE, KNIGHT_CENTER_BONUS, KNIGHT_CENTER_S_MAX, KNIGHT_OPPONENT_BACK_ROW_BONUS, KNIGHT_OPPONENT_BACK_ROW_S_MAX);
-	generate_piece_square_table(bishop_square_table, BISHOP_PSQT_BASE_VALUE, BISHOP_CENTER_BONUS, BISHOP_CENTER_S_MAX, BISHOP_OPPONENT_BACK_ROW_BONUS, BISHOP_OPPONENT_BACK_ROW_S_MAX);
-	generate_piece_square_table(king_square_table_endgame, KING_PSQT_BASE_VALUE_EG, KING_CENTER_BONUS_EG, KING_CENTER_S_MAX_EG, KING_OPPONENT_BACK_ROW_BONUS_EG, KING_OPPONENT_BACK_ROW_S_MAX_EG);
-	generate_piece_square_table(pawn_square_table, PAWN_PSQT_BASE_VALUE_MG, PAWN_CENTER_BONUS_MG, PAWN_CENTER_S_MAX_MG, PAWN_OPPONENT_BACK_ROW_BONUS_MG, PAWN_OPPONENT_BACK_ROW_S_MAX_MG);
-	generate_piece_square_table(pawn_square_table_endgame, PAWN_PSQT_BASE_VALUE_EG, PAWN_CENTER_BONUS_EG, PAWN_CENTER_S_MAX_EG, PAWN_OPPONENT_BACK_ROW_BONUS_EG, PAWN_OPPONENT_BACK_ROW_S_MAX_EG);
-	generate_piece_square_table(queen_square_table, QUEEN_PSQT_BASE_VALUE, QUEEN_CENTER_BONUS, QUEEN_CENTER_S_MAX, QUEEN_OPPONENT_BACK_ROW_BONUS, QUEEN_OPPONENT_BACK_ROW_S_MAX);
 
 }
