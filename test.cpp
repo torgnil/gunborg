@@ -237,7 +237,7 @@ void white_en_passant_capture() {
 	for (auto it : moves) {
 		if (is_capture(it.m)) {
 			assert_equals("capture on e.p square", to_square(it.m), 43);
-			assert_equals("pawn mvvlva", it.sort_score, 1000006);
+			assert_equals("pawn mvvlva", it.sort_score, 1000000);
 			make_move(position, it);
 			assert_equals("black pawn is captured", position.p[BLACK][PAWN], 0);
 			unmake_move(position, it);
@@ -259,7 +259,7 @@ void black_en_passant_capture() {
 	for (auto it : moves) {
 		if (is_capture(it.m)) {
 			assert_equals("capture on e.p square", to_square(it.m), 20);
-			assert_equals("pawn mvvlva", it.sort_score, 1000006);
+			assert_equals("pawn mvvlva", it.sort_score, 1000000);
 			make_move(position, it);
 			assert_equals("white pawn is captured", position.p[WHITE][PAWN], 0);
 			unmake_move(position, it);

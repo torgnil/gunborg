@@ -26,7 +26,6 @@
 #include "board.h"
 #include "Cache.h"
 #include "eval.h"
-#include "magic.h"
 #include "moves.h"
 #include "util.h"
 #include <algorithm>
@@ -114,150 +113,6 @@ void pick_next_move(MoveList& moves, const int no_sorted_moves) {
 		i++;
 	}
 	std::swap(moves[no_sorted_moves], moves[max_index]);
-}
-
-struct SEEInfo {
-	uint64_t attacking_pieces[2][6] = {}; //[WHITE|BLACK][PAWN ... KING]
-	uint64_t occupied_squares = 0;
-};
-
-int find_and_reset_least_valuable_piece(SEEInfo& see_info, const int& side,const int& square) {
-	if (see_info.attacking_pieces[side][PAWN]) {
-		uint64_t lsb = lsb(see_info.attacking_pieces[side][PAWN]);
-		// reset piece on the occupied_squares bb
-		see_info.occupied_squares &= ~lsb;
-		see_info.attacking_pieces[side][PAWN] = reset_lsb(see_info.attacking_pieces[side][PAWN]);
-		return 100;
-	}
-	if (see_info.attacking_pieces[side][KNIGHT]) {
-		uint64_t lsb = lsb(see_info.attacking_pieces[side][KNIGHT]);
-		// reset piece on the occupied_squares bb
-		see_info.occupied_squares &= ~lsb;
-		see_info.attacking_pieces[side][KNIGHT] = reset_lsb(see_info.attacking_pieces[side][KNIGHT]);
-		return 300;
-	}
-	// find attacks for bishop, rooks and queens (inluding x-rays)
-	uint64_t attacking_bishops = see_info.attacking_pieces[side][BISHOP] & bishop_attacks(see_info.occupied_squares, square);
-	if (attacking_bishops) {
-		uint64_t lsb = lsb(attacking_bishops);
-		see_info.occupied_squares &= ~lsb;
-		see_info.attacking_pieces[side][BISHOP] = reset_lsb(see_info.attacking_pieces[side][BISHOP]);
-		return 300;
-	}
-	uint64_t attacking_rooks = see_info.attacking_pieces[side][ROOK] & rook_attacks(see_info.occupied_squares, square);
-	if (attacking_rooks) {
-		uint64_t lsb = lsb(attacking_rooks);
-		see_info.occupied_squares &= ~lsb;
-		see_info.attacking_pieces[side][ROOK] = reset_lsb(see_info.attacking_pieces[side][ROOK]);
-		return 500;
-	}
-	uint64_t attacking_queens = see_info.attacking_pieces[side][QUEEN] & queen_attacks(see_info.occupied_squares, square);
-	if (attacking_queens) {
-		uint64_t lsb = lsb(attacking_queens);
-		see_info.occupied_squares &= ~lsb;
-		see_info.attacking_pieces[side][QUEEN] = reset_lsb(see_info.attacking_pieces[side][QUEEN]);
-		return 900;
-	}
-	if (see_info.attacking_pieces[side][KING]) {
-		uint64_t lsb = lsb(see_info.attacking_pieces[side][KING]);
-		// reset piece on the occupied_squares bb
-		see_info.occupied_squares &= ~lsb;
-		see_info.attacking_pieces[side][KING] = reset_lsb(see_info.attacking_pieces[side][KING]);
-		return 10000;
-	}
-	return 0;
-}
-
-int piece_values[6] = {100,300,300,500,900,10000};
-/*
- * position - the captured position
- * white_turn - who's turn it is to move after the original capture
- */
-int see(const Position& position, const bool& white_turn, const Move& capturing_move) {
-	if (captured_piece(capturing_move.m) > KING) {
-		return 0; // special move - ignore
-	}
-	if (captured_piece(capturing_move.m) > piece(capturing_move.m)) {
-		return 1;
-	}
-	int captured_piece_value = piece_values[captured_piece(capturing_move.m)];
-	int capturing_piece_value = piece_values[piece(capturing_move.m)];
-	int square = to_square(capturing_move.m);
-
-	uint64_t bb_square = 1L << square;
-
-	uint64_t black_squares = position.p[BLACK][KING]
-			| position.p[BLACK][PAWN]
-			| position.p[BLACK][KNIGHT]
-			| position.p[BLACK][BISHOP]
-			| position.p[BLACK][ROOK]
-			| position.p[BLACK][QUEEN];
-
-	uint64_t white_squares = position.p[WHITE][KING]
-			| position.p[WHITE][PAWN]
-			| position.p[WHITE][KNIGHT]
-			| position.p[WHITE][BISHOP]
-			| position.p[WHITE][ROOK]
-			| position.p[WHITE][QUEEN];
-
-	SEEInfo see_info;
-
-	see_info.occupied_squares = black_squares | white_squares;
-
-	// all pieces attacking the square that are independent of x-rays
-	see_info.attacking_pieces[WHITE][PAWN] |= position.p[WHITE][PAWN] & ((bb_square & ~SW_BORDER) >> 9);
-	see_info.attacking_pieces[WHITE][PAWN] |= position.p[WHITE][PAWN] & ((bb_square & ~SE_BORDER) >> 7);
-
-	see_info.attacking_pieces[BLACK][PAWN] |= position.p[BLACK][PAWN] & ((bb_square & ~NW_BORDER) << 7);
-	see_info.attacking_pieces[BLACK][PAWN] |= position.p[BLACK][PAWN] & ((bb_square & ~NE_BORDER) << 9);
-
-	see_info.attacking_pieces[WHITE][KNIGHT] |= position.p[WHITE][KNIGHT] & knight_moves[square];
-	see_info.attacking_pieces[BLACK][KNIGHT] |= position.p[BLACK][KNIGHT] & knight_moves[square];
-
-	see_info.attacking_pieces[WHITE][KING] |= position.p[WHITE][KING] & king_moves[square];
-	see_info.attacking_pieces[BLACK][KING] |= position.p[BLACK][KING] & king_moves[square];
-
-	see_info.attacking_pieces[WHITE][BISHOP] = position.p[WHITE][BISHOP];
-	see_info.attacking_pieces[BLACK][BISHOP] = position.p[BLACK][BISHOP];
-	see_info.attacking_pieces[WHITE][ROOK] = position.p[WHITE][ROOK];
-	see_info.attacking_pieces[BLACK][ROOK] = position.p[BLACK][ROOK];
-	see_info.attacking_pieces[WHITE][QUEEN] = position.p[WHITE][QUEEN];
-	see_info.attacking_pieces[BLACK][QUEEN] = position.p[BLACK][QUEEN];
-
-	int side = white_turn ? WHITE : BLACK;
-
-	int gain_swap_list[32] = {};
-
-	gain_swap_list[0] = captured_piece_value;
-	gain_swap_list[1] = capturing_piece_value - gain_swap_list[0];
-	int d = 1;
-	while (true) {
-		int least_valueable_attacker_value = find_and_reset_least_valuable_piece(see_info, (side + d) & 1,
-				square);
-		if (least_valueable_attacker_value) {
-			d++;
-			gain_swap_list[d] = least_valueable_attacker_value - gain_swap_list[d - 1];
-			if (std::max(-gain_swap_list[d - 1], gain_swap_list[d]) < 0) {
-				break;
-			}
-		} else {
-			break;
-		}
-	}
-	d--;
-	while (d) {
-		gain_swap_list[d - 1] = -std::max(-gain_swap_list[d - 1], gain_swap_list[d]);
-		d--;
-	}
-	return gain_swap_list[0];
-
-}
-
-int make_capture_and_see(Position& position, const bool& white_turn, Move& capturing_move) {
-	position.p[color(capturing_move.m)][piece(capturing_move.m)] &= ~(1ULL << from_square(capturing_move.m));
-	int result =  see(position, !white_turn, capturing_move);
-	position.p[color(capturing_move.m)][piece(capturing_move.m)] |= (1ULL << from_square(capturing_move.m));
-	return result;
 }
 
 int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Position& position) {
@@ -385,8 +240,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 				// the rest of the quite moves are sorted based on how often they increase score in the search tree
 				it->sort_score += history[from_square(it->m)][to_square(it->m)];
 			}
-		} else if (make_capture_and_see(position, white_turn, *it ) < 0) {
-			it->sort_score -= 1000;
 		}
 	}
 
