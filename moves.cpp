@@ -33,7 +33,7 @@ int rook_castle_from_squares[64];
 uint64_t knight_moves[64];
 uint64_t king_moves[64];
 
-const int piece_values[7] = {100, 300, 300, 500, 900, 10000, 100};
+const int PIECE_VALUES[7] = {100, 300, 300, 500, 900, 10000, 100};
 
 
 uint64_t south_fill(uint64_t l) {
@@ -136,6 +136,65 @@ void unmake_move(Position& position, Move& move) {
 	position.hash_key = position.hash_key ^ move_hash(move.m);
 }
 
+
+uint64_t get_attacked_squares(const Position& position, const bool white_turn, uint64_t occupied_squares) {
+	uint64_t attacked_squares = 0;
+	uint64_t black_squares = position.p[BLACK][KING] | position.p[BLACK][PAWN] | position.p[BLACK][KNIGHT]
+			| position.p[BLACK][BISHOP] | position.p[BLACK][ROOK] | position.p[BLACK][QUEEN];
+
+	uint64_t white_squares = position.p[WHITE][KING] | position.p[WHITE][PAWN] | position.p[WHITE][KNIGHT]
+			| position.p[WHITE][BISHOP] | position.p[WHITE][ROOK] | position.p[WHITE][QUEEN];
+
+	int side = white_turn ? WHITE : BLACK;
+	uint64_t side_squares = white_turn ? white_squares : black_squares;
+
+	// knight moves
+	uint64_t knights = position.p[side][KNIGHT];
+	while (knights) {
+		int from = lsb_to_square(knights);
+		attacked_squares |= knight_moves[from];
+		knights = reset_lsb(knights);
+	}
+	// bishop moves
+	uint64_t bishops = position.p[side][BISHOP];
+	while (bishops) {
+		int from = lsb_to_square(bishops);
+		attacked_squares |= bishop_attacks(occupied_squares, from);
+		bishops = reset_lsb(bishops);
+	}
+	// rook moves
+	uint64_t rooks = position.p[side][ROOK];
+	while (rooks) {
+		int from = lsb_to_square(rooks);
+		attacked_squares |= rook_attacks(occupied_squares, from);
+		rooks = reset_lsb(rooks);
+	}
+	// queen moves
+	uint64_t queens = position.p[side][QUEEN];
+	while (queens) {
+		int from = lsb_to_square(queens);
+		attacked_squares |= queen_attacks(occupied_squares, from);
+		queens = reset_lsb(queens);
+	}
+	// king moves
+	uint64_t king = position.p[side][KING];
+	int from = lsb_to_square(king);
+	attacked_squares |= king_moves[from];
+
+	if (white_turn) {
+		// white pawn captures
+		attacked_squares |= (position.p[WHITE][PAWN] & ~NW_BORDER) << 7;
+		attacked_squares |= (position.p[WHITE][PAWN] & ~NE_BORDER) << 9;
+	} else {
+		// black pawn captures
+		attacked_squares |= (position.p[BLACK][PAWN] & ~SW_BORDER) >> 9;
+		attacked_squares |= (position.p[BLACK][PAWN] & ~SE_BORDER) >> 7;
+	}
+
+	attacked_squares &= ~side_squares;
+	return attacked_squares;
+}
+
 struct SEEInfo {
 	uint64_t attacking_pieces[2][6] = {}; //[WHITE|BLACK][PAWN ... KING]
 	uint64_t occupied_squares = 0;
@@ -188,16 +247,12 @@ int find_and_reset_least_valuable_piece(SEEInfo& see_info, const int& side,const
 	return 0;
 }
 
-/*
- * position - the captured position
- * white_turn - who's turn it is to move after the original capture
- */
 int see(const Position& position, const Move& capturing_move) {
 	if (captured_piece(capturing_move.m) > KING) {
 		return 0; // special move - ignore
 	}
-	int captured_piece_value = piece_values[captured_piece(capturing_move.m)];
-	int capturing_piece_value = piece_values[piece(capturing_move.m)];
+	int captured_piece_value = PIECE_VALUES[captured_piece(capturing_move.m)];
+	int capturing_piece_value = PIECE_VALUES[piece(capturing_move.m)];
 	if (captured_piece_value >= capturing_piece_value) {
 		return captured_piece_value - capturing_piece_value;
 	}
@@ -254,9 +309,15 @@ int see(const Position& position, const Move& capturing_move) {
 	gain_swap_list[1] = capturing_piece_value - gain_swap_list[0];
 	int d = 1;
 	while (true) {
-		int least_valueable_attacker_value = find_and_reset_least_valuable_piece(see_info, (side + d) & 1,
+		int move_side = (side + d) & 1;
+		int least_valueable_attacker_value = find_and_reset_least_valuable_piece(see_info, move_side,
 				square);
 		if (least_valueable_attacker_value) {
+			// in check after capture?
+			if (get_attacked_squares(position, move_side != WHITE, see_info.occupied_squares) & position.p[move_side][KING]) {
+				//illegal move
+				break;
+			}
 			d++;
 			gain_swap_list[d] = least_valueable_attacker_value - gain_swap_list[d - 1];
 			if (std::max(-gain_swap_list[d - 1], gain_swap_list[d]) < 0) {
@@ -288,7 +349,7 @@ inline void add_capture_move(const int& from, const int& to, const int& color, c
 	Move move;
 	move.m = to_capture_move(from, to, piece, captured_piece, color, promotion);
 
-	move.sort_score = piece_values[captured_piece] - piece_values[piece];
+	move.sort_score = PIECE_VALUES[captured_piece] - PIECE_VALUES[piece];
 	if (move.sort_score < 0) {
 		move.sort_score = see(position, move);
 	}
@@ -304,7 +365,6 @@ inline void add_castle_move(int from, int to, int color, MoveList& moves) {
 }
 
 uint64_t get_attacked_squares(const Position& position, const bool white_turn) {
-	uint64_t attacked_squares = 0;
 	uint64_t black_squares = position.p[BLACK][KING] | position.p[BLACK][PAWN] | position.p[BLACK][KNIGHT]
 			| position.p[BLACK][BISHOP] | position.p[BLACK][ROOK] | position.p[BLACK][QUEEN];
 
@@ -313,54 +373,7 @@ uint64_t get_attacked_squares(const Position& position, const bool white_turn) {
 
 	uint64_t occupied_squares = black_squares | white_squares;
 
-	int side = white_turn ? WHITE : BLACK;
-	uint64_t side_squares = white_turn ? white_squares : black_squares;
-
-	// knight moves
-	uint64_t knights = position.p[side][KNIGHT];
-	while (knights) {
-		int from = lsb_to_square(knights);
-		attacked_squares |= knight_moves[from];
-		knights = reset_lsb(knights);
-	}
-	// bishop moves
-	uint64_t bishops = position.p[side][BISHOP];
-	while (bishops) {
-		int from = lsb_to_square(bishops);
-		attacked_squares |= bishop_attacks(occupied_squares, from);
-		bishops = reset_lsb(bishops);
-	}
-	// rook moves
-	uint64_t rooks = position.p[side][ROOK];
-	while (rooks) {
-		int from = lsb_to_square(rooks);
-		attacked_squares |= rook_attacks(occupied_squares, from);
-		rooks = reset_lsb(rooks);
-	}
-	// queen moves
-	uint64_t queens = position.p[side][QUEEN];
-	while (queens) {
-		int from = lsb_to_square(queens);
-		attacked_squares |= queen_attacks(occupied_squares, from);
-		queens = reset_lsb(queens);
-	}
-	// king moves
-	uint64_t king = position.p[side][KING];
-	int from = lsb_to_square(king);
-	attacked_squares |= king_moves[from];
-
-	if (white_turn) {
-		// white pawn captures
-		attacked_squares |= (position.p[WHITE][PAWN] & ~NW_BORDER) << 7;
-		attacked_squares |= (position.p[WHITE][PAWN] & ~NE_BORDER) << 9;
-	} else {
-		// black pawn captures
-		attacked_squares |= (position.p[BLACK][PAWN] & ~SW_BORDER) >> 9;
-		attacked_squares |= (position.p[BLACK][PAWN] & ~SE_BORDER) >> 7;
-	}
-
-	attacked_squares &= ~side_squares;
-	return attacked_squares;
+	return get_attacked_squares(position, white_turn, occupied_squares);
 }
 
 MoveList get_captures(const Position& position, const bool white_turn) {

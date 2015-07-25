@@ -39,6 +39,8 @@ inline uint64_t file_fill(uint64_t l) {
 	return south_fill(l) | north_fill(l);
 }
 
+int see(const Position& position, const Move& capturing_move);
+
 MoveList get_captures(const Position& position, const bool white_turn);
 
 MoveList get_moves(const Position& position, const bool white_turn);
