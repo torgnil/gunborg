@@ -142,7 +142,7 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 			unmake_move(position, move);
 			continue;
 		}
-		if (see(position, move) < 0) {
+		if (move.sort_score < 1000000) {
 			// losing move
 			unmake_move(position, move);
 			continue;
