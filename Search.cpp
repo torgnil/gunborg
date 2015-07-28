@@ -478,8 +478,12 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 				move_score = 0;
 			} else {
 				// for all moves except the first, search with a very narrow window to see if a full window search is necessary
-				if (i > 0 && depth > 1) {
-					move_score = -null_window_search(!white_turn, depth - 1, -alpha, pos, tt, in_check, killers, quites_history, 1, 0);
+				if (i > 0 && depth > 2) {
+					int R = 0;
+					if (i > 5 && !is_capture(root_move.m)) {
+						R = 2;
+					}
+					move_score = -null_window_search(!white_turn, depth - 1 - R, -alpha, pos, tt, in_check, killers, quites_history, 1, 0);
 					if (move_score > alpha) {
 						// full window search is necessary
 						move_score = aspiration_window_search(white_turn, depth, alpha, alpha + WINDOW_SIZE, pos, tt,
