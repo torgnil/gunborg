@@ -141,7 +141,7 @@ int evaluate(const Position& position);
 /**
  * Score from side's perspective
  */
-int nega_evaluate(const Position& position, bool white_turn);
+int nega_evaluate(const Position& position, const bool& white_turn);
 
 void init_eval();
 
