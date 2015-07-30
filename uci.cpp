@@ -37,7 +37,7 @@ using namespace std;
 
 namespace {
 
-const char* VERSION = "1.51";
+const char* VERSION = "1.52";
 const int DEFAULT_HASH_SIZE_MB = 16;
 
 }

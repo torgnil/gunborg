@@ -93,7 +93,8 @@ extern uint64_t to_randoms[64];
  * To avoid hash collisions of similiar positions we xor move info with pre-generated 64-bit random numbers
  */
 inline uint64_t move_hash(uint32_t move) {
-	return from_randoms[from_square(move) % 64] ^ to_randoms[to_square(move) % 64];
+	uint64_t move_64 = ((uint64_t) move) << 32 | move;
+	return from_randoms[from_square(move) % 64] ^ to_randoms[to_square(move) % 64] ^ move_64;
 }
 
 inline void make_null_move(Position& position) {

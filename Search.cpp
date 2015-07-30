@@ -373,7 +373,6 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 		Transposition* tt_hit = probe_tt(tt, position.hash_key);
 		*tt_hit = t;
 	} else {
-		// all node
 		t.type = TT_TYPE_UPPER_BOUND;
 		t.score = alpha;
 		Transposition* tt_hit = probe_tt(tt, position.hash_key);
