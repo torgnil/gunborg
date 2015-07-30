@@ -44,6 +44,7 @@ struct Transposition {
 	uint8_t depth = 0;
 	uint8_t type = 0;
 	int16_t score = 0;
+	uint8_t generation = 0;
 };
 
 

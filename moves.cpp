@@ -23,7 +23,11 @@
 
 #include "moves.h"
 #include "magic.h"
+#include <cstdlib>
 #include <stdlib.h>
+
+uint64_t from_randoms[64];
+uint64_t to_randoms[64];
 
 int rook_castle_to_squares[64];
 int rook_castle_from_squares[64];
@@ -764,6 +768,12 @@ MoveList get_moves(const Position& position, const bool white_turn) {
 	return moves;
 }
 
+uint64_t ull_rand() {
+	uint64_t number = ((uint64_t)rand()) << 32;
+	number |= rand();
+	return number;
+}
+
 void init() {
 
 	rook_castle_to_squares[2] = 3;
@@ -780,7 +790,6 @@ void init() {
 		uint64_t to_squares = ((b & ~NNW_BORDER) << 15) | ((b & ~NNE_BORDER) << 17) | ((b & ~EEN_BORDER) << 10)
 				| ((b & ~WWN_BORDER) << 6) | ((b & ~EES_BORDER) >> 6) | ((b & ~SSE_BORDER) >> 15)
 				| ((b & ~SSW_BORDER) >> 17) | ((b & ~WWS_BORDER) >> 10);
-
 		knight_moves[i] = to_squares;
 	}
 	for (int i = 0; i < 64; i++) {
@@ -791,7 +800,11 @@ void init() {
 
 		king_moves[i] = to_squares;
 	}
-
+	srand(123456);
+	for (int i = 0; i < 64; i++) {
+		from_randoms[i] = ull_rand();
+		to_randoms[i] = ull_rand();
+	}
 	init_magic_lookup_table();
 }
 

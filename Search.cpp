@@ -229,7 +229,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 							&& color(tt_pv->next_move) == (white_turn ? WHITE : BLACK);
 
 	if (cache_hit) {
-		if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_EXACT) {
+		if (tt_pv->depth >= depth && tt_pv->type == TT_TYPE_EXACT) {
 			return tt_pv->score;
 		} else if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_LOWER_BOUND) {
 			alpha = tt_pv->score;
