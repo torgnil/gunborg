@@ -26,9 +26,14 @@
 #ifndef CACHE_H_
 #define CACHE_H_
 
-const int TRANSPOSITION_PER_NODE = 2;
+const uint8_t TT_TYPE_EXACT = 1;
+const uint8_t TT_TYPE_LOWER_BOUND = 2;
+const uint8_t TT_TYPE_UPPER_BOUND = 3;
+
+const int TRANSPOSITION_PER_NODE = 4;
 
 extern uint64_t hash_size;
+
 
 /*
  * size of Transposition is 12 bytes
@@ -36,7 +41,9 @@ extern uint64_t hash_size;
 struct Transposition {
 	uint32_t hash = 0;
 	uint32_t next_move = 0;
-	uint32_t depth = 0;
+	uint8_t depth = 0;
+	uint8_t type = 0;
+	int16_t score = 0;
 };
 
 

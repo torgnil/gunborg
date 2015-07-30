@@ -168,8 +168,8 @@ static const uint64_t black_queen_side_castle_squares = B8 + C8 + D8;
 static const uint64_t center_mask_1 = D4 + D5 + E4 + E5;
 static const uint64_t center_mask_2 = C3 + C4 + C5 + C6 + D3 + D6 + E3 + E6 + F3 + F4 + F5 + F6;
 
-static const int WHITE = 0;
-static const int BLACK = 1;
+static const unsigned int WHITE = 0;
+static const unsigned int BLACK = 1;
 
 static const int PAWN = 0;
 static const int KNIGHT = 1;

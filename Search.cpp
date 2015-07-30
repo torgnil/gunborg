@@ -225,7 +225,24 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 
 	// check for hit in transposition table
 	Transposition* tt_pv = probe_tt(tt, position.hash_key);
-	bool cache_hit = tt_pv->next_move != 0 && tt_pv->hash == hash_verification(position.hash_key);
+	bool cache_hit = tt_pv->hash == hash_verification(position.hash_key)
+							&& color(tt_pv->next_move) == (white_turn ? WHITE : BLACK);
+
+	if (cache_hit) {
+		if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_EXACT) {
+			return tt_pv->score;
+		} else if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_LOWER_BOUND) {
+			alpha = tt_pv->score;
+			if (alpha >= beta) {
+				return beta;
+			}
+		} else if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_UPPER_BOUND) {
+			beta = tt_pv->score;
+			if (alpha >= beta) {
+				return beta;
+			}
+		}
+	}
 
 	MoveList moves = get_moves(position, white_turn);
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
@@ -325,6 +342,8 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 			}
 			next_move = move.m;
 			t.next_move = next_move;
+			t.type = TT_TYPE_LOWER_BOUND;
+			t.score = beta;
 			Transposition* tt_hit = probe_tt(tt, position.hash_key);
 			*tt_hit = t;
 			return beta;
@@ -349,6 +368,14 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 	}
 	if (next_move != 0) {
 		t.next_move = next_move;
+		t.type = TT_TYPE_EXACT;
+		t.score = alpha;
+		Transposition* tt_hit = probe_tt(tt, position.hash_key);
+		*tt_hit = t;
+	} else {
+		// all node
+		t.type = TT_TYPE_UPPER_BOUND;
+		t.score = alpha;
 		Transposition* tt_hit = probe_tt(tt, position.hash_key);
 		*tt_hit = t;
 	}
