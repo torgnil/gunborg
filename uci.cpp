@@ -35,6 +35,15 @@
 
 using namespace std;
 
+namespace {
+
+const char* VERSION = "1.49";
+const int DEFAULT_HASH_SIZE_MB = 16;
+
+}
+
+
+uint64_t hash_size = get_hash_table_size(DEFAULT_HASH_SIZE_MB);
 
 FenInfo start_pos() {
 	return parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -212,16 +221,15 @@ void uci() {
 
 	gunborg::Search* search = NULL;
 	list history;
-	int hash_size = 16 * HASH_MB_FACTOR;
 	Transposition * tt = new Transposition[hash_size];
 
 	while (true) {
 		string line;
 		getline(cin, line);
 		if (line.find("uci") != string::npos) {
-			cout << "id name gunborg " << "1.48" << "\n";
+			cout << "id name gunborg " << VERSION << "\n";
 			cout << "id author Torbjorn Nilsson\n";
-			cout << "option name Hash type spin default 16 min 1 max 1024\n";
+			cout << "option name Hash type spin default " << DEFAULT_HASH_SIZE_MB << " min 1 max 1024\n";
 			cout << "option name Ponder type check default false\n";
 			cout << "uciok\n" << flush;
 		}
@@ -240,7 +248,7 @@ void uci() {
 		if (line.find("setoption name Hash") != string::npos) {
 			int hash_size_in_mb = parse_int_parameter(line, "value");
 			if (hash_size_in_mb >= 1 && hash_size_in_mb <= 1024) {
-				hash_size = hash_size_in_mb * HASH_MB_FACTOR;
+				hash_size = get_hash_table_size(hash_size_in_mb);
 			}
 			delete[] tt;
 			tt = new Transposition[hash_size];
@@ -291,7 +299,6 @@ void uci() {
 			}
 			search = new gunborg::Search();
 			search->should_run = true;
-			search->hash_size = hash_size;
 			int depth = parse_int_parameter(line, "depth");
 			if (depth != 0 ) {
 				search->max_depth = depth < 32 ? depth : 32;
@@ -361,7 +368,7 @@ void uci() {
 		}
 		if (line.find("bench") != string::npos) {
 			delete[] tt;
-			tt = new Transposition[16 * HASH_MB_FACTOR];
+			tt = new Transposition[get_hash_table_size(DEFAULT_HASH_SIZE_MB)];
 			history.clear();
 			if (search != NULL) {
 				delete search;
@@ -369,7 +376,6 @@ void uci() {
 			}
 			search = new gunborg::Search();
 			search->should_run = true;
-			search->hash_size = hash_size;
 			search->max_depth = 10;
 			search->max_think_time_ms = 60000;
 			fen_info = parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");

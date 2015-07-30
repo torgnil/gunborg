@@ -86,22 +86,26 @@ inline int piece_at_square(const Position& position, int square, int color) {
 }
 
 
-const uint64_t randoms[11] = {0x4f6b51e21c5b81dc, 0xf9ebb81edf60c6df, 0x902a7518765f9cd0, 0x790aa2bfb958bef7, 0x37b260633706d7b3, 0xd8bdb9e89ab98616, 0x0dd67a10e981dac1, 0xaadf786e8113f5bd, 0x4e88e6a86d257ad0, 0x52bb6085747ebc6b, 0x1adbff7bae60442f };
+const uint64_t from_randoms[16] = {0x4f6b51e21c5b81dc, 0xf9ebb81edf60c6df, 0x902a7518765f9cd0, 0x790aa2bfb958bef7, 0x37b260633706d7b3, 0xd8bdb9e89ab98616, 0x0dd67a10e981dac1, 0xaadf786e8113f5bd,
+								   0x4f6b51e21c5b81dc, 0xf9ebb81ed560c6df, 0x902b7518765f9cd0, 0x791aa2bfb958bef7, 0x37b264633706d7b3, 0xd8bdb9e87ab98616, 0x0dd67a12e981dac1, 0xaadf786e8413f5bd};
+const uint64_t   to_randoms[16] = {0x672351e21c5b81dc, 0xf9ebb8123900c6df, 0x902a7523565f9cd0, 0x797834bfb958bef7, 0x37b2606337069075, 0xd8bd29ab98616453, 0x0dd67a10e2347ac1, 0xaad7936e8113f5bd,
+								   0x672351e21c5b82dc, 0xf9ebb3123900c6df, 0x912a7523565f9cd0, 0x794834bfb958bef7, 0x32b2606337069075, 0xd8bd29ab93616453, 0x0dd67a14e2347ac1, 0xaad7936e8613f5bd};
+
 
 /**
  * To avoid hash collisions of similiar positions we xor move info with pre-generated 64-bit random numbers
  */
 inline uint64_t move_hash(uint32_t move) {
 	uint64_t move_64 = (((uint64_t) move) << 32) | move;
-	return randoms[from_square(move) % 11] ^ move_64;
+	return from_randoms[from_square(move) % 16] ^ to_randoms[to_square(move) % 16] ^ move_64;
 }
 
 inline void make_null_move(Position& position) {
-	position.hash_key = position.hash_key ^ randoms[0];
+	position.hash_key = position.hash_key ^ from_randoms[0];
 }
 
 inline void unmake_null_move(Position& position) {
-	position.hash_key = position.hash_key ^ randoms[0];
+	position.hash_key = position.hash_key ^ from_randoms[0];
 }
 
 #endif /* MOVES_H_ */

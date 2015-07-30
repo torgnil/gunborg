@@ -26,20 +26,62 @@
 #ifndef CACHE_H_
 #define CACHE_H_
 
+const int TRANSPOSITION_PER_NODE = 2;
 
-const int HASH_MB_FACTOR = 131072; // 65536 for 16 bytes, 87381 for 12 bytes, 131072 for 8 bytes
-
+extern uint64_t hash_size;
 
 /*
- * size of Transposition is 8 bytes
+ * size of Transposition is 12 bytes
  */
 struct Transposition {
 	uint32_t hash = 0;
 	uint32_t next_move = 0;
+	uint32_t depth = 0;
 };
 
 
 #define hash_verification(h) ((uint32_t)(h >> 32))
-#define hash_index(h) ((uint32_t) h)
+
+/*
+ * probes the transposition table
+ *
+ * returns a hit or a pointer to the element that should be replaced
+ *
+ * replaces the element with the lowest depth
+ *
+ */
+inline Transposition* probe_tt(Transposition *tt, uint64_t hash_key) {
+	uint64_t node_start_index = TRANSPOSITION_PER_NODE * ((uint32_t) ((hash_key)) & ((hash_size - 1) / TRANSPOSITION_PER_NODE));
+	uint64_t lowest_depth_index = node_start_index;
+	uint32_t lowest_depth = 32;
+	for (int i = 0; i < TRANSPOSITION_PER_NODE; i++) {
+		if (tt[node_start_index + i].hash == hash_verification(hash_key)) {
+			return &tt[node_start_index + i];
+		}
+		if (tt[node_start_index + i].depth <= lowest_depth) {
+			lowest_depth_index = node_start_index + i;
+			lowest_depth = tt[node_start_index + i].depth;
+		}
+	}
+	return &tt[lowest_depth_index];
+}
+
+inline uint64_t get_hash_table_size(int hash_size_mb) {
+	return 1ULL << msb_to_square(hash_size_mb*1024*1024 / sizeof(Transposition));
+}
+
+/*
+ * approximation of hash full in per mille
+ *
+ */
+inline int hashfull(Transposition *tt) {
+	int count = 0;
+	for (unsigned int i = 0; i < 1000; i++) {
+		if (tt[i+i].hash != 0) {
+			count++;
+		}
+	}
+	return count;
+}
 
 #endif /* CACHE_H_ */

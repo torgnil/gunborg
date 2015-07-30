@@ -50,7 +50,7 @@ private:
 			bool in_check, Move (&killers)[32][2], uint64_t (&history)[64][64]);
 
 	bool time_to_stop();
-	void print_uci_info(int pv[], int depth, int score);
+	void print_uci_info(int pv[], int depth, int score, Transposition *tt);
 	void init_sort_score(const bool white_turn, MoveList& root_moves, Position& p, Transposition *tt);
 	bool is_draw_by_repetition(
 			const list& history, const Position& pos, const bool white_turn);
@@ -60,7 +60,6 @@ public:
 	Search();
 	std::atomic_bool should_run;
 	int max_think_time_ms;
-	int hash_size = HASH_MB_FACTOR * 16;
 	int max_depth = 30;
 	int node_count;
 	bool save_time;

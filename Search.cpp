@@ -224,13 +224,13 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 	}
 
 	// check for hit in transposition table
-	Transposition tt_pv = tt[hash_index(position.hash_key) % hash_size];
-	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(position.hash_key);
+	Transposition* tt_pv = probe_tt(tt, position.hash_key);
+	bool cache_hit = tt_pv->next_move != 0 && tt_pv->hash == hash_verification(position.hash_key);
 
 	MoveList moves = get_moves(position, white_turn);
 	for (auto it = moves.begin(); it != moves.end(); ++it) {
 		// sort pv moves first
-		if (cache_hit && tt_pv.next_move == it->m) {
+		if (cache_hit && tt_pv->next_move == it->m) {
 			it->sort_score += 1100000;
 		}
 		// ...then captures in MVVLVA order
@@ -250,6 +250,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 
 	Transposition t;
 	t.hash = hash_verification(position.hash_key);
+	t.depth = depth;
 	int next_move = 0;
 	bool has_legal_move = false;
 	int static_eval = 0;
@@ -324,7 +325,8 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 			}
 			next_move = move.m;
 			t.next_move = next_move;
-			tt[hash_index(position.hash_key) % hash_size] = t;
+			Transposition* tt_hit = probe_tt(tt, position.hash_key);
+			*tt_hit = t;
 			return beta;
 		}
 
@@ -347,12 +349,13 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 	}
 	if (next_move != 0) {
 		t.next_move = next_move;
-		tt[hash_index(position.hash_key) % hash_size] = t;
+		Transposition* tt_hit = probe_tt(tt, position.hash_key);
+		*tt_hit = t;
 	}
 	return alpha;
 }
 
-void Search::print_uci_info(int pv[], int depth, int score) {
+void Search::print_uci_info(int pv[], int depth, int score, Transposition *tt) {
 	std::string pvstring = pvstring_from_stack(pv, depth);
 
 	int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
@@ -360,18 +363,18 @@ void Search::print_uci_info(int pv[], int depth, int score) {
 
 	// uci info with score from engine's perspective
 	std::cout << "info score cp " << score << " depth " << depth << " time " << time_elapsed_last_depth_ms << " nodes "
-			<< node_count << " pv " << pvstring << "\n" << std::flush;
+			<< node_count << " hashfull " << hashfull(tt) <<" pv " << pvstring << "\n" << std::flush;
 }
 
 void Search::init_sort_score(const bool white_turn, MoveList& root_moves, Position& p, Transposition *tt) {
 	// check for hit in transposition table
-	Transposition tt_pv = tt[hash_index(p.hash_key) % hash_size];
-	bool cache_hit = tt_pv.next_move != 0 && tt_pv.hash == hash_verification(p.hash_key);
+	Transposition* tt_pv = probe_tt(tt, p.hash_key);
+	bool cache_hit = tt_pv->next_move != 0 && tt_pv->hash == hash_verification(p.hash_key);
 
 	for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
 		make_move(p, *it);
 		it->sort_score = nega_evaluate(p, white_turn);
-		if (cache_hit && it->m == tt_pv.next_move) {
+		if (cache_hit && it->m == tt_pv->next_move) {
 			it->sort_score += 1000;
 		}
 		unmake_move(p, *it);
@@ -517,15 +520,15 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 				uint64_t hash = pos.hash_key;
 				for (int p = 1; p < depth - 1; p++) {
 					hash ^= move_hash(next_pv_move);
-					Transposition next = tt[hash_index(hash) % hash_size];
-					if (next.hash == hash_verification(hash) && next.next_move != 0) {
-						pv[p] = next.next_move;
-						next_pv_move = next.next_move;
+					Transposition* next = probe_tt(tt, hash);
+					if (next->hash == hash_verification(hash) && next->next_move != 0) {
+						pv[p] = next->next_move;
+						next_pv_move = next->next_move;
 					} else {
 						break;
 					}
 				}
-				print_uci_info(pv, depth, move_score);
+				print_uci_info(pv, depth, move_score, tt);
 				std::string pvstring = pvstring_from_stack(pv, depth);
 				std::stringstream ss(pvstring);
 				getline(ss, best_move, ' ');
@@ -541,7 +544,7 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 		if (time_to_stop()) {
 			break;
 		}
-		print_uci_info(pv, depth, alpha);
+		print_uci_info(pv, depth, alpha, tt);
 		int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
 						> (clock.now() - start).count();
 		if (!pondering && save_time && (4 * time_elapsed_last_depth_ms) > max_think_time_ms) {
