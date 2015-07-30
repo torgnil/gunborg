@@ -30,13 +30,13 @@ const uint8_t TT_TYPE_EXACT = 1;
 const uint8_t TT_TYPE_LOWER_BOUND = 2;
 const uint8_t TT_TYPE_UPPER_BOUND = 3;
 
-const int TRANSPOSITION_PER_NODE = 4;
+const int TT_BUCKET_SIZE = 4;
 
 extern uint64_t hash_size;
 
 
 /*
- * size of Transposition is 12 bytes
+ * size of Transposition is 13 bytes
  */
 struct Transposition {
 	uint32_t hash = 0;
@@ -53,25 +53,32 @@ struct Transposition {
 /*
  * probes the transposition table
  *
- * returns a hit or a pointer to the element that should be replaced
+ * returns a hit(same verifcation and the bucket) or a pointer to the element that should be replaced in the bucket
  *
- * replaces the element with the lowest depth
+ * replaces the element with the lowest depth and the lowest generation
  *
  */
-inline Transposition* probe_tt(Transposition *tt, uint64_t hash_key) {
-	uint64_t node_start_index = TRANSPOSITION_PER_NODE * ((uint32_t) ((hash_key)) & ((hash_size - 1) / TRANSPOSITION_PER_NODE));
-	uint64_t lowest_depth_index = node_start_index;
-	uint32_t lowest_depth = 32;
-	for (int i = 0; i < TRANSPOSITION_PER_NODE; i++) {
-		if (tt[node_start_index + i].hash == hash_verification(hash_key)) {
-			return &tt[node_start_index + i];
+inline Transposition* probe_tt(Transposition *tt, const uint64_t& hash_key, const uint8_t& generation) {
+	uint64_t bucket_start_index = TT_BUCKET_SIZE * ((uint32_t) ((hash_key)) & ((hash_size - 1) / TT_BUCKET_SIZE));
+	uint64_t tt_index = bucket_start_index;
+	uint8_t lowest_depth = 32;
+	uint8_t lowest_generation = 255;
+	for (int i = 0; i < TT_BUCKET_SIZE; i++) {
+		if (tt[bucket_start_index + i].hash == hash_verification(hash_key)) {
+			return &tt[bucket_start_index + i];
 		}
-		if (tt[node_start_index + i].depth <= lowest_depth) {
-			lowest_depth_index = node_start_index + i;
-			lowest_depth = tt[node_start_index + i].depth;
+		if (tt[bucket_start_index + i].generation <= lowest_generation) {
+			if (tt[bucket_start_index + i].generation < lowest_generation) {
+				lowest_depth = 32;
+			}
+			if (tt[bucket_start_index + i].depth <= lowest_depth) {
+				tt_index = bucket_start_index + i;
+				lowest_depth = tt[bucket_start_index + i].depth;
+			}
+			lowest_generation = tt[bucket_start_index + i].generation;
 		}
 	}
-	return &tt[lowest_depth_index];
+	return &tt[tt_index];
 }
 
 inline uint64_t get_hash_table_size(int hash_size_mb) {

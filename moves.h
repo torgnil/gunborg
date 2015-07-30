@@ -94,7 +94,7 @@ extern uint64_t to_randoms[64];
  */
 inline uint64_t move_hash(uint32_t move) {
 	uint64_t move_64 = ((uint64_t) move) << 32 | move;
-	return from_randoms[from_square(move) % 64] ^ to_randoms[to_square(move) % 64] ^ move_64;
+	return from_randoms[from_square(move)] ^ to_randoms[to_square(move)] ^ move_64;
 }
 
 inline void make_null_move(Position& position) {

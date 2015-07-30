@@ -63,6 +63,7 @@ public:
 	int max_depth = 30;
 	int node_count;
 	bool save_time;
+	uint8_t generation = 0;
 
 	void search_best_move(const Position& position, const bool white_turn, list history, Transposition * tt);
 

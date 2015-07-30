@@ -224,7 +224,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 	}
 
 	// check for hit in transposition table
-	Transposition* tt_pv = probe_tt(tt, position.hash_key);
+	Transposition* tt_pv = probe_tt(tt, position.hash_key, generation);
 	bool cache_hit = tt_pv->hash == hash_verification(position.hash_key)
 							&& color(tt_pv->next_move) == (white_turn ? WHITE : BLACK);
 
@@ -268,6 +268,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 	Transposition t;
 	t.hash = hash_verification(position.hash_key);
 	t.depth = depth;
+	t.generation = generation;
 	int next_move = 0;
 	bool has_legal_move = false;
 	int static_eval = 0;
@@ -344,7 +345,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 			t.next_move = next_move;
 			t.type = TT_TYPE_LOWER_BOUND;
 			t.score = beta;
-			Transposition* tt_hit = probe_tt(tt, position.hash_key);
+			Transposition* tt_hit = probe_tt(tt, position.hash_key, generation);
 			*tt_hit = t;
 			return beta;
 		}
@@ -370,12 +371,12 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 		t.next_move = next_move;
 		t.type = TT_TYPE_EXACT;
 		t.score = alpha;
-		Transposition* tt_hit = probe_tt(tt, position.hash_key);
+		Transposition* tt_hit = probe_tt(tt, position.hash_key, generation);
 		*tt_hit = t;
 	} else {
 		t.type = TT_TYPE_UPPER_BOUND;
 		t.score = alpha;
-		Transposition* tt_hit = probe_tt(tt, position.hash_key);
+		Transposition* tt_hit = probe_tt(tt, position.hash_key, generation);
 		*tt_hit = t;
 	}
 	return alpha;
@@ -394,7 +395,7 @@ void Search::print_uci_info(int pv[], int depth, int score, Transposition *tt) {
 
 void Search::init_sort_score(const bool white_turn, MoveList& root_moves, Position& p, Transposition *tt) {
 	// check for hit in transposition table
-	Transposition* tt_pv = probe_tt(tt, p.hash_key);
+	Transposition* tt_pv = probe_tt(tt, p.hash_key, generation);
 	bool cache_hit = tt_pv->next_move != 0 && tt_pv->hash == hash_verification(p.hash_key);
 
 	for (auto it = root_moves.begin(); it != root_moves.end(); ++it) {
@@ -546,7 +547,7 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 				uint64_t hash = pos.hash_key;
 				for (int p = 1; p < depth - 1; p++) {
 					hash ^= move_hash(next_pv_move);
-					Transposition* next = probe_tt(tt, hash);
+					Transposition* next = probe_tt(tt, hash, generation);
 					if (next->hash == hash_verification(hash) && next->next_move != 0) {
 						pv[p] = next->next_move;
 						next_pv_move = next->next_move;

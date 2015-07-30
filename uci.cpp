@@ -37,7 +37,7 @@ using namespace std;
 
 namespace {
 
-const char* VERSION = "1.52";
+const char* VERSION = "1.53";
 const int DEFAULT_HASH_SIZE_MB = 16;
 
 }
@@ -222,7 +222,6 @@ void uci() {
 	gunborg::Search* search = NULL;
 	list history;
 	Transposition * tt = new Transposition[hash_size];
-
 	while (true) {
 		string line;
 		getline(cin, line);
@@ -299,6 +298,8 @@ void uci() {
 			}
 			search = new gunborg::Search();
 			search->should_run = true;
+			search->generation = move;
+
 			int depth = parse_int_parameter(line, "depth");
 			if (depth != 0 ) {
 				search->max_depth = depth < 32 ? depth : 32;
