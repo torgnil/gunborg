@@ -488,6 +488,11 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(pos, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? pos.p[WHITE][KING] : pos.p[BLACK][KING]);
+	bool is_pawn_end_game = (pos.p[WHITE][QUEEN] | pos.p[BLACK][QUEEN]
+						  | pos.p[WHITE][BISHOP]| pos.p[BLACK][BISHOP]
+					      | pos.p[WHITE][KNIGHT]| pos.p[BLACK][KNIGHT]
+					      | pos.p[WHITE][ROOK]  | pos.p[BLACK][ROOK]) == 0;
+	bool null_move_not_allowed = in_check || is_pawn_end_game;
 
 	for (int depth = 1; depth <= max_depth; depth++) {
 		// moves sorted for the next depth
@@ -513,20 +518,20 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 					if (i > 5 && !is_capture(root_move.m)) {
 						R = 2;
 					}
-					move_score = -null_window_search(!white_turn, depth - 1 - R, -alpha, pos, tt, in_check, killers, quites_history, 1, 0);
+					move_score = -null_window_search(!white_turn, depth - 1 - R, -alpha, pos, tt, null_move_not_allowed, killers, quites_history, 1, 0);
 					if (move_score > alpha) {
 						// full window search is necessary
 						move_score = aspiration_window_search(white_turn, depth, alpha, alpha + WINDOW_SIZE, pos, tt,
-								in_check, killers, quites_history);
+								null_move_not_allowed, killers, quites_history);
 					} else {
 						move_score = alpha - i*500; // keep sort order
 					}
 				} else {
 					if (alpha == INT_MIN) {
-						move_score = aspiration_window_search(white_turn, depth, -START_WINDOW_SIZE, START_WINDOW_SIZE, pos, tt, in_check, killers, quites_history);
+						move_score = aspiration_window_search(white_turn, depth, -START_WINDOW_SIZE, START_WINDOW_SIZE, pos, tt, null_move_not_allowed, killers, quites_history);
 					} else {
 						move_score = aspiration_window_search(white_turn, depth, alpha - START_WINDOW_SIZE,
-								alpha + START_WINDOW_SIZE, pos, tt, in_check, killers, quites_history);
+								alpha + START_WINDOW_SIZE, pos, tt, null_move_not_allowed, killers, quites_history);
 					}
 				}
 			}
