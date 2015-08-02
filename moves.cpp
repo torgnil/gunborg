@@ -54,7 +54,7 @@ uint64_t north_fill(uint64_t l) {
 	return l;
 }
 
-bool make_move(Position& position, Move move) {
+bool make_move(Position& position, Move& move) {
 	position.p[color(move.m)][piece(move.m)] &= ~(1ULL << from_square(move.m));
 	position.p[color(move.m)][piece(move.m)] |= (1ULL << to_square(move.m));
 	uint64_t meta_info = position.meta_info_stack.back();

@@ -52,7 +52,7 @@ bool is_illegal_castling_move(const Move& root_move, uint64_t attacked_squares_b
 /**
  * Returns true if legal move.
  */
-bool make_move(Position& position, Move move);
+bool make_move(Position& position, Move& move);
 
 void unmake_move(Position& position, Move& move);
 
