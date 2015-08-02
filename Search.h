@@ -42,9 +42,9 @@ private:
 	static const int START_WINDOW_SIZE = 20;
 
 	int alpha_beta(bool white_turn, int depth, int alpha, int beta, Position& position, Transposition *tt,
-			bool null_move_not_allowed, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension);
+			bool null_move_disabled, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension);
 	int null_window_search(bool white_turn, int depth, int beta, Position& position, Transposition *tt,
-			bool null_move_not_allowed, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension);
+			bool null_move_disabled, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension);
 	int capture_quiescence_eval_search(bool white_turn, int alpha, int beta, Position& position);
 	int aspiration_window_search(bool white_turn, int depth, int alpha, int beta, Position& pos, Transposition *tt,
 			bool in_check, Move (&killers)[32][2], uint64_t (&history)[64][64]);

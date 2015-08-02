@@ -163,9 +163,9 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 }
 
 int Search::null_window_search(bool white_turn, int depth, int beta, Position& position, Transposition *tt,
-		bool null_move_not_allowed, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension) {
+		bool null_move_disabled, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension) {
 	int alpha = beta - 1;
-	return alpha_beta(white_turn, depth, alpha, beta, position, tt, null_move_not_allowed, killers, history, ply, extension);
+	return alpha_beta(white_turn, depth, alpha, beta, position, tt, null_move_disabled, killers, history, ply, extension);
 }
 
 inline bool should_prune(int depth, bool white_turn, Position& position, int alpha, int beta) {
@@ -197,7 +197,7 @@ inline bool should_prune(int depth, bool white_turn, Position& position, int alp
 }
 
 int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position& position, Transposition *tt,
-		bool null_move_not_allowed, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension) {
+		bool null_move_disabled, Move (&killers)[32][2], uint64_t (&history)[64][64], int ply, int extension) {
 	if (depth == 0) {
 		return capture_quiescence_eval_search(white_turn, alpha, beta, position);
 	}
@@ -209,7 +209,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 	}
 
 	// null move heuristic
-	if (!null_move_not_allowed && depth > 3) {
+	if (!null_move_disabled && depth > 3) {
 		// skip a turn and see if and see if we get a cut-off at shallower depth
 		// it assumes:
 		// 1. That the disadvantage of forfeiting one's turn is greater than the disadvantage of performing a shallower search.
@@ -294,7 +294,7 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 					depth_extention = 1;
 				}
 			}
-			res = -alpha_beta(!white_turn, depth - 1 + depth_extention, -beta, -alpha, position, tt, null_move_not_allowed,
+			res = -alpha_beta(!white_turn, depth - 1 + depth_extention, -beta, -alpha, position, tt, null_move_disabled,
 				killers, history, ply + 1, extension);
 		} else {
 			// prune late moves that we do not expect to improve alpha
@@ -314,21 +314,21 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 			if (beta - alpha > 1 && next_move != 0) {
 				// we do not expect to find a better move
 				// use a fast null window search to verify it!
-				res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, position, tt, null_move_not_allowed,
+				res = -null_window_search(!white_turn, depth - 1 - depth_reduction, -alpha, position, tt, null_move_disabled,
 							killers, history, ply + 1, extension);
 				if (res > alpha) {
 					// score improved unexpected, we have to do a full window search
-					res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, position, tt, null_move_not_allowed,
+					res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, position, tt, null_move_disabled,
 							killers, history, ply + 1, extension);
 				}
 			} else {
-				res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, position, tt, null_move_not_allowed,
+				res = -alpha_beta(!white_turn, depth - 1 - depth_reduction, -beta, -alpha, position, tt, null_move_disabled,
 							killers, history, ply + 1, extension);
 			}
 			if (depth_reduction > 0 && res > alpha) {
 				// score improved "unexpected" at reduced depth
 				// re-search at normal depth
-				res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, position, tt, null_move_not_allowed, killers, history,
+				res = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, position, tt, null_move_disabled, killers, history,
 						ply + 1, extension);
 			}
 		}
@@ -488,11 +488,11 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 
 	uint64_t attacked_squares_by_opponent = get_attacked_squares(pos, !white_turn);
 	bool in_check = attacked_squares_by_opponent & (white_turn ? pos.p[WHITE][KING] : pos.p[BLACK][KING]);
-	bool is_pawn_end_game = (pos.p[WHITE][QUEEN] | pos.p[BLACK][QUEEN]
+	bool is_late_end_game = pop_count(pos.p[WHITE][QUEEN] | pos.p[BLACK][QUEEN]
 						  | pos.p[WHITE][BISHOP]| pos.p[BLACK][BISHOP]
 					      | pos.p[WHITE][KNIGHT]| pos.p[BLACK][KNIGHT]
-					      | pos.p[WHITE][ROOK]  | pos.p[BLACK][ROOK]) == 0;
-	bool null_move_not_allowed = in_check || is_pawn_end_game;
+					      | pos.p[WHITE][ROOK]  | pos.p[BLACK][ROOK]) <= 2;
+	bool null_move_disabled = in_check || is_late_end_game;
 
 	for (int depth = 1; depth <= max_depth; depth++) {
 		// moves sorted for the next depth
@@ -518,20 +518,20 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 					if (i > 5 && !is_capture(root_move.m)) {
 						R = 2;
 					}
-					move_score = -null_window_search(!white_turn, depth - 1 - R, -alpha, pos, tt, null_move_not_allowed, killers, quites_history, 1, 0);
+					move_score = -null_window_search(!white_turn, depth - 1 - R, -alpha, pos, tt, null_move_disabled, killers, quites_history, 1, 0);
 					if (move_score > alpha) {
 						// full window search is necessary
 						move_score = aspiration_window_search(white_turn, depth, alpha, alpha + WINDOW_SIZE, pos, tt,
-								null_move_not_allowed, killers, quites_history);
+								null_move_disabled, killers, quites_history);
 					} else {
 						move_score = alpha - i*500; // keep sort order
 					}
 				} else {
 					if (alpha == INT_MIN) {
-						move_score = aspiration_window_search(white_turn, depth, -START_WINDOW_SIZE, START_WINDOW_SIZE, pos, tt, null_move_not_allowed, killers, quites_history);
+						move_score = aspiration_window_search(white_turn, depth, -START_WINDOW_SIZE, START_WINDOW_SIZE, pos, tt, null_move_disabled, killers, quites_history);
 					} else {
 						move_score = aspiration_window_search(white_turn, depth, alpha - START_WINDOW_SIZE,
-								alpha + START_WINDOW_SIZE, pos, tt, null_move_not_allowed, killers, quites_history);
+								alpha + START_WINDOW_SIZE, pos, tt, null_move_disabled, killers, quites_history);
 					}
 				}
 			}
