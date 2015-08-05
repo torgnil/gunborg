@@ -231,12 +231,12 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 	if (cache_hit) {
 		if (tt_pv->depth >= depth && tt_pv->type == TT_TYPE_EXACT) {
 			return tt_pv->score;
-		} else if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_LOWER_BOUND) {
+		} else if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_LOWER_BOUND && tt_pv->score > alpha) {
 			alpha = tt_pv->score;
 			if (alpha >= beta) {
 				return beta;
 			}
-		} else if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_UPPER_BOUND) {
+		} else if (tt_pv->depth == depth && tt_pv->type == TT_TYPE_UPPER_BOUND && tt_pv->score < beta) {
 			beta = tt_pv->score;
 			if (alpha >= beta) {
 				return beta;
