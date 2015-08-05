@@ -520,7 +520,11 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 				if (i > 0 && depth > 2) {
 					int R = 0;
 					if (i > 5 && !is_capture(root_move.m)) {
-						R = 2;
+						if (i > 20 && depth > 4) {
+							R = 4;
+						} else {
+							R = 2;
+						}
 					}
 					move_score = -null_window_search(!white_turn, depth - 1 - R, -alpha, pos, tt, null_move_disabled, killers, quites_history, 1, 0);
 					if (move_score > alpha) {
