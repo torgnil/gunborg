@@ -42,6 +42,8 @@ const int ROOK_KING_PROXIMITY_BONUS = 4;
 const int QUEEN_KING_PROXIMITY_BONUS = 11;
 const int BISHOP_KING_PROXIMITY_BONUS = 0;
 
+const int PIECE_VALUES[7] = {100, 300, 300, 500, 900, 10000, 100};
+
 // the value of a white pawn at all squares from white's perspective
 const int PAWN_SQUARE_TABLE[] = {
 		// A1

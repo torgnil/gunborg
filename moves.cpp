@@ -21,6 +21,7 @@
  *      Author: Torbjörn Nilsson
  */
 
+#include "eval.h"
 #include "moves.h"
 #include "magic.h"
 #include <cstdlib>
@@ -36,9 +37,6 @@ int rook_castle_from_squares[64];
 
 uint64_t knight_moves[64];
 uint64_t king_moves[64];
-
-const int PIECE_VALUES[7] = {100, 300, 300, 500, 900, 10000, 100};
-
 
 uint64_t south_fill(uint64_t l) {
 	l |= l >> 8; // OR 1 row

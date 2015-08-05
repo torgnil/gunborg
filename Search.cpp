@@ -137,6 +137,10 @@ int Search::capture_quiescence_eval_search(bool white_turn, int alpha, int beta,
 	for (unsigned int i = 0; i < capture_moves.size(); ++i) {
 		pick_next_move(capture_moves, i);
 		Move move = capture_moves[i];
+		if (PIECE_VALUES[captured_piece(move.m)] + DELTA_PRUNING_MARGIN + static_eval < alpha
+				&& promotion_piece(move.m) == EMPTY) {
+			continue;
+		}
 		bool legal_move = make_move(position, move);
 		if (!legal_move) {
 			unmake_move(position, move);
