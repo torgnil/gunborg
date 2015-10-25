@@ -312,8 +312,8 @@ int Search::alpha_beta(bool white_turn, int depth, int alpha, int beta, Position
 			int depth_reduction = 0;
 			// late move reduction.
 			// we assume sort order is good enough to not search later moves as deep as the first
-			if (depth > 2 && i > 5 && !is_capture(move.m)) {
-				depth_reduction = depth > 5 && i > 20 ? 2 : 1;
+			if (depth > 2 && i > 5 && !is_capture(move.m) && next_move == 0) {
+				depth_reduction = depth > 4 && i > 20 ? 2 : 1;
 			}
 			if (beta - alpha > 1 && next_move != 0) {
 				// we do not expect to find a better move
