@@ -447,18 +447,21 @@ bool Search::is_stale_mate(const bool white_turn, Position& pos) {
  */
 int Search::aspiration_window_search(bool white_turn, int depth, int alpha, int beta, Position& pos, Transposition *tt,
 		bool in_check, Move (&killers)[32][2], uint64_t (&history)[64][64]) {
+	int window_size = beta - alpha;
 	while (!time_to_stop()) {
 		int move_score = -alpha_beta(!white_turn, depth - 1, -beta, -alpha, pos, tt, in_check, killers, history, 1, 0);
 		if (move_score > alpha && move_score < beta) {
 			return move_score;
 		} else {
-			int window_size = beta - alpha;
+			window_size = window_size * 2;
 			if (move_score <= alpha) {
 				// failed low, search again at same depth
+				beta = alpha + 1;
 				alpha = alpha - window_size;
 			}
 			if (move_score >= beta) {
 				// failed high, search again at same depth
+				alpha = beta - 1;
 				beta = beta + window_size;
 			}
 		}

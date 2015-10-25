@@ -39,7 +39,7 @@ private:
 	std::chrono::high_resolution_clock::time_point start;
 	bool pondering = false;
 	static const int WINDOW_SIZE = 56;
-	static const int START_WINDOW_SIZE = 20;
+	static const int START_WINDOW_SIZE = 30;
 	static const int DELTA_PRUNING_MARGIN = 200;
 
 	int alpha_beta(bool white_turn, int depth, int alpha, int beta, Position& position, Transposition *tt,
