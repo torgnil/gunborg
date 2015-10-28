@@ -238,6 +238,20 @@ int evaluate(const Position& position) {
 	score += evaluate_side(position, WHITE, white_piece_material, black_piece_material);
 	score -= evaluate_side(position, BLACK, black_piece_material, white_piece_material);
 
+
+	if (pop_count(
+			position.p[WHITE][QUEEN] |
+			position.p[WHITE][BISHOP] |
+			position.p[WHITE][KNIGHT] |
+			position.p[BLACK][QUEEN]  |
+			position.p[BLACK][BISHOP] |
+			position.p[BLACK][KNIGHT] ) == 0 &&
+		pop_count(position.p[WHITE][ROOK]) == 1 &&
+		pop_count(position.p[BLACK][ROOK]) == 1) {
+		// rook ending is drawish
+		score = score / 2;
+	}
+
 	return score;
 }
 
