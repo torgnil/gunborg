@@ -163,6 +163,66 @@ int evaluate_side(const Position& position, const int& side, const int& piece_ma
 	return score;
 }
 
+bool is_drawish_endgame(const Position& position) {
+	if (pop_count(
+			position.p[WHITE][QUEEN] | position.p[BLACK][QUEEN]) != 0) {
+		return false;
+	}
+	// r vs R
+	if (pop_count(
+			position.p[WHITE][BISHOP] |
+			position.p[WHITE][KNIGHT] |
+			position.p[BLACK][BISHOP] |
+			position.p[BLACK][KNIGHT]) == 0 &&
+			pop_count(position.p[WHITE][ROOK]) == 1 &&
+			pop_count(position.p[BLACK][ROOK]) == 1) {
+		return true;
+	}
+	// r vs B
+	if (pop_count(
+			position.p[WHITE][KNIGHT] |
+			position.p[BLACK][KNIGHT]) == 0 &&
+				((pop_count(position.p[WHITE][ROOK]) == 1 &&
+				pop_count(position.p[BLACK][ROOK]) == 0 &&
+				pop_count(position.p[WHITE][BISHOP]) == 0 &&
+				pop_count(position.p[BLACK][BISHOP]) == 1) ||
+				(pop_count(position.p[WHITE][ROOK]) == 0 &&
+				pop_count(position.p[BLACK][ROOK]) == 1 &&
+				pop_count(position.p[WHITE][BISHOP]) == 1 &&
+				pop_count(position.p[BLACK][BISHOP]) == 0))) {
+		return true;
+	}
+	// r vs N
+	if (pop_count(
+			position.p[WHITE][BISHOP] |
+			position.p[BLACK][BISHOP]) == 0 &&
+				((pop_count(position.p[WHITE][ROOK]) == 1 &&
+				pop_count(position.p[BLACK][ROOK]) == 0 &&
+				pop_count(position.p[WHITE][KNIGHT]) == 0 &&
+				pop_count(position.p[BLACK][KNIGHT]) == 1) ||
+				(pop_count(position.p[WHITE][ROOK]) == 0 &&
+				pop_count(position.p[BLACK][ROOK]) == 1 &&
+				pop_count(position.p[WHITE][KNIGHT]) == 1 &&
+				pop_count(position.p[BLACK][KNIGHT]) == 0))) {
+		return true;
+	}
+	// opposite color bihops
+	if (pop_count(
+			position.p[WHITE][ROOK] |
+			position.p[WHITE][KNIGHT] |
+			position.p[BLACK][ROOK] |
+			position.p[BLACK][KNIGHT]) == 0 &&
+			pop_count(position.p[WHITE][BISHOP]) == 1 &&
+			pop_count(position.p[BLACK][BISHOP]) == 1 &&
+				(((WHITE_SQUARES & position.p[WHITE][BISHOP]) != 0 &&
+				(WHITE_SQUARES & position.p[BLACK][BISHOP]) == 0) ||
+				((BLACK_SQUARES & position.p[WHITE][BISHOP]) != 0 &&
+				(BLACK_SQUARES & position.p[BLACK][BISHOP]) == 0))) {
+		return true;
+	}
+	return false;
+}
+
 // score in centipawns
 int evaluate(const Position& position) {
 	uint64_t black_king = position.p[BLACK][KING];
@@ -239,17 +299,12 @@ int evaluate(const Position& position) {
 	score -= evaluate_side(position, BLACK, black_piece_material, white_piece_material);
 
 
-	if (pop_count(
-			position.p[WHITE][QUEEN] |
-			position.p[WHITE][BISHOP] |
-			position.p[WHITE][KNIGHT] |
-			position.p[BLACK][QUEEN]  |
-			position.p[BLACK][BISHOP] |
-			position.p[BLACK][KNIGHT] ) == 0 &&
-		pop_count(position.p[WHITE][ROOK]) == 1 &&
-		pop_count(position.p[BLACK][ROOK]) == 1) {
-		// rook ending is drawish
-		score = score / 2;
+	if (is_drawish_endgame(position)) {
+		if (pop_count(position.p[WHITE][PAWN] | position.p[BLACK][PAWN]) == 0) {
+			score = score / 8;
+		} else {
+			score = score * 6 / 8;
+		}
 	}
 
 	return score;
