@@ -392,8 +392,15 @@ void Search::print_uci_info(int pv[], int depth, int score, Transposition *tt) {
 	int time_elapsed_last_depth_ms = std::chrono::duration_cast < std::chrono::milliseconds
 			> (clock.now() - start).count();
 
+	std::string mate_str;
+	if (score > 7000) {
+		mate_str += std::string(" mate ") + std::to_string((depth + 1)/2);
+	} else if (score < -7000) {
+		mate_str += std::string(" mate -") + std::to_string((depth + 1)/2);
+	}
+
 	// uci info with score from engine's perspective
-	std::cout << "info score cp " << score << " depth " << depth << " time " << time_elapsed_last_depth_ms << " nodes "
+	std::cout << "info score cp " << score << mate_str << " depth " << depth << " time " << time_elapsed_last_depth_ms << " nodes "
 			<< node_count << " hashfull " << hashfull(tt) <<" pv " << pvstring << "\n" << std::flush;
 }
 
@@ -595,7 +602,7 @@ void Search::search_best_move(const Position& position, const bool white_turn, c
 		}
 		// if mate is found at this depth, just stop searching for better moves.
 		// Cause there are none.. The best move at the last depth will prolong the inevitably as long as possible or deliver mate.
-		if (abs(alpha) > 5000) {
+		if (abs(alpha) > 7000) {
 			// deliver mate or be mated
 			break;
 		}

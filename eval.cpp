@@ -165,7 +165,9 @@ int evaluate_side(const Position& position, const int& side, const int& piece_ma
 
 bool is_drawish_endgame(const Position& position) {
 	if (pop_count(
-			position.p[WHITE][QUEEN] | position.p[BLACK][QUEEN]) != 0) {
+			position.p[WHITE][QUEEN] | position.p[BLACK][QUEEN]) != 0 ||
+		pop_count(
+			position.p[WHITE][KING] | position.p[BLACK][KING]) != 2 ) {
 		return false;
 	}
 	// r vs R
